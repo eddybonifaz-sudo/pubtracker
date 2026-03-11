@@ -12,7 +12,7 @@ import {
   FileSpreadsheet, FileDown, RefreshCw, Shield, User, Mail, Lock, UserCheck,
   Settings, KeyRound
 } from "lucide-react";
-import * as XLSX from "sheetjs";
+// No se requiere paquete xlsx — exportación nativa del navegador
 
 /* ═══════════════════════════════════════════════════════════════
    ⚙️ CONFIGURACIÓN — Pegue aquí su URL de Google Apps Script
@@ -21,7 +21,7 @@ import * as XLSX from "sheetjs";
    2. Pegar google-apps-script-v2.js → Ejecutar inicializarSistema()
    3. Implementar como webapp → Copiar URL → Pegar abajo
    ═══════════════════════════════════════════════════════════════ */
-const API_URL = "https://script.google.com/macros/s/AKfycbwn9Tz7fYeIg_ldcZEoo_X_C1x9pagOZx7dGC1oGk-GSEmZqZvM6DNMRbnb1d2dGU6x/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbyazwyYNFczOgGNOplKlIP_Uc0TZQWPXD-4y6dmDxmxUFNVt7eeJTHiJmGVIAXL8Sny/exec";
 // Ejemplo: const API_URL = "https://script.google.com/macros/s/AKfycbx.../exec";
 
 /* ═══════════════════════════════════════════════════════════════
@@ -79,12 +79,17 @@ const Inp=({value,onChange,placeholder,type="text",icon:Ic})=><div style={{posit
 const Sel=({value,onChange,options,placeholder,style:st})=><select value={value} onChange={e=>onChange(e.target.value)} style={{width:"100%",padding:"9px 12px",borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:13,color:value?"#1e293b":"#94a3b8",background:"white",outline:"none",boxSizing:"border-box",...st}}><option value="">{placeholder||"Seleccionar…"}</option>{options.map(o=><option key={o} value={o}>{o}</option>)}</select>;
 const Btn=({children,onClick,primary,danger,small,disabled,icon:Ic})=><button onClick={onClick} disabled={disabled} style={{display:"inline-flex",alignItems:"center",gap:6,padding:small?"5px 10px":"9px 18px",borderRadius:10,border:primary||danger?"none":"1.5px solid #e2e8f0",fontSize:small?11:13,fontWeight:primary?700:500,cursor:disabled?"not-allowed":"pointer",background:primary?`linear-gradient(135deg,${P.teal},${P.green})`:danger?P.rose:"white",color:primary||danger?"white":"#475569",opacity:disabled?.5:1,transition:"all .15s",boxShadow:primary?"0 3px 10px rgba(17,94,89,.25)":"none"}}>{Ic&&<Ic size={small?12:15}/>}{children}</button>;
 
-/* ── Export Excel ── */
+/* ── Export Excel (sin dependencias externas) ── */
 function exportExcel(pubs,autores,links){
   const rows=pubs.map(p=>{const aI=links.filter(l=>l.pubId===p.id).map(l=>l.autorId);const nm=aI.map(id=>{const a=autores.find(x=>x.id===id);return a?`${a.nombres} ${a.apellidos}`:""}).filter(Boolean).join("; ");
-  return{"Título":p.titulo,"Autores UNO":nm,"Autores Externos":p.autoresExternos||"","Tipo":p.tipoPublicacion,"Estado":p.estadoPublicacion,"Fecha":p.fechaPublicacion,"Cuartil":p.cuartil,"Revista":p.revista,"ISSN/ISBN":p.issn,"Vol":p.volumen,"Núm":p.numero,"Págs":p.paginas,"DOI":p.doi,"URL":p.url,"Idx 1":p.indexacion1,"Idx 2":p.indexacion2,"Idx 3":p.indexacion3,"Reg.DI":p.registrado}});
-  const ws=XLSX.utils.json_to_sheet(rows);ws["!cols"]=[{wch:55},{wch:28},{wch:35},{wch:18},{wch:14},{wch:12},{wch:5},{wch:28},{wch:16},{wch:6},{wch:6},{wch:8},{wch:35},{wch:35},{wch:18},{wch:18},{wch:18},{wch:6}];
-  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Publicaciones");XLSX.writeFile(wb,`PubTracker_${new Date().toISOString().slice(0,10)}.xlsx`);
+  return[p.titulo,nm,p.autoresExternos||"",p.tipoPublicacion,p.estadoPublicacion,p.fechaPublicacion,p.cuartil,p.revista,p.issn,p.volumen,p.numero,p.paginas,p.doi,p.url,p.indexacion1,p.indexacion2,p.indexacion3,p.registrado]});
+  const headers=["Título","Autores UNO","Autores Externos","Tipo","Estado","Fecha","Cuartil","Revista","ISSN/ISBN","Vol","Núm","Págs","DOI","URL","Idx 1","Idx 2","Idx 3","Reg.DI"];
+  const esc=s=>String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  let xml='<?xml version="1.0" encoding="UTF-8"?><?mso-application progid="Excel.Sheet"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Styles><Style ss:ID="hdr"><Font ss:Bold="1" ss:Size="10"/><Interior ss:Color="#F1F5F9" ss:Pattern="Solid"/></Style><Style ss:ID="def"><Font ss:Size="10"/></Style></Styles><Worksheet ss:Name="Publicaciones"><Table>';
+  xml+="<Row>"+headers.map(h=>`<Cell ss:StyleID="hdr"><Data ss:Type="String">${esc(h)}</Data></Cell>`).join("")+"</Row>";
+  rows.forEach(r=>{xml+="<Row>"+r.map(c=>`<Cell ss:StyleID="def"><Data ss:Type="String">${esc(c)}</Data></Cell>`).join("")+"</Row>"});
+  xml+="</Table></Worksheet></Workbook>";
+  const blob=new Blob([xml],{type:"application/vnd.ms-excel"});const u=URL.createObjectURL(blob);const a=document.createElement("a");a.href=u;a.download=`PubTracker_${new Date().toISOString().slice(0,10)}.xls`;a.click();URL.revokeObjectURL(u);
 }
 
 /* ── Export Word por docente ── */
