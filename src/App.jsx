@@ -22,9 +22,9 @@ const API_URL = "https://script.google.com/macros/s/AKfycbyazwyYNFczOgGNOplKlIP_
 async function apiGet(a){if(!API_URL)return null;try{const r=await fetch(`${API_URL}?action=${a}`);return await r.json()}catch(e){return null}}
 async function apiPost(b){if(!API_URL)return null;try{const r=await fetch(API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(b)});return await r.json()}catch(e){return null}}
 
-/* ── Paleta y constantes ── */
-const P={teal:"#115e59",tealL:"#0d9488",tealBg:"#ccfbf1",navy:"#0f172a",slate:"#64748b",rose:"#be123c",roseBg:"#ffe4e6",green:"#047857",greenBg:"#d1fae5",violet:"#6d28d9",violetBg:"#ede9fe",sky:"#0369a1",skyBg:"#e0f2fe",gold:"#a16207",goldBg:"#fef3c7"};
-const CC=["#115e59","#a16207","#6d28d9","#be123c","#0369a1","#047857","#d97706","#9333ea","#e11d48","#0891b2","#65a30d"];
+/* ── Paleta y constantes — Color Institucional UNO #47090A ── */
+const P={teal:"#47090A",tealL:"#6b0e10",tealBg:"#fdf0f0",navy:"#1a0203",slate:"#64748b",rose:"#be123c",roseBg:"#ffe4e6",green:"#047857",greenBg:"#d1fae5",violet:"#6d28d9",violetBg:"#ede9fe",sky:"#0369a1",skyBg:"#e0f2fe",gold:"#a16207",goldBg:"#fef3c7"};
+const CC=["#47090A","#a16207","#6d28d9","#be123c","#0369a1","#047857","#d97706","#9333ea","#6b0e10","#0891b2","#65a30d"];
 const TIPOS=["Artículo Científico","Artículo Regional","Libro","Capítulo de Libro","Proceeding","Tesis","Ponencia"];
 const ESTADOS=["Publicado","Aceptado","En revisión","Enviado","En preparación","Rechazado"];
 const CUARTILES=["Q1","Q2","Q3","Q4","N/A"];
@@ -46,6 +46,7 @@ const DEMO=(()=>{const R=[
 {n:"DALMA JOSELYN",a:"JATIVA AVILA",e:"djativa@uotavalo.edu.ec",est:"Publicado",t:"Neurodidáctica: aplicación de las neurociencias en la enseñanza",tp:"Artículo Regional",f:"1/7/2025",q:"N/A",rv:"Rev. Investigación en C. Educación",is:"3073-1461",i1:"Latindex Catálogo",i2:"",i3:"",rg:"Sí"},
 {n:"KAREN ANDREA",a:"ARMAS SANCHEZ",e:"karmas@uotavalo.edu.ec",est:"Publicado",t:"Validación del ejercicio profesional como reconocimiento a la experiencia laboral",tp:"Capítulo de Libro",f:"6/11/2025",q:"N/A",rv:"Editorial Octaedro",is:"9788410792333",i1:"",i2:"",i3:"",rg:"No"},
 {n:"JESUS FRANCISCO",a:"GONZALEZ ALONSO",e:"jgonzalez@uotavalo.edu.ec",est:"Publicado",t:"Gestión Educativa",tp:"Libro",f:"7/11/2025",q:"N/A",rv:"Editorial Grupo Compás",is:"978-9942-53-101-8",i1:"Scopus",i2:"",i3:"",rg:"Sí"},
+{n:"JESUS FRANCISCO",a:"GONZALEZ ALONSO",e:"jgonzalez@uotavalo.edu.ec",est:"Publicado",t:"Innovación pedagógica en educación superior",tp:"Artículo Científico",f:"10/9/2025",q:"Q2",rv:"Revista Iberoamericana de Educación",is:"1022-6508",i1:"Scopus",i2:"Latindex Catálogo",i3:"",rg:"Sí"},
 ];const am={};let ac=1,pc=1;const ps=[],lk=[];
 R.forEach(r=>{const k=r.n+"|"+r.a;if(!am[k])am[k]={id:"A"+String(ac++).padStart(3,"0"),nombres:r.n,apellidos:r.a,email:r.e,rol:"autor",activo:true};const pid="P"+String(pc++).padStart(3,"0");ps.push({id:pid,titulo:r.t,tipoPublicacion:r.tp,estadoPublicacion:r.est,fechaPublicacion:r.f,cuartil:r.q,revista:r.rv,issn:r.is,volumen:"",numero:"",paginas:"",doi:"",url:"",indexacion1:r.i1,indexacion2:r.i2,indexacion3:r.i3,registrado:r.rg,autoresExternos:r.ext||""});lk.push({pubId:pid,autorId:am[k].id,orden:1});});
 return{publicaciones:ps,autores:Object.values(am),pubAutores:lk};})();
@@ -104,7 +105,7 @@ function exportWord(autor, pubs, links, filtros={}) {
     const estadoColor = p.estadoPublicacion==="Publicado"?"#047857":p.estadoPublicacion==="Aceptado"?"#0369a1":"#a16207";
     return `
     <tr>
-      <td style="padding:6px 8px;border:1px solid #d1d5db;text-align:center;font-weight:bold;color:#115e59;font-size:11px;">${i+1}</td>
+      <td style="padding:6px 8px;border:1px solid #d1d5db;text-align:center;font-weight:bold;color:#47090A;font-size:11px;">${i+1}</td>
       <td style="padding:6px 8px;border:1px solid #d1d5db;font-size:11px;">
         <strong>${p.titulo}</strong>
         ${p.autoresExternos?`<br/><span style="font-size:10px;color:#6d28d9;">Coautores: ${p.autoresExternos}</span>`:""}
@@ -129,17 +130,17 @@ function exportWord(autor, pubs, links, filtros={}) {
 <style>
   @page { size: A4; margin: 2cm 2.5cm; }
   body { font-family: Arial, sans-serif; margin: 0; padding: 0; color: #1e293b; font-size: 12px; }
-  .header-block { border-bottom: 3px solid #8B0000; padding-bottom: 10px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; }
-  .logo-text { font-size: 14px; font-weight: bold; color: #8B0000; letter-spacing: 1px; }
+  .header-block { border-bottom: 3px solid #47090A; padding-bottom: 10px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; }
+  .logo-text { font-size: 14px; font-weight: bold; color: #47090A; letter-spacing: 1px; }
   .logo-sub { font-size: 10px; color: #64748b; }
-  h1 { font-size: 18px; color: #115e59; text-align: center; margin: 0 0 4px; border: none; }
-  h2 { font-size: 13px; color: #0f172a; border-bottom: 2px solid #115e59; padding-bottom: 4px; margin: 20px 0 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+  h1 { font-size: 18px; color: #47090A; text-align: center; margin: 0 0 4px; border: none; }
+  h2 { font-size: 13px; color: #1a0203; border-bottom: 2px solid #47090A; padding-bottom: 4px; margin: 20px 0 10px; text-transform: uppercase; letter-spacing: 0.5px; }
   table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 11px; }
-  th { background: #115e59; color: white; text-align: left; padding: 7px 8px; border: 1px solid #115e59; font-size: 10px; text-transform: uppercase; letter-spacing: 0.3px; }
+  th { background: #47090A; color: white; text-align: left; padding: 7px 8px; border: 1px solid #47090A; font-size: 10px; text-transform: uppercase; letter-spacing: 0.3px; }
   .kpi-table td { text-align: center; padding: 10px; border: 1px solid #d1d5db; }
   .kpi-num { font-size: 22px; font-weight: bold; }
   .footer { margin-top: 30px; text-align: center; color: #94a3b8; font-size: 9px; border-top: 1px solid #e2e8f0; padding-top: 10px; }
-  .info-box { background: #f0fdfa; border-left: 4px solid #115e59; padding: 10px 14px; margin-bottom: 14px; border-radius: 0 6px 6px 0; }
+  .info-box { background: #fdf0f0; border-left: 4px solid #47090A; padding: 10px 14px; margin-bottom: 14px; border-radius: 0 6px 6px 0; }
   .info-row { display: flex; gap: 6px; margin-bottom: 3px; font-size: 11px; }
   .info-label { font-weight: 700; color: #475569; min-width: 160px; }
   .info-value { color: #1e293b; }
@@ -178,7 +179,7 @@ function exportWord(autor, pubs, links, filtros={}) {
   <h2>1. Resumen de Producción Científica</h2>
   <table class="kpi-table">
     <tr>
-      <td><div class="kpi-num" style="color:#115e59;">${aP.length}</div><div style="font-size:10px;color:#64748b;">Total Publicaciones</div></td>
+      <td><div class="kpi-num" style="color:#47090A;">${aP.length}</div><div style="font-size:10px;color:#64748b;">Total Publicaciones</div></td>
       <td><div class="kpi-num" style="color:#047857;">${pub}</div><div style="font-size:10px;color:#64748b;">Publicadas</div></td>
       <td><div class="kpi-num" style="color:#0369a1;">${enProceso}</div><div style="font-size:10px;color:#64748b;">En Proceso</div></td>
       <td><div class="kpi-num" style="color:#a16207;">${sc}</div><div style="font-size:10px;color:#64748b;">Scopus</div></td>
@@ -192,9 +193,9 @@ function exportWord(autor, pubs, links, filtros={}) {
   <table>
     <tr><th style="width:70%;">Tipo de Publicación</th><th style="width:30%;text-align:center;">Cantidad</th></tr>
     ${tipoRows}
-    <tr style="background:#f0fdfa;font-weight:bold;">
-      <td style="padding:5px 8px;border:1px solid #d1d5db;font-size:11px;color:#115e59;">TOTAL</td>
-      <td style="padding:5px 8px;border:1px solid #d1d5db;font-size:11px;text-align:center;color:#115e59;">${aP.length}</td>
+    <tr style="background:#fdf0f0;font-weight:bold;">
+      <td style="padding:5px 8px;border:1px solid #d1d5db;font-size:11px;color:#47090A;">TOTAL</td>
+      <td style="padding:5px 8px;border:1px solid #d1d5db;font-size:11px;text-align:center;color:#47090A;">${aP.length}</td>
     </tr>
   </table>
 
@@ -221,7 +222,7 @@ function exportWord(autor, pubs, links, filtros={}) {
   ${aP.map((p,i)=>{
     const idx=[p.indexacion1,p.indexacion2,p.indexacion3].filter(Boolean).join(", ")||"N/A";
     return `<div style="margin-bottom:14px;border:1px solid #e2e8f0;border-radius:6px;overflow:hidden;">
-      <div style="background:#115e59;color:white;padding:6px 12px;font-size:11px;font-weight:bold;">Publicación ${i+1}</div>
+      <div style="background:#47090A;color:white;padding:6px 12px;font-size:11px;font-weight:bold;">Publicación ${i+1}</div>
       <table style="margin:0;">
         <tr><td style="padding:5px 8px;border:1px solid #e2e8f0;font-weight:700;font-size:10px;color:#475569;width:35%;">${p.titulo}</td></tr>
       </table>
@@ -234,7 +235,7 @@ function exportWord(autor, pubs, links, filtros={}) {
         ${p.doi?`<tr style="background:#fafafa;"><td style="padding:4px 8px;border:1px solid #e2e8f0;font-weight:600;color:#475569;">DOI:</td><td style="padding:4px 8px;border:1px solid #e2e8f0;">${p.doi}</td></tr>`:""}
         ${p.url?`<tr><td style="padding:4px 8px;border:1px solid #e2e8f0;font-weight:600;color:#475569;">URL:</td><td style="padding:4px 8px;border:1px solid #e2e8f0;">${p.url}</td></tr>`:""}
         <tr style="background:#fafafa;"><td style="padding:4px 8px;border:1px solid #e2e8f0;font-weight:600;color:#475569;">Indexación:</td><td style="padding:4px 8px;border:1px solid #e2e8f0;">${idx}</td></tr>
-        ${p.cuartil&&p.cuartil!=="N/A"?`<tr><td style="padding:4px 8px;border:1px solid #e2e8f0;font-weight:600;color:#475569;">Cuartil:</td><td style="padding:4px 8px;border:1px solid #e2e8f0;font-weight:bold;color:#115e59;">${p.cuartil}</td></tr>`:""}
+        ${p.cuartil&&p.cuartil!=="N/A"?`<tr><td style="padding:4px 8px;border:1px solid #e2e8f0;font-weight:600;color:#475569;">Cuartil:</td><td style="padding:4px 8px;border:1px solid #e2e8f0;font-weight:bold;color:#47090A;">${p.cuartil}</td></tr>`:""}
         <tr><td style="padding:4px 8px;border:1px solid #e2e8f0;font-weight:600;color:#475569;">Registrado UO:</td><td style="padding:4px 8px;border:1px solid #e2e8f0;">${p.registrado==="Sí"?"✓ Sí":"✗ No"}</td></tr>
         ${p.autoresExternos?`<tr style="background:#fafafa;"><td style="padding:4px 8px;border:1px solid #e2e8f0;font-weight:600;color:#6d28d9;">Autores Externos:</td><td style="padding:4px 8px;border:1px solid #e2e8f0;color:#6d28d9;">${p.autoresExternos}</td></tr>`:""}
       </table>
@@ -281,9 +282,18 @@ function ReporteModal({autores, pubs, links, onClose}){
   const handleWord = () => {
     if(fAutorId){
       const autor = autores.find(a=>a.id===fAutorId);
-      if(autor) exportWord(autor, pubs, links, {anio:fAnio,tipo:fTipo});
+      if(autor) exportWord(autor, pubs, links, {anio:fAnio, tipo:fTipo});
     } else {
-      autores.forEach(autor => exportWord(autor, pubs, links, {anio:fAnio,tipo:fTipo}));
+      // Exportar solo autores que tienen publicaciones con los filtros aplicados
+      const autoresConPubs = autores.filter(a=>{
+        const aL = links.filter(l=>l.autorId===a.id);
+        let ap = pubs.filter(p=>aL.some(l=>l.pubId===p.id));
+        if(fAnio) ap = ap.filter(p=>parseYear(p.fechaPublicacion)===parseInt(fAnio));
+        if(fTipo) ap = ap.filter(p=>p.tipoPublicacion===fTipo);
+        return ap.length > 0;
+      });
+      if(autoresConPubs.length === 0){ alert("No hay publicaciones con los filtros seleccionados"); return; }
+      autoresConPubs.forEach(autor => exportWord(autor, pubs, links, {anio:fAnio, tipo:fTipo}));
     }
     onClose();
   };
@@ -370,7 +380,8 @@ function PubForm({pub,autores,pubAutores,onSave,onCancel,currentUser,isAdmin}){
   const s=(k,v)=>setForm(p=>({...p,[k]:v}));
   const submit=()=>{if(!form.titulo.trim())return alert("Título requerido");if(selA.length===0)return alert("Seleccione al menos un autor");onSave({...form,id:pub?.id},selA)};
   const steps=["Información","Bibliometría","Indexación"];
-  const autoresDisponibles = isAdmin ? autores : autores.filter(a=>a.id===currentUser?.id);
+  // Todos los autores de la facultad siempre disponibles para seleccionar coautores
+  const autoresDisponibles = autores;
   return(
     <div style={{background:"white",borderRadius:16,overflow:"hidden",boxShadow:"0 20px 60px rgba(0,0,0,.12)",maxWidth:680,width:"100%"}}>
       <div style={{background:`linear-gradient(135deg,${P.navy},${P.teal})`,padding:"18px 24px",color:"white"}}><h2 style={{fontSize:17,fontWeight:700,margin:0,fontFamily:"'Playfair Display',serif"}}>{isE?"Editar Publicación":"Nueva Publicación"}</h2></div>
@@ -657,7 +668,7 @@ export default function App(){
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
             <div style={{background:"white",borderRadius:12,padding:"10px 14px",border:"1px solid #f1f5f9"}}>
               <p style={{fontSize:10,fontWeight:700,color:"#94a3b8",margin:"0 0 6px",textTransform:"uppercase",letterSpacing:.8}}>Por Tipo</p>
-              <ResponsiveContainer width="100%" height={130}><PieChart><Pie data={Object.entries(stats.porTipo).map(([name,value])=>({name,value}))} cx="50%" cy="50%" innerRadius={28} outerRadius={52} paddingAngle={3} dataKey="value" label={({value})=>value} style={{fontSize:9}}>{Object.keys(stats.porTipo).map((_,i)=><Cell key={i} fill={CC[i%CC.length]}/>)}</Pie><Tooltip wrapperStyle={{fontSize:11}}/></PieChart></ResponsiveContainer>
+              <ResponsiveContainer width="100%" height={150}><PieChart margin={{top:10,right:10,bottom:10,left:10}}><Pie data={Object.entries(stats.porTipo).map(([name,value])=>({name,value}))} cx="50%" cy="50%" innerRadius={30} outerRadius={55} paddingAngle={3} dataKey="value" label={({value})=>value} labelLine={false} style={{fontSize:9}}>{Object.keys(stats.porTipo).map((_,i)=><Cell key={i} fill={CC[i%CC.length]}/>)}</Pie><Tooltip wrapperStyle={{fontSize:11}}/></PieChart></ResponsiveContainer>
             </div>
             <div style={{background:"white",borderRadius:12,padding:"10px 14px",border:"1px solid #f1f5f9"}}>
               <p style={{fontSize:10,fontWeight:700,color:"#94a3b8",margin:"0 0 6px",textTransform:"uppercase",letterSpacing:.8}}>Por Año</p>
@@ -676,7 +687,7 @@ export default function App(){
         {/* ═══ CONTENT VIEWS ═══ */}
         <div style={{padding:"16px 20px",animation:"fadeIn .3s"}}>
 
-          {/* ── DASHBOARD COMPLETO ── */}
+          {/* ═══ DASHBOARD COMPLETO ── */}
           {view==="dashboard"&&<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
             <div style={{background:"white",borderRadius:12,padding:14,border:"1px solid #f1f5f9"}}>
               <h3 style={{fontSize:12,fontWeight:700,color:P.navy,margin:"0 0 10px"}}>Publicaciones por Año</h3>
@@ -725,7 +736,12 @@ export default function App(){
                 return<div key={p.id} style={{background:"white",borderRadius:10,border:"1px solid #f1f5f9",padding:"10px 14px",display:"flex",alignItems:"center",gap:10}}>
                   <div style={{flex:1,minWidth:0}}>
                     <h4 style={{fontSize:12,fontWeight:600,color:P.navy,margin:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.titulo}</h4>
-                    <p style={{fontSize:10,color:"#94a3b8",margin:"1px 0 0"}}>{aus.map(a=>`${a.apellidos}`).join(", ")}{p.autoresExternos?<span style={{color:P.violet}}> + {p.autoresExternos.split(/[,\n]/).filter(Boolean).length} ext.</span>:""} · {p.revista||""} · {p.fechaPublicacion||""}</p>
+                    <p style={{fontSize:10,color:"#94a3b8",margin:"2px 0 0",display:"flex",alignItems:"center",gap:4,flexWrap:"wrap"}}>
+                      {p.tipoPublicacion&&<span style={{background:P.teal+"18",color:P.teal,fontSize:9,fontWeight:700,padding:"1px 7px",borderRadius:10,whiteSpace:"nowrap"}}>{p.tipoPublicacion}</span>}
+                      <span>{aus.map(a=>`${a.apellidos}`).join(", ")}{p.autoresExternos?<span style={{color:P.violet}}> + {p.autoresExternos.split(/[,\n]/).filter(Boolean).length} ext.</span>:""}</span>
+                      {p.revista&&<span>· {p.revista}</span>}
+                      {p.fechaPublicacion&&<span>· {p.fechaPublicacion}</span>}
+                    </p>
                   </div>
                   <div style={{display:"flex",gap:4,alignItems:"center",flexShrink:0}}>
                     <EBdg e={p.estadoPublicacion}/><QBdg q={p.cuartil}/>
@@ -756,7 +772,7 @@ export default function App(){
           {/* ── INDEXACIÓN ── */}
           {view==="indexacion"&&<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
             <div style={{background:"white",borderRadius:12,padding:14,border:"1px solid #f1f5f9"}}><h3 style={{fontSize:12,fontWeight:700,color:P.navy,margin:"0 0 10px"}}>Bases de Indexación</h3><ResponsiveContainer width="100%" height={260}><BarChart data={Object.entries(stats.porIdx).sort((a,b)=>b[1]-a[1]).map(([name,value])=>({name,value}))} layout="vertical" margin={{left:5}}><CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9"/><XAxis type="number" tick={{fontSize:10}}/><YAxis type="category" dataKey="name" width={110} tick={{fontSize:10}}/><Tooltip/><Bar dataKey="value" fill={P.sky} radius={[0,5,5,0]} barSize={16}/></BarChart></ResponsiveContainer></div>
-            <div style={{background:"white",borderRadius:12,padding:14,border:"1px solid #f1f5f9"}}><h3 style={{fontSize:12,fontWeight:700,color:P.navy,margin:"0 0 10px"}}>Cuartiles</h3>{(()=>{const qd={};visiblePubs.forEach(p=>{if(p.cuartil?.startsWith("Q"))qd[p.cuartil]=(qd[p.cuartil]||0)+1});const d=Object.entries(qd).sort().map(([n,v])=>({name:n,value:v}));return d.length?<><ResponsiveContainer width="100%" height={200}><PieChart><Pie data={d} cx="50%" cy="50%" innerRadius={45} outerRadius={80} paddingAngle={4} dataKey="value" label={({name,value})=>`${name}: ${value}`}>{d.map((e,i)=><Cell key={i} fill={e.name==="Q1"?P.green:e.name==="Q2"?P.teal:e.name==="Q3"?P.gold:"#ea580c"}/>)}</Pie><Tooltip/></PieChart></ResponsiveContainer><div style={{display:"flex",justifyContent:"center",gap:16,marginTop:8}}>{["Q1","Q2","Q3","Q4"].map(q=><div key={q} style={{textAlign:"center"}}><div style={{fontSize:20,fontWeight:800,color:q==="Q1"?P.green:q==="Q2"?P.teal:q==="Q3"?P.gold:"#ea580c"}}>{qd[q]||0}</div><div style={{fontSize:10,color:"#94a3b8"}}>{q}</div></div>)}</div></>:<p style={{color:"#94a3b8",textAlign:"center",padding:30}}>Sin datos</p>})()}</div>
+            <div style={{background:"white",borderRadius:12,padding:14,border:"1px solid #f1f5f9"}}><h3 style={{fontSize:12,fontWeight:700,color:P.navy,margin:"0 0 10px"}}>Cuartiles</h3>{(()=>{const qd={};visiblePubs.forEach(p=>{if(p.cuartil?.startsWith("Q"))qd[p.cuartil]=(qd[p.cuartil]||0)+1});const d=Object.entries(qd).sort().map(([n,v])=>({name:n,value:v}));return d.length?<><ResponsiveContainer width="100%" height={220}><PieChart margin={{top:10,right:30,bottom:10,left:30}}><Pie data={d} cx="50%" cy="50%" innerRadius={50} outerRadius={85} paddingAngle={4} dataKey="value" label={({name,value})=>`${name}: ${value}`} labelLine={true}>{d.map((e,i)=><Cell key={i} fill={e.name==="Q1"?P.green:e.name==="Q2"?P.teal:e.name==="Q3"?P.gold:"#ea580c"}/>)}</Pie><Tooltip/></PieChart></ResponsiveContainer><div style={{display:"flex",justifyContent:"center",gap:16,marginTop:8}}>{["Q1","Q2","Q3","Q4"].map(q=><div key={q} style={{textAlign:"center"}}><div style={{fontSize:20,fontWeight:800,color:q==="Q1"?P.green:q==="Q2"?P.teal:q==="Q3"?P.gold:"#ea580c"}}>{qd[q]||0}</div><div style={{fontSize:10,color:"#94a3b8"}}>{q}</div></div>)}</div></>:<p style={{color:"#94a3b8",textAlign:"center",padding:30}}>Sin datos de cuartiles</p>})()}</div>
           </div>}
 
           {/* ── ESTADO REGISTRO ── */}
