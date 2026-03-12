@@ -797,7 +797,7 @@ export default function App(){
                   <td style={{padding:"10px 12px",color:"#94a3b8"}}>{a.email||"—"}</td>
                   <td style={{padding:"10px 12px",textAlign:"center",fontWeight:700}}>{a.count}</td>
                   <td style={{padding:"10px 12px",textAlign:"center"}}>{a.scopus>0?<Bdg c={P.gold} bg={P.goldBg}>{a.scopus}</Bdg>:"—"}</td>
-                  <td style={{padding:"10px 12px"}}><div style={{display:"flex",gap:4"}}>
+                  <td style={{padding:"10px 12px"}}><div style={{display:"flex",gap:4}}>
                     <Btn small icon={FileDown} onClick={()=>exportWord(a,data.publicaciones,data.pubAutores)}>Word</Btn>
                     <button onClick={()=>setDeleteAutor(a)} title="Eliminar docente" style={{padding:"4px 8px",borderRadius:8,border:"1px solid #ffe4e6",background:"#fff5f5",cursor:"pointer",fontSize:11,color:P.rose,display:"inline-flex",alignItems:"center",gap:4,fontWeight:600}}><Trash2 size={11}/>Eliminar</button>
                   </div></td>
