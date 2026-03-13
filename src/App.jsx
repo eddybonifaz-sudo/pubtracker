@@ -129,9 +129,99 @@ function exportWord(autor,pubs,links,filtros={}){
   const blob=new Blob(["\ufeff",html],{type:"application/msword"});const u=URL.createObjectURL(blob);const a=document.createElement("a");a.href=u;a.download=`Informe_${autor.apellidos.replace(/\s/g,"_")}_${filtros.anio||new Date().getFullYear()}.doc`;a.click();URL.revokeObjectURL(u);
 }
 
-/* ════════════════════════════════════════
-   MODAL PERFIL DEL INVESTIGADOR
-   ════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════
+   EXPORT WORD CONSOLIDADO (Admin)
+   ═══════════════════════════════════════════════════ */
+function exportWordConsolidado(pubs, autores, links, filtros={}){
+  const today=new Date();
+  const fechaStr=today.toLocaleDateString("es-EC",{year:"numeric",month:"long",day:"numeric"});
+  const periodo=filtros.anio?`Año ${filtros.anio}`:`Enero – Diciembre ${today.getFullYear()}`;
+
+  // Filtrar publicaciones globales
+  let allPubs=pubs;
+  if(filtros.anio) allPubs=allPubs.filter(p=>parseYear(p.fechaPublicacion)===parseInt(filtros.anio));
+  if(filtros.tipo) allPubs=allPubs.filter(p=>p.tipoPublicacion===filtros.tipo);
+  if(allPubs.length===0){alert("No hay publicaciones con los filtros seleccionados");return;}
+
+  // KPIs globales facultad
+  const totalPubs=allPubs.length;
+  const publicadas=allPubs.filter(p=>p.estadoPublicacion==="Publicado").length;
+  const enProceso=allPubs.filter(p=>p.estadoPublicacion!=="Publicado"&&p.estadoPublicacion!=="Rechazado").length;
+  const scopusCnt=allPubs.filter(p=>[p.indexacion1,p.indexacion2,p.indexacion3].some(i=>i?.includes("Scopus"))).length;
+  const wosCnt=allPubs.filter(p=>[p.indexacion1,p.indexacion2,p.indexacion3].some(i=>i?.includes("Wos")||i?.includes("Web of Science"))).length;
+  const q1q2=allPubs.filter(p=>p.cuartil==="Q1"||p.cuartil==="Q2").length;
+
+  // Tabla global resumen
+  const globalRows=allPubs.map((p,i)=>{
+    const aI=links.filter(l=>l.pubId===p.id).map(l=>l.autorId);
+    const autNm=aI.map(id=>{const a=autores.find(x=>x.id===id);return a?`${a.apellidos}`:"";}).filter(Boolean).join("; ");
+    const idx=[p.indexacion1,p.indexacion2,p.indexacion3].filter(Boolean).join(", ")||"N/A";
+    const ec=p.estadoPublicacion==="Publicado"?"#047857":p.estadoPublicacion==="Aceptado"?"#0369a1":"#a16207";
+    const urlCell=p.url?`<a href="${p.url}" style="color:#1d4ed8;font-size:9px;">Evidencia</a>`:p.doi?`<a href="https://doi.org/${p.doi}" style="color:#c2410c;font-size:9px;">DOI</a>`:"—";
+    return`<tr><td style="padding:4px 6px;border:1px solid #d1d5db;text-align:center;font-weight:bold;color:${C1};font-size:10px;">${i+1}</td><td style="padding:4px 6px;border:1px solid #d1d5db;font-size:10px;"><strong>${p.titulo}</strong></td><td style="padding:4px 6px;border:1px solid #d1d5db;font-size:10px;">${autNm||"—"}</td><td style="padding:4px 6px;border:1px solid #d1d5db;font-size:10px;">${p.tipoPublicacion||"—"}</td><td style="padding:4px 6px;border:1px solid #d1d5db;font-size:10px;color:${ec};font-weight:600;">${p.estadoPublicacion||"—"}</td><td style="padding:4px 6px;border:1px solid #d1d5db;font-size:10px;text-align:center;font-weight:bold;">${p.cuartil&&p.cuartil!=="N/A"?p.cuartil:"—"}</td><td style="padding:4px 6px;border:1px solid #d1d5db;font-size:10px;">${p.revista||"—"}</td><td style="padding:4px 6px;border:1px solid #d1d5db;font-size:10px;">${idx}</td><td style="padding:4px 6px;border:1px solid #d1d5db;font-size:10px;text-align:center;">${urlCell}</td></tr>`;
+  }).join("");
+
+  // Tipo resumen global
+  const tipoRes={};allPubs.forEach(p=>{const t=p.tipoPublicacion||"Otro";tipoRes[t]=(tipoRes[t]||0)+1;});
+  const tipoRows=Object.entries(tipoRes).sort((a,b)=>b[1]-a[1]).map(([t,c])=>`<tr><td style="padding:5px 8px;border:1px solid #d1d5db;font-size:11px;">${t}</td><td style="padding:5px 8px;border:1px solid #d1d5db;font-size:11px;text-align:center;font-weight:700;">${c}</td><td style="padding:5px 8px;border:1px solid #d1d5db;font-size:11px;text-align:center;">${Math.round(c/totalPubs*100)}%</td></tr>`).join("");
+
+  // Secciones por autor
+  const autorSections=autores.map(autor=>{
+    const aL=links.filter(l=>l.autorId===autor.id);
+    let aP=allPubs.filter(p=>aL.some(l=>l.pubId===p.id));
+    if(aP.length===0)return"";
+    const aRows=aP.map((p,i)=>{
+      const idx=[p.indexacion1,p.indexacion2,p.indexacion3].filter(Boolean).join(", ")||"N/A";
+      const ec=p.estadoPublicacion==="Publicado"?"#047857":p.estadoPublicacion==="Aceptado"?"#0369a1":"#a16207";
+      const urlCell=p.url?`<a href="${p.url}" style="color:#1d4ed8;font-size:9px;">Evidencia</a>`:p.doi?`<a href="https://doi.org/${p.doi}" style="color:#c2410c;font-size:9px;">DOI</a>`:"—";
+      return`<tr><td style="padding:4px 6px;border:1px solid #e2e8f0;text-align:center;color:${C1};font-size:10px;font-weight:700;">${i+1}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;"><strong>${p.titulo}</strong></td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;">${p.tipoPublicacion||"—"}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;color:${ec};font-weight:600;">${p.estadoPublicacion||"—"}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;text-align:center;font-weight:bold;">${p.cuartil&&p.cuartil!=="N/A"?p.cuartil:"—"}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;">${idx}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;text-align:center;">${urlCell}</td></tr>`;
+    }).join("");
+    const aLinks=[autor.orcid?`<a href="https://orcid.org/${autor.orcid}" style="color:#a6ce39;font-size:9px;font-weight:bold;">ORCID</a>`:"",autor.scopusId?`<a href="https://www.scopus.com/authid/detail.uri?authorId=${autor.scopusId}" style="color:#e9711c;font-size:9px;font-weight:bold;">Scopus</a>`:"",autor.scholarId?`<a href="https://scholar.google.com/citations?user=${autor.scholarId}" style="color:#4285F4;font-size:9px;font-weight:bold;">Scholar</a>`:""].filter(Boolean).join(" · ");
+    return`<div style="margin-bottom:20px;border:1px solid #e2e8f0;border-radius:6px;overflow:hidden;page-break-inside:avoid;">
+      <div style="background:${C1};color:white;padding:7px 14px;display:flex;justify-content:space-between;align-items:center;">
+        <div><strong style="font-size:12px;">${autor.nombres} ${autor.apellidos}</strong>${autor.tituloAcademico?` <span style="font-size:10px;opacity:.8;">· ${autor.tituloAcademico}</span>`:""}</div>
+        <div style="font-size:10px;opacity:.8;">${aP.length} publicaciones${aLinks?` &nbsp;|&nbsp; ${aLinks}`:""}</div>
+      </div>
+      <table style="margin:0;font-size:10px;width:100%;border-collapse:collapse;">
+        <tr><th style="background:${NAVY};color:white;padding:5px 6px;border:1px solid ${NAVY};font-size:9px;width:3%;">#</th><th style="background:${NAVY};color:white;padding:5px 6px;border:1px solid ${NAVY};font-size:9px;width:30%;">Título</th><th style="background:${NAVY};color:white;padding:5px 6px;border:1px solid ${NAVY};font-size:9px;width:9%;">Tipo</th><th style="background:${NAVY};color:white;padding:5px 6px;border:1px solid ${NAVY};font-size:9px;width:9%;">Estado</th><th style="background:${NAVY};color:white;padding:5px 6px;border:1px solid ${NAVY};font-size:9px;width:4%;">Q</th><th style="background:${NAVY};color:white;padding:5px 6px;border:1px solid ${NAVY};font-size:9px;width:22%;">Indexación</th><th style="background:${NAVY};color:white;padding:5px 6px;border:1px solid ${NAVY};font-size:9px;width:8%;">Evidencia</th></tr>
+        ${aRows}
+      </table>
+    </div>`;
+  }).join("");
+
+  // Ranking autores para el resumen
+  const rankRows=autores.map(a=>{
+    const cnt=allPubs.filter(p=>links.some(l=>l.pubId===p.id&&l.autorId===a.id)).length;
+    return{...a,cnt};
+  }).filter(a=>a.cnt>0).sort((a,b)=>b.cnt-a.cnt)
+  .map((a,i)=>`<tr${i%2===0?' style="background:#fafafa;"':''}><td style="padding:5px 8px;border:1px solid #e2e8f0;font-size:11px;text-align:center;font-weight:bold;color:${C1};">${i+1}</td><td style="padding:5px 8px;border:1px solid #e2e8f0;font-size:11px;font-weight:600;">${a.apellidos}, ${a.nombres.split(" ")[0]}</td><td style="padding:5px 8px;border:1px solid #e2e8f0;font-size:11px;text-align:center;font-weight:700;color:${C1};">${a.cnt}</td></tr>`).join("");
+
+  const html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><style>@page{size:A4;margin:1.8cm 2cm}body{font-family:Arial,sans-serif;margin:0;padding:0;color:#1e293b;font-size:11px}.hb{border-bottom:3px solid ${C1};padding-bottom:10px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center}.lt{font-size:14px;font-weight:bold;color:${C1};letter-spacing:1px}.ls{font-size:10px;color:#64748b}h1{font-size:17px;color:${C1};text-align:center;margin:0 0 4px;border:none}h2{font-size:12px;color:${NAVY};border-bottom:2px solid ${C1};padding-bottom:3px;margin:18px 0 8px;text-transform:uppercase;letter-spacing:.5px}table{width:100%;border-collapse:collapse;margin:6px 0}th{background:${C1};color:white;text-align:left;padding:6px 8px;border:1px solid ${C1};font-size:10px;text-transform:uppercase}.kt td{text-align:center;padding:10px;border:1px solid #d1d5db}.kn{font-size:20px;font-weight:bold}.ft{margin-top:24px;text-align:center;color:#94a3b8;font-size:9px;border-top:1px solid #e2e8f0;padding-top:8px}.ib{background:${C1Bg};border-left:4px solid ${C1};padding:8px 12px;margin-bottom:12px;border-radius:0 6px 6px 0}.ir{display:flex;gap:6px;margin-bottom:2px;font-size:11px}.il{font-weight:700;color:#475569;min-width:140px}.iv{color:#1e293b}</style></head><body>
+  <div class="hb"><div><div class="lt">UNIVERSIDAD DE OTAVALO</div><div class="ls">Facultad de Ciencias Sociales y Pedagógicas</div><div class="ls">Coordinación de Investigación</div></div><div style="text-align:right"><div style="font-size:10px;color:#94a3b8;">PubTracker · Reporte Consolidado</div><div style="font-size:10px;color:#94a3b8;">${fechaStr}</div></div></div>
+  <div style="text-align:center;margin-bottom:14px;"><h1>Informe Consolidado de Producción Científica</h1><p style="font-size:13px;font-weight:bold;color:${NAVY};margin:3px 0;">Facultad de Ciencias Sociales y Pedagógicas</p></div>
+  <div class="ib"><div class="ir"><span class="il">Período:</span><span class="iv">${periodo}</span></div><div class="ir"><span class="il">Fecha de generación:</span><span class="iv">${fechaStr}</span></div><div class="ir"><span class="il">Total registros:</span><span class="iv">${totalPubs} publicaciones${filtros.tipo?` · Tipo: ${filtros.tipo}`:""}</span></div><div class="ir"><span class="il">Docentes con producción:</span><span class="iv">${autores.filter(a=>allPubs.some(p=>links.some(l=>l.pubId===p.id&&l.autorId===a.id))).length} investigadores</span></div>${filtros.departamento?`<div class="ir"><span class="il">Carrera / Departamento:</span><span class="iv" style="font-weight:700;color:${C1};">${filtros.departamento}</span></div>`:""}</div>
+  <h2>1. Resumen Ejecutivo de la Facultad</h2>
+  <table class="kt"><tr><td><div class="kn" style="color:${C1};">${totalPubs}</div><div style="font-size:10px;color:#64748b;">Total</div></td><td><div class="kn" style="color:#047857;">${publicadas}</div><div style="font-size:10px;color:#64748b;">Publicadas</div></td><td><div class="kn" style="color:#0369a1;">${enProceso}</div><div style="font-size:10px;color:#64748b;">En Proceso</div></td><td><div class="kn" style="color:#a16207;">${scopusCnt}</div><div style="font-size:10px;color:#64748b;">Scopus</div></td><td><div class="kn" style="color:#6d28d9;">${wosCnt}</div><div style="font-size:10px;color:#64748b;">WoS</div></td><td><div class="kn" style="color:${C1};">${q1q2}</div><div style="font-size:10px;color:#64748b;">Q1/Q2</div></td></tr></table>
+  <h2>2. Distribución por Tipo de Publicación</h2>
+  <table><tr><th style="width:60%;">Tipo</th><th style="width:20%;text-align:center;">Cantidad</th><th style="width:20%;text-align:center;">%</th></tr>${tipoRows}<tr style="background:${C1Bg};font-weight:bold;"><td style="padding:5px 8px;border:1px solid #d1d5db;font-size:11px;color:${C1};">TOTAL</td><td style="padding:5px 8px;border:1px solid #d1d5db;font-size:11px;text-align:center;color:${C1};">${totalPubs}</td><td style="padding:5px 8px;border:1px solid #d1d5db;font-size:11px;text-align:center;color:${C1};">100%</td></tr></table>
+  <h2>3. Ranking de Investigadores</h2>
+  <table><tr><th style="width:8%;text-align:center;">#</th><th style="width:62%;">Investigador</th><th style="width:30%;text-align:center;">Publicaciones</th></tr>${rankRows}</table>
+  <h2>4. Matriz Global de Publicaciones</h2>
+  <table><tr><th style="width:3%;text-align:center;">#</th><th style="width:26%;">Título</th><th style="width:14%;">Autores</th><th style="width:9%;">Tipo</th><th style="width:8%;">Estado</th><th style="width:4%;text-align:center;">Q</th><th style="width:16%;">Revista/Editorial</th><th style="width:12%;">Indexación</th><th style="width:8%;text-align:center;">Evidencia</th></tr>${globalRows}</table>
+  <h2>5. Detalle por Investigador</h2>
+  ${autorSections}
+  <div class="ft"><p>PubTracker · Coordinación de Investigación · Facultad de Ciencias Sociales y Pedagógicas · Universidad de Otavalo</p><p>Reporte consolidado generado el ${fechaStr}</p></div>
+</body></html>`;
+  const blob=new Blob(["\ufeff",html],{type:"application/msword"});
+  const u=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=u;
+  a.download=`Reporte_Consolidado_FCSyP_${filtros.anio||today.getFullYear()}.doc`;
+  a.click();
+  URL.revokeObjectURL(u);
+}
+
+
 function ProfileModal({user, autores, onSave, onClose, isAdmin, allAutores}){
   const autor = autores.find(a=>a.id===user.id) || user;
   const[tab,setTab]=useState("info");
@@ -333,25 +423,41 @@ function ProfileModal({user, autores, onSave, onClose, isAdmin, allAutores}){
 }
 
 
-function ReporteModal({autores,pubs,links,onClose}){
-  const[fAnio,setFAnio]=useState("");const[fTipo,setFTipo]=useState("");const[fAutorId,setFAutorId]=useState("");
+function ReporteModal({autores,pubs,links,onClose,isAdmin}){
+  const[fAnio,setFAnio]=useState("");const[fTipo,setFTipo]=useState("");const[fAutorId,setFAutorId]=useState("");const[fDepto,setFDepto]=useState("");
   const years=useMemo(()=>{const ys=new Set();pubs.forEach(p=>{const y=parseYear(p.fechaPublicacion);if(y)ys.add(y)});return Array.from(ys).sort((a,b)=>b-a)},[pubs]);
-  const preview=useMemo(()=>{let l=pubs;if(fAnio)l=l.filter(p=>parseYear(p.fechaPublicacion)===parseInt(fAnio));if(fTipo)l=l.filter(p=>p.tipoPublicacion===fTipo);if(fAutorId){const ids=links.filter(x=>x.autorId===fAutorId).map(x=>x.pubId);l=l.filter(p=>ids.includes(p.id))}return l},[pubs,links,fAnio,fTipo,fAutorId]);
+  const deptos=useMemo(()=>{const ds=new Set();autores.forEach(a=>{if(a.departamento)ds.add(a.departamento)});return Array.from(ds).sort()},[autores]);
+  const autoresFilt=useMemo(()=>fDepto?autores.filter(a=>a.departamento===fDepto):autores,[autores,fDepto]);
+  const preview=useMemo(()=>{
+    let l=pubs;
+    if(fAnio)l=l.filter(p=>parseYear(p.fechaPublicacion)===parseInt(fAnio));
+    if(fTipo)l=l.filter(p=>p.tipoPublicacion===fTipo);
+    if(fAutorId){const ids=links.filter(x=>x.autorId===fAutorId).map(x=>x.pubId);l=l.filter(p=>ids.includes(p.id));}
+    else if(fDepto){const dIds=new Set(autoresFilt.map(a=>a.id));l=l.filter(p=>links.some(x=>dIds.has(x.autorId)&&x.pubId===p.id));}
+    return l;
+  },[pubs,links,fAnio,fTipo,fAutorId,fDepto,autoresFilt]);
   const handleExcel=()=>{exportExcel(pubs,autores,links,{anio:fAnio,tipo:fTipo,autorId:fAutorId});if(preview.length>0)onClose()};
   const handleWord=()=>{
     if(fAutorId){const autor=autores.find(a=>a.id===fAutorId);if(autor)exportWord(autor,pubs,links,{anio:fAnio,tipo:fTipo});}
-    else{const autCon=autores.filter(a=>{const aL=links.filter(l=>l.autorId===a.id);let ap=pubs.filter(p=>aL.some(l=>l.pubId===p.id));if(fAnio)ap=ap.filter(p=>parseYear(p.fechaPublicacion)===parseInt(fAnio));if(fTipo)ap=ap.filter(p=>p.tipoPublicacion===fTipo);return ap.length>0});if(autCon.length===0){alert("No hay publicaciones con los filtros seleccionados");return;}autCon.forEach(a=>exportWord(a,pubs,links,{anio:fAnio,tipo:fTipo}));}
+    else{const autCon=autoresFilt.filter(a=>{const aL=links.filter(l=>l.autorId===a.id);let ap=pubs.filter(p=>aL.some(l=>l.pubId===p.id));if(fAnio)ap=ap.filter(p=>parseYear(p.fechaPublicacion)===parseInt(fAnio));if(fTipo)ap=ap.filter(p=>p.tipoPublicacion===fTipo);return ap.length>0});if(autCon.length===0){alert("No hay publicaciones con los filtros seleccionados");return;}autCon.forEach(a=>exportWord(a,pubs,links,{anio:fAnio,tipo:fTipo}));}
     onClose();
   };
+  const handleConsolidado=()=>{exportWordConsolidado(pubs,autoresFilt,links,{anio:fAnio,tipo:fTipo,departamento:fDepto});onClose();};
   return(<div style={{background:"white",borderRadius:16,padding:24,maxWidth:500,width:"100%",boxShadow:"0 20px 60px rgba(0,0,0,.15)"}}>
     <div style={{display:"flex",justifyContent:"space-between",marginBottom:16}}><h3 style={{fontSize:15,fontWeight:700,color:P.navy,margin:0}}>Generar Reporte</h3><button onClick={onClose} style={{border:"none",background:"none",cursor:"pointer",color:"#94a3b8"}}><X size={18}/></button></div>
     <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:16}}>
       <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>AÑO</label><select value={fAnio} onChange={e=>setFAnio(e.target.value)} style={{width:"100%",padding:"9px 12px",borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:13,background:"white",outline:"none"}}><option value="">Todos los años</option>{years.map(y=><option key={y} value={y}>{y}</option>)}</select></div>
       <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>TIPO</label><Sel value={fTipo} onChange={setFTipo} options={TIPOS} placeholder="Todos los tipos"/></div>
-      <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>AUTOR</label><select value={fAutorId} onChange={e=>setFAutorId(e.target.value)} style={{width:"100%",padding:"9px 12px",borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:13,background:"white",outline:"none"}}><option value="">Todos los autores</option>{autores.map(a=><option key={a.id} value={a.id}>{a.nombres} {a.apellidos}</option>)}</select></div>
+      {isAdmin&&deptos.length>0&&<div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>CARRERA / DEPARTAMENTO</label><select value={fDepto} onChange={e=>{setFDepto(e.target.value);setFAutorId("");}} style={{width:"100%",padding:"9px 12px",borderRadius:10,border:`1.5px solid ${fDepto?C1:"#e2e8f0"}`,fontSize:13,background:"white",outline:"none",color:fDepto?C1:"inherit"}}><option value="">Todas las carreras</option>{deptos.map(d=><option key={d} value={d}>{d}</option>)}</select></div>}
+      <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>AUTOR ESPECÍFICO</label><select value={fAutorId} onChange={e=>{setFAutorId(e.target.value);setFDepto("");}} style={{width:"100%",padding:"9px 12px",borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:13,background:"white",outline:"none"}}><option value="">Todos los autores{fDepto?` de ${fDepto}`:""}</option>{autoresFilt.map(a=><option key={a.id} value={a.id}>{a.nombres} {a.apellidos}</option>)}</select></div>
     </div>
-    <div style={{background:C1Bg,borderRadius:10,padding:"10px 14px",marginBottom:16,border:`1px solid ${C1}20`}}><p style={{fontSize:11,color:C1,margin:0,fontWeight:600}}>{preview.length} publicaciones coinciden</p></div>
-    <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}><Btn onClick={onClose}>Cancelar</Btn><Btn onClick={handleExcel} icon={FileSpreadsheet}>Excel</Btn><Btn primary onClick={handleWord} icon={FileDown}>Word</Btn></div>
+    <div style={{background:C1Bg,borderRadius:10,padding:"10px 14px",marginBottom:12,border:`1px solid ${C1}20`}}><p style={{fontSize:11,color:C1,margin:0,fontWeight:600}}>{preview.length} publicaciones coinciden{fDepto?` · ${fDepto}`:""}</p></div>
+    {isAdmin&&!fAutorId&&<div style={{background:P.goldBg,borderRadius:10,padding:"10px 14px",marginBottom:12,border:"1px solid #fde68a"}}>
+      <p style={{fontSize:11,color:P.gold,fontWeight:700,margin:"0 0 6px",display:"flex",alignItems:"center",gap:5}}><Shield size={13}/>Opción administrador</p>
+      <p style={{fontSize:10,color:"#92400e",margin:"0 0 8px"}}>Reporte con resumen ejecutivo {fDepto?`de ${fDepto}`:"de la facultad"} + secciones por investigador</p>
+      <button onClick={handleConsolidado} disabled={preview.length===0} style={{width:"100%",padding:"8px 14px",borderRadius:10,border:"none",background:`linear-gradient(135deg,${NAVY},${C1})`,color:"white",fontSize:12,fontWeight:700,cursor:preview.length===0?"not-allowed":"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6,opacity:preview.length===0?.5:1}}><FileDown size={14}/>Reporte Consolidado {fDepto?`· ${fDepto}`:"FCSyP"}</button>
+    </div>}
+    <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}><Btn onClick={onClose}>Cancelar</Btn><Btn onClick={handleExcel} icon={FileSpreadsheet}>Excel</Btn><Btn primary onClick={handleWord} icon={FileDown}>{fAutorId?"Word Individual":"Word por Autor"}</Btn></div>
   </div>);
 }
 
@@ -441,6 +547,68 @@ function PubForm({pub,autores,pubAutores,onSave,onCancel,currentUser}){
   </div>);
 }
 
+/* ════════════════════════════════════════
+   MODAL DETALLE DE PUBLICACIÓN
+   ════════════════════════════════════════ */
+function DetailModal({pub, autores, links, onClose, onEdit, onStatus}){
+  const aus = links.filter(l=>l.pubId===pub.id).map(l=>{const a=autores.find(x=>x.id===l.autorId);return a?`${a.nombres} ${a.apellidos}`:null;}).filter(Boolean);
+  const idx = [pub.indexacion1,pub.indexacion2,pub.indexacion3].filter(Boolean);
+  const ec  = pub.estadoPublicacion==="Publicado"?"#047857":pub.estadoPublicacion==="Aceptado"?"#0369a1":pub.estadoPublicacion==="En revisión"?"#d97706":"#64748b";
+
+  const Row=({label,value,children})=>value||children?<div style={{display:"flex",gap:10,padding:"7px 0",borderBottom:"1px solid #f8fafc"}}><span style={{fontSize:11,fontWeight:700,color:"#64748b",minWidth:130,flexShrink:0}}>{label}</span><span style={{fontSize:12,color:"#1e293b",flex:1}}>{children||value}</span></div>:null;
+
+  return(
+    <div style={{background:"white",borderRadius:16,overflow:"hidden",maxWidth:600,width:"100%",boxShadow:"0 20px 60px rgba(0,0,0,.2)"}}>
+      {/* Header */}
+      <div style={{background:`linear-gradient(135deg,${NAVY},${C1})`,padding:"18px 20px 14px",color:"white"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12}}>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{display:"flex",gap:6,marginBottom:6,flexWrap:"wrap"}}>
+              <span style={{fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:20,background:"rgba(255,255,255,.2)",color:"white"}}>{pub.tipoPublicacion||"—"}</span>
+              <span style={{fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:20,background:"rgba(255,255,255,.15)",color:"white"}}>{pub.estadoPublicacion||"—"}</span>
+              {pub.cuartil&&pub.cuartil!=="N/A"&&<span style={{fontSize:10,fontWeight:800,padding:"2px 8px",borderRadius:20,background:"rgba(255,255,255,.25)",color:"white"}}>{pub.cuartil}</span>}
+            </div>
+            <h2 style={{fontSize:14,fontWeight:700,margin:0,lineHeight:1.4,color:"white"}}>{pub.titulo}</h2>
+          </div>
+          <button onClick={onClose} style={{border:"none",background:"rgba(255,255,255,.15)",cursor:"pointer",color:"white",borderRadius:8,padding:6,flexShrink:0}}><X size={16}/></button>
+        </div>
+        {/* Links prominentes en el header */}
+        {(pub.doi||pub.url)&&<div style={{display:"flex",gap:8,marginTop:10,flexWrap:"wrap"}}>
+          {pub.doi&&<a href={`https://doi.org/${pub.doi}`} target="_blank" rel="noreferrer" style={{display:"inline-flex",alignItems:"center",gap:5,padding:"5px 12px",borderRadius:8,background:"rgba(255,255,255,.15)",border:"1px solid rgba(255,255,255,.3)",color:"white",fontSize:11,fontWeight:700,textDecoration:"none"}}><ExternalLink size={12}/>Ver DOI <span style={{opacity:.7,fontSize:10}}>doi.org/{pub.doi}</span></a>}
+          {pub.url&&<a href={pub.url} target="_blank" rel="noreferrer" style={{display:"inline-flex",alignItems:"center",gap:5,padding:"5px 12px",borderRadius:8,background:"rgba(255,255,255,.25)",border:"1px solid rgba(255,255,255,.4)",color:"white",fontSize:11,fontWeight:700,textDecoration:"none"}}><ExternalLink size={12}/>Ver Evidencia / Publicación completa</a>}
+        </div>}
+      </div>
+
+      {/* Cuerpo */}
+      <div style={{padding:"16px 20px",maxHeight:"52vh",overflowY:"auto"}}>
+        <Row label="Autores facultad">{aus.length>0?aus.map((a,i)=><span key={i} style={{display:"inline-block",background:C1Bg,color:C1,borderRadius:20,padding:"2px 8px",fontSize:11,fontWeight:600,marginRight:4,marginBottom:2}}>{a}</span>):"—"}</Row>
+        {pub.autoresExternos&&<Row label="Autores externos"><span style={{color:P.violet}}>{pub.autoresExternos}</span></Row>}
+        <Row label="Revista / Editorial" value={pub.revista}/>
+        <Row label="ISSN / ISBN" value={pub.issn}/>
+        <Row label="Volumen / Número">{[pub.volumen,pub.numero].filter(Boolean).join(" / ")||"—"}</Row>
+        <Row label="Páginas" value={pub.paginas}/>
+        <Row label="Fecha de publicación" value={pub.fechaPublicacion}/>
+        <Row label="Cuartil">{pub.cuartil&&pub.cuartil!=="N/A"?<span style={{fontWeight:800,color:C1}}>{pub.cuartil}</span>:"N/A"}</Row>
+        <Row label="Indexación">
+          {idx.length>0
+            ? idx.map((ix,i)=><span key={i} style={{display:"inline-block",background:P.goldBg,color:P.gold,borderRadius:20,padding:"2px 8px",fontSize:11,fontWeight:600,marginRight:4,marginBottom:2}}>{ix}</span>)
+            : <span style={{color:"#94a3b8"}}>Sin indexación registrada</span>}
+        </Row>
+        <Row label="Registrado Dir. Inv.">{pub.registrado==="Sí"?<span style={{color:P.green,fontWeight:700}}>✓ Sí</span>:<span style={{color:"#94a3b8"}}>✗ No</span>}</Row>
+        {pub.doi&&<Row label="DOI"><a href={`https://doi.org/${pub.doi}`} target="_blank" rel="noreferrer" style={{color:"#c2410c",fontWeight:600,fontSize:12}}>{pub.doi} ↗</a></Row>}
+        {pub.url&&<Row label="URL / Evidencia"><a href={pub.url} target="_blank" rel="noreferrer" style={{color:"#1d4ed8",fontWeight:600,fontSize:12,wordBreak:"break-all"}}>{pub.url} ↗</a></Row>}
+      </div>
+
+      {/* Footer acciones */}
+      <div style={{display:"flex",gap:8,justifyContent:"flex-end",padding:"12px 20px",borderTop:"1px solid #f1f5f9",background:"#fafbfc"}}>
+        <Btn onClick={onClose}>Cerrar</Btn>
+        <Btn onClick={()=>{onStatus(pub);onClose();}} icon={CheckCircle2}>Cambiar Estado</Btn>
+        <Btn primary onClick={()=>{onEdit(pub);onClose();}} icon={Edit3}>Editar</Btn>
+      </div>
+    </div>
+  );
+}
+
 function StatusModal({pub,onSave,onClose}){
   const[est,setEst]=useState(pub.estadoPublicacion);const[reg,setReg]=useState(pub.registrado||"No");
   return(<div style={{background:"white",borderRadius:16,padding:24,maxWidth:420,width:"100%",boxShadow:"0 20px 60px rgba(0,0,0,.15)"}}>
@@ -485,6 +653,7 @@ export default function App(){
   const[showForm,setShowForm]=useState(false);
   const[editPub,setEditPub]=useState(null);
   const[statusPub,setStatusPub]=useState(null);
+  const[detailPub,setDetailPub]=useState(null);
   const[showDocForm,setShowDocForm]=useState(false);
   const[showReporteModal,setShowReporteModal]=useState(false);
   const[showProfile,setShowProfile]=useState(false);
@@ -709,19 +878,29 @@ export default function App(){
           </div>
           <p style={{fontSize:11,color:"#94a3b8",marginBottom:8}}>{filteredPubs.length} publicaciones</p>
           <div style={{display:"flex",flexDirection:"column",gap:6}}>
-            {filteredPubs.map(p=>{const aus=getAut(p.id);return(
-              <div key={p.id} style={{background:"white",borderRadius:12,padding:"10px 14px",border:"1px solid #f1f5f9",display:"flex",gap:10,alignItems:"flex-start",boxShadow:"0 1px 3px rgba(0,0,0,.03)"}}>
+            {filteredPubs.map(p=>{const aus=getAut(p.id);const hasLinks=p.doi||p.url;return(
+              <div key={p.id} style={{background:"white",borderRadius:12,padding:"10px 14px",border:"1px solid #f1f5f9",display:"flex",gap:10,alignItems:"flex-start",boxShadow:"0 1px 3px rgba(0,0,0,.03)",transition:"box-shadow .15s"}} onMouseEnter={e=>e.currentTarget.style.boxShadow="0 3px 10px rgba(71,9,10,.1)"} onMouseLeave={e=>e.currentTarget.style.boxShadow="0 1px 3px rgba(0,0,0,.03)"}>
                 <div style={{flex:1,minWidth:0}}>
-                  <h4 style={{fontSize:12,fontWeight:600,color:P.navy,margin:"0 0 4px",lineHeight:1.4}}>{p.titulo}</h4>
+                  {/* Título clickeable + íconos de enlace junto al título */}
+                  <div style={{display:"flex",alignItems:"flex-start",gap:6,marginBottom:4}}>
+                    <h4 onClick={()=>setDetailPub(p)} style={{fontSize:12,fontWeight:600,color:P.navy,margin:0,lineHeight:1.4,cursor:"pointer",flex:1}} title="Ver detalle">{p.titulo}</h4>
+                    {p.doi&&<a href={`https://doi.org/${p.doi}`} target="_blank" rel="noreferrer" onClick={e=>e.stopPropagation()} title={`DOI: ${p.doi}`} style={{display:"inline-flex",alignItems:"center",flexShrink:0,padding:"2px 5px",borderRadius:5,background:"#fff7ed",border:"1px solid #fed7aa",color:"#c2410c",textDecoration:"none"}}><ExternalLink size={10}/></a>}
+                    {p.url&&<a href={p.url} target="_blank" rel="noreferrer" onClick={e=>e.stopPropagation()} title="Ver evidencia / publicación" style={{display:"inline-flex",alignItems:"center",flexShrink:0,padding:"2px 5px",borderRadius:5,background:"#eff6ff",border:"1px solid #bfdbfe",color:"#1d4ed8",textDecoration:"none"}}><ExternalLink size={10}/></a>}
+                  </div>
                   <div style={{display:"flex",alignItems:"center",gap:4,flexWrap:"wrap",marginBottom:3}}>
                     <TipoBdg tipo={p.tipoPublicacion}/>
                     <span style={{fontSize:10,color:"#94a3b8"}}>{aus.map(a=>a.apellidos).join(", ")}{p.autoresExternos&&<span style={{color:P.violet}}> + ext.</span>}</span>
                     {p.revista&&<span style={{fontSize:10,color:"#94a3b8"}}>· {p.revista}</span>}
                     {p.fechaPublicacion&&<span style={{fontSize:10,color:"#94a3b8"}}>· {p.fechaPublicacion}</span>}
                   </div>
-                  <div style={{display:"flex",gap:4,flexWrap:"wrap"}}><EBdg e={p.estadoPublicacion}/><QBdg q={p.cuartil}/></div>
+                  <div style={{display:"flex",gap:4,flexWrap:"wrap",alignItems:"center"}}>
+                    <EBdg e={p.estadoPublicacion}/><QBdg q={p.cuartil}/>
+                    {p.doi&&<a href={`https://doi.org/${p.doi}`} target="_blank" rel="noreferrer" title={`DOI: ${p.doi}`} style={{display:"inline-flex",alignItems:"center",gap:3,padding:"2px 7px",borderRadius:6,background:"#fff7ed",border:"1px solid #fed7aa",fontSize:10,fontWeight:600,color:"#c2410c",textDecoration:"none"}}><ExternalLink size={9}/>DOI</a>}
+                    {p.url&&<a href={p.url} target="_blank" rel="noreferrer" title="Ver publicación" style={{display:"inline-flex",alignItems:"center",gap:3,padding:"2px 7px",borderRadius:6,background:"#eff6ff",border:"1px solid #bfdbfe",fontSize:10,fontWeight:600,color:"#1d4ed8",textDecoration:"none"}}><ExternalLink size={9}/>Evidencia</a>}
+                  </div>
                 </div>
                 <div style={{display:"flex",gap:4,flexShrink:0}}>
+                  <button onClick={()=>setDetailPub(p)} title="Ver detalle" style={{padding:"4px 8px",borderRadius:8,border:"1px solid #e2e8f0",background:"#f8fafc",cursor:"pointer",color:"#475569",display:"inline-flex",alignItems:"center"}}><Eye size={12}/></button>
                   <button onClick={()=>{setEditPub(p);setShowForm(true)}} title="Editar" style={{padding:"4px 8px",borderRadius:8,border:`1px solid ${C1}30`,background:C1Bg,cursor:"pointer",color:C1,display:"inline-flex",alignItems:"center"}}><Edit3 size={12}/></button>
                   <button onClick={()=>setStatusPub(p)} title="Estado" style={{padding:"4px 8px",borderRadius:8,border:"1px solid #e2e8f0",background:"white",cursor:"pointer",color:"#64748b",display:"inline-flex",alignItems:"center"}}><CheckCircle2 size={12}/></button>
                   {(isAdmin||aus.some(a=>a.id===user?.id))&&<button onClick={()=>setDeletePub(p)} title="Eliminar" style={{padding:"4px 8px",borderRadius:8,border:"1px solid #ffe4e6",background:"#fff5f5",cursor:"pointer",color:P.rose,display:"inline-flex",alignItems:"center"}}><Trash2 size={12}/></button>}
@@ -748,7 +927,11 @@ export default function App(){
               </div>
               <div style={{display:"flex",flexDirection:"column",gap:4}}>
                 {fp.slice(0,3).map(p=><div key={p.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 0",borderBottom:"1px solid #f8fafc"}}>
-                  <div style={{flex:1,minWidth:0}}><p style={{fontSize:11,fontWeight:500,color:P.navy,margin:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.titulo}</p><div style={{display:"flex",gap:4,marginTop:2}}><TipoBdg tipo={p.tipoPublicacion}/></div></div>
+                  <div style={{flex:1,minWidth:0}}><p style={{fontSize:11,fontWeight:500,color:P.navy,margin:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.titulo}</p>
+                  <div style={{display:"flex",gap:4,marginTop:2,alignItems:"center"}}><TipoBdg tipo={p.tipoPublicacion}/>
+                    {p.doi&&<a href={`https://doi.org/${p.doi}`} target="_blank" rel="noreferrer" style={{display:"inline-flex",alignItems:"center",gap:2,padding:"1px 5px",borderRadius:5,background:"#fff7ed",border:"1px solid #fed7aa",fontSize:9,fontWeight:600,color:"#c2410c",textDecoration:"none"}}><ExternalLink size={8}/>DOI</a>}
+                    {p.url&&<a href={p.url} target="_blank" rel="noreferrer" style={{display:"inline-flex",alignItems:"center",gap:2,padding:"1px 5px",borderRadius:5,background:"#eff6ff",border:"1px solid #bfdbfe",fontSize:9,fontWeight:600,color:"#1d4ed8",textDecoration:"none"}}><ExternalLink size={8}/>Evidencia</a>}
+                  </div></div>
                   <div style={{display:"flex",gap:4,marginLeft:8,flexShrink:0}}><EBdg e={p.estadoPublicacion}/><QBdg q={p.cuartil}/></div>
                 </div>)}
                 {fp.length>3&&<p style={{fontSize:10,color:"#94a3b8",margin:"4px 0 0",textAlign:"center"}}>+{fp.length-3} más</p>}
@@ -826,11 +1009,12 @@ export default function App(){
     </main>
 
     {/* MODALES */}
+    {detailPub&&<div style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{maxHeight:"92vh",overflowY:"auto",animation:"slideUp .3s",width:"100%",maxWidth:600}}><DetailModal pub={detailPub} autores={data.autores} links={data.pubAutores} onClose={()=>setDetailPub(null)} onEdit={p=>{setEditPub(p);setShowForm(true);}} onStatus={p=>setStatusPub(p)}/></div></div>}
     {showProfile&&<div style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{maxHeight:"92vh",overflowY:"auto",animation:"slideUp .3s",width:"100%",maxWidth:580}}><ProfileModal user={user} autores={data.autores} onSave={handleSaveProfile} onClose={()=>setShowProfile(false)} isAdmin={isAdmin} allAutores={data.autores}/></div></div>}
     {showForm&&<div style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{maxHeight:"92vh",overflowY:"auto",animation:"slideUp .3s"}}><PubForm pub={editPub} autores={data.autores} pubAutores={data.pubAutores} onSave={handleSavePub} onCancel={()=>{setShowForm(false);setEditPub(null)}} currentUser={user}/></div></div>}
     {statusPub&&<div style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{animation:"slideUp .3s"}}><StatusModal pub={statusPub} onSave={handleStatus} onClose={()=>setStatusPub(null)}/></div></div>}
     {showDocForm&&<div style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{animation:"slideUp .3s"}}><DocenteForm onSave={handleAddDocente} onClose={()=>setShowDocForm(false)}/></div></div>}
-    {showReporteModal&&<div style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{animation:"slideUp .3s"}}><ReporteModal autores={isAdmin?data.autores:visibleAutores} pubs={visiblePubs} links={data.pubAutores} onClose={()=>setShowReporteModal(false)}/></div></div>}
+    {showReporteModal&&<div style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{animation:"slideUp .3s"}}><ReporteModal autores={isAdmin?data.autores:visibleAutores} pubs={visiblePubs} links={data.pubAutores} onClose={()=>setShowReporteModal(false)} isAdmin={isAdmin}/></div></div>}
     {deletePub&&<div style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{animation:"slideUp .3s"}}><ConfirmDelete title="Eliminar Publicación" message={`¿Seguro que deseas eliminar "${deletePub.titulo}"? Esta acción no se puede deshacer.`} onConfirm={()=>handleDeletePub(deletePub.id)} onCancel={()=>setDeletePub(null)}/></div></div>}
     {deleteAutor&&<div style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{animation:"slideUp .3s"}}><ConfirmDelete title="Eliminar Docente" message={`¿Seguro que deseas eliminar a ${deleteAutor.nombres} ${deleteAutor.apellidos} y TODAS sus publicaciones? Esta acción no se puede deshacer.`} onConfirm={()=>handleDeleteAutor(deleteAutor.id)} onCancel={()=>setDeleteAutor(null)}/></div></div>}
     {toast&&<div style={{position:"fixed",bottom:20,right:20,zIndex:100,display:"flex",alignItems:"center",gap:8,padding:"9px 16px",borderRadius:12,boxShadow:"0 8px 30px rgba(0,0,0,.15)",animation:"toastIn .3s",background:toast.t==="error"?P.rose:C1,color:"white",fontSize:12,fontWeight:600}}>{toast.t==="error"?<AlertCircle size={14}/>:<CheckCircle2 size={14}/>}{toast.m}</div>}
