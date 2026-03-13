@@ -181,11 +181,11 @@ function exportWord(autor,pubs,links,filtros={}){
     <div class="ir"><span class="il">Fecha del informe:</span><span class="iv">${fechaStr}</span></div>
     <div class="ir"><span class="il">Total de registros:</span><span class="iv">${aP.length} publicaciones${filtros.tipo?` · Tipo: ${filtros.tipo}`:""}</span></div>
     ${autor.departamento?`<div class="ir"><span class="il">Departamento / Carrera:</span><span class="iv">${autor.departamento}</span></div>`:""}
-    ${autor.horasInvestigacion?`<div class="ir"><span class="il">Horas de Investigación:</span><span class="iv" style="font-weight:700;color:#047857;">${autor.horasInvestigacion} horas/semana</span></div>`:""}
+    <div class="ir"><span class="il">Horas de Investigación:</span><span class="iv" style="font-weight:700;color:#047857;">${autor.horasInvestigacion&&String(autor.horasInvestigacion).trim()&&String(autor.horasInvestigacion)!=="0"?String(autor.horasInvestigacion)+" horas/semana":"No registrado"}</span></div>
   </div>
 
   <h2>1. Resumen de Producción Científica</h2>
-  ${autor.horasInvestigacion?`<div style="background:#f0fdf4;border-left:4px solid #047857;border-radius:0 8px 8px 0;padding:8px 14px;margin-bottom:10px;display:flex;align-items:center;gap:14px;"><div style="font-size:24px;font-weight:900;color:#047857;">${autor.horasInvestigacion}</div><div><div style="font-size:11px;font-weight:700;color:#047857;">HORAS DE INVESTIGACIÓN</div><div style="font-size:10px;color:#64748b;">Al período ${periodo} · horas semanales asignadas</div></div></div>`:""}
+  ${(()=>{const h=autor.horasInvestigacion&&String(autor.horasInvestigacion).trim()&&String(autor.horasInvestigacion)!=="0"?String(autor.horasInvestigacion):null;return h?`<div style="background:#f0fdf4;border-left:4px solid #047857;border-radius:0 8px 8px 0;padding:8px 14px;margin-bottom:10px;display:table;width:100%;"><div style="display:table-cell;width:60px;vertical-align:middle;"><div style="font-size:28px;font-weight:900;color:#047857;">${h}</div></div><div style="display:table-cell;vertical-align:middle;padding-left:10px;"><div style="font-size:11px;font-weight:700;color:#047857;text-transform:uppercase;letter-spacing:.5px;">Horas de Investigación Semanales</div><div style="font-size:10px;color:#64748b;">Período: ${periodo}</div></div></div>`:"";})()}
   <table class="kt"><tr>
     <td><div class="kn" style="color:${C1};">${aP.length}</div><div style="font-size:10px;color:#64748b;">Total</div></td>
     <td><div class="kn" style="color:#047857;">${pub}</div><div style="font-size:10px;color:#64748b;">Publicadas</div></td>
@@ -954,7 +954,7 @@ export default function App(){
             {l:"Aceptadas",v:stats.aceptadas,c:P.sky,i:Clock},
             {l:"Scopus",v:stats.scopus,c:P.gold,i:Star},
             {l:"Registradas",v:stats.reg,c:P.violet,i:ClipboardList},
-            {l:isAdmin?"Activos":"Hrs Inv/sem",v:(()=>{if(isAdmin)return stats.autorRank.filter(a=>a.count>0).length;const me=data.autores.find(x=>x.id===user?.id)||user;const h=me?.horasInvestigacion;return h&&String(h).trim()&&String(h)!=="0"?String(h)+"h":"—"})(),c:P.green,i:Clock}
+            {l:isAdmin?"Activos":"Hrs Inv/sem",v:(()=>{if(isAdmin)return stats.autorRank.filter(a=>a.count>0).length;const me=data.autores.find(x=>String(x.id)===String(user?.id));const h=me?.horasInvestigacion??user?.horasInvestigacion;return h&&String(h).trim()&&String(h)!=="0"?String(h)+"h":"—"})(),c:P.green,i:Clock}
           ].map((s,i)=><div key={i} style={{background:"white",borderRadius:12,padding:"12px 14px",border:"1px solid #f1f5f9",boxShadow:"0 1px 3px rgba(0,0,0,.03)"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
               <div><p style={{fontSize:10,color:"#94a3b8",margin:0}}>{s.l}</p><p style={{fontSize:22,fontWeight:800,color:s.c,margin:"2px 0 0"}}>{s.v}</p></div>
@@ -1092,12 +1092,19 @@ export default function App(){
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
                 <div style={{display:"flex",alignItems:"center",gap:10}}>
                   <img src={photoSrc} alt="" style={{width:40,height:40,borderRadius:"50%",objectFit:"cover",border:`2px solid ${C1}30`,flexShrink:0}} onError={e=>{e.target.onerror=null;e.target.src=avatarUrl(a.nombres,a.apellidos)}}/>
-                  <div><h3 style={{fontSize:13,fontWeight:700,color:P.navy,margin:0}}>{a.nombres} {a.apellidos}</h3><p style={{fontSize:10,color:"#94a3b8",margin:0}}>{a.email}{a.tituloAcademico&&<span style={{marginLeft:6,fontWeight:600,color:C1}}>{a.tituloAcademico}</span>}</p></div>
+                  <div>
+                    <h3 style={{fontSize:13,fontWeight:700,color:P.navy,margin:0}}>{a.nombres} {a.apellidos}</h3>
+                    <p style={{fontSize:10,color:"#94a3b8",margin:0}}>
+                      {a.email}
+                      {a.tituloAcademico&&<span style={{marginLeft:6,fontWeight:600,color:C1}}>{a.tituloAcademico}</span>}
+                      {a.departamento&&<span style={{marginLeft:6,color:"#94a3b8"}}>· {a.departamento}</span>}
+                    </p>
+                  </div>
                 </div>
                 <div style={{display:"flex",gap:6,alignItems:"center"}}>
                   <Bdg c={C1}>{fp.length} pubs{fAnio?` (${fAnio})`:""}</Bdg>
                   {a.scopus>0&&<Bdg c={P.gold} bg={P.goldBg}>{a.scopus} Scopus</Bdg>}
-                  {a.horasInvestigacion&&<Bdg c={P.green} bg={P.greenBg}><Clock size={9} style={{marginRight:2}}/>{a.horasInvestigacion}h inv/sem</Bdg>}
+                  <Bdg c={P.green} bg={P.greenBg}><Clock size={9} style={{marginRight:2}}/>{(()=>{const h=String(a.horasInvestigacion||"").trim();return h&&h!=="0"?h+"h inv/sem":"hrs: —"})()}</Bdg>
                   <Btn small icon={FileDown} onClick={()=>exportWord(a,data.publicaciones,data.pubAutores,{anio:fAnio})}>Word</Btn>
                 </div>
               </div>
@@ -1165,7 +1172,7 @@ export default function App(){
           <div style={{background:"white",borderRadius:12,border:"1px solid #f1f5f9",overflow:"hidden"}}>
             <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
               <thead><tr style={{borderBottom:"2px solid #f1f5f9",background:"#fafbfc"}}>
-                {["FOTO","NOMBRES","APELLIDOS","EMAIL","PUBS","SCOPUS","ACCIONES"].map(h=><th key={h} style={{textAlign:h==="PUBS"||h==="SCOPUS"||h==="FOTO"?"center":"left",padding:"10px 12px",color:"#94a3b8",fontSize:10,fontWeight:700}}>{h}</th>)}
+                {["FOTO","NOMBRES","APELLIDOS","EMAIL","PUBS","SCOPUS","HRS INV","ACCIONES"].map(h=><th key={h} style={{textAlign:h==="PUBS"||h==="SCOPUS"||h==="HRS INV"||h==="FOTO"?"center":"left",padding:"10px 12px",color:"#94a3b8",fontSize:10,fontWeight:700}}>{h}</th>)}
               </tr></thead>
               <tbody>{stats.autorRank.map(a=>{const photoSrc=a.fotoUrl?driveImgUrl(a.fotoUrl):avatarUrl(a.nombres,a.apellidos);return<tr key={a.id} style={{borderBottom:"1px solid #f8fafc"}}>
                 <td style={{padding:"8px 12px",textAlign:"center"}}><img src={photoSrc} alt="" style={{width:32,height:32,borderRadius:"50%",objectFit:"cover",border:`2px solid ${C1}20`}} onError={e=>{e.target.onerror=null;e.target.src=avatarUrl(a.nombres,a.apellidos)}}/></td>
@@ -1174,6 +1181,7 @@ export default function App(){
                 <td style={{padding:"10px 12px",color:"#94a3b8"}}>{a.email||"—"}</td>
                 <td style={{padding:"10px 12px",textAlign:"center",fontWeight:700,color:a.count>0?C1:"#94a3b8"}}>{a.count}</td>
                 <td style={{padding:"10px 12px",textAlign:"center"}}>{a.scopus>0?<Bdg c={P.gold} bg={P.goldBg}>{a.scopus}</Bdg>:"—"}</td>
+                <td style={{padding:"10px 12px",textAlign:"center"}}>{(()=>{const h=String(a.horasInvestigacion||"").trim();return h&&h!=="0"?<Bdg c={P.green} bg={P.greenBg}><Clock size={9} style={{marginRight:2}}/>{h}h</Bdg>:<span style={{color:"#94a3b8"}}>—</span>})()}</td>
                 <td style={{padding:"10px 12px"}}><div style={{display:"flex",gap:4}}>
                   <Btn small icon={FileDown} onClick={()=>exportWord(a,data.publicaciones,data.pubAutores)}>Word</Btn>
                   <button onClick={()=>setDeleteAutor(a)} style={{padding:"4px 8px",borderRadius:8,border:"1px solid #ffe4e6",background:"#fff5f5",cursor:"pointer",fontSize:11,color:P.rose,display:"inline-flex",alignItems:"center",gap:4,fontWeight:600}}><Trash2 size={11}/>Eliminar</button>
