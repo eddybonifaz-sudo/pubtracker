@@ -185,6 +185,7 @@ function exportWord(autor,pubs,links,filtros={}){
   </div>
 
   <h2>1. Resumen de Producción Científica</h2>
+  ${autor.horasInvestigacion?`<div style="background:#f0fdf4;border-left:4px solid #047857;border-radius:0 8px 8px 0;padding:8px 14px;margin-bottom:10px;display:flex;align-items:center;gap:14px;"><div style="font-size:24px;font-weight:900;color:#047857;">${autor.horasInvestigacion}</div><div><div style="font-size:11px;font-weight:700;color:#047857;">HORAS DE INVESTIGACIÓN</div><div style="font-size:10px;color:#64748b;">Al período ${periodo} · horas semanales asignadas</div></div></div>`:""}
   <table class="kt"><tr>
     <td><div class="kn" style="color:${C1};">${aP.length}</div><div style="font-size:10px;color:#64748b;">Total</div></td>
     <td><div class="kn" style="color:#047857;">${pub}</div><div style="font-size:10px;color:#64748b;">Publicadas</div></td>
@@ -594,14 +595,14 @@ function AuthScreen({onLogin}){
     else{if(email==="admin"&&pass==="UNO2025")onLogin({id:"admin",nombres:"ADMINISTRADOR",apellidos:"SISTEMA",email:"admin",rol:"admin"});else{const a=DEMO.autores.find(x=>x.email?.toLowerCase()===email.toLowerCase());if(a)onLogin({...a,rol:"autor"});else setError("Credenciales incorrectas. Contacte al administrador.")}}setLoading(false)};
   return(<div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:`linear-gradient(135deg,${NAVY} 0%,${C1} 55%,${C1L} 100%)`,fontFamily:"'DM Sans',system-ui,sans-serif"}}>
     <style>{`@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap');@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}`}</style>
-    <div style={{width:420,background:"white",borderRadius:20,boxShadow:"0 25px 80px rgba(0,0,0,.35)",overflow:"hidden",animation:"fadeUp .5s ease"}}>
-      <div style={{background:`linear-gradient(135deg,${NAVY},${C1})`,padding:"28px 36px 20px",textAlign:"center"}}>
+    <div style={{width:"min(420px,94vw)",background:"white",borderRadius:20,boxShadow:"0 25px 80px rgba(0,0,0,.35)",overflow:"hidden",animation:"fadeUp .5s ease",margin:"0 12px"}}>
+      <div style={{background:`linear-gradient(135deg,${NAVY},${C1})`,padding:"24px 28px 18px",textAlign:"center"}}>
         <div style={{width:48,height:48,borderRadius:14,background:"rgba(255,255,255,.15)",display:"inline-flex",alignItems:"center",justifyContent:"center",marginBottom:10}}><BookOpen size={22} style={{color:"white"}}/></div>
         <h1 style={{color:"white",fontSize:22,fontWeight:800,margin:0,fontFamily:"'Playfair Display',serif"}}>PubTracker</h1>
         <p style={{color:"rgba(255,255,255,.6)",fontSize:11,margin:"4px 0 0"}}>Facultad de Ciencias Sociales y Pedagógicas · UNO</p>
       </div>
       <div style={{padding:"6px 0 0",borderBottom:"1px solid #f1f5f9",background:"white",textAlign:"center"}}><p style={{fontSize:12,fontWeight:700,color:C1,padding:"10px 0",margin:0}}>Iniciar Sesión</p></div>
-      <div style={{padding:"20px 36px 28px"}}>
+      <div style={{padding:"20px 24px 28px"}}>
         {error&&<div style={{background:P.roseBg,color:P.rose,padding:"8px 12px",borderRadius:10,fontSize:12,marginBottom:14,display:"flex",alignItems:"center",gap:6}}><AlertCircle size={14}/>{error}</div>}
         <div style={{marginBottom:10}}><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>EMAIL / USUARIO</label><Inp value={email} onChange={setEmail} placeholder="correo@uotavalo.edu.ec" type="email" icon={Mail}/></div>
         <div style={{marginBottom:18}}><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>CONTRASEÑA</label><Inp value={pass} onChange={setPass} placeholder="••••••" type="password" icon={Lock}/></div>
@@ -625,9 +626,9 @@ function PubForm({pub,autores,pubAutores,onSave,onCancel,currentUser}){
   const steps=["Información","Bibliometría","Indexación"];
   return(<div style={{background:"white",borderRadius:16,overflow:"hidden",boxShadow:"0 20px 60px rgba(0,0,0,.12)",maxWidth:680,width:"100%"}}>
     <div style={{background:`linear-gradient(135deg,${NAVY},${C1})`,padding:"18px 24px",color:"white"}}><h2 style={{fontSize:17,fontWeight:700,margin:0,fontFamily:"'Playfair Display',serif"}}>{isE?"Editar Publicación":"Nueva Publicación"}</h2></div>
-    <div style={{display:"flex",borderBottom:"1px solid #f1f5f9",background:"#fafbfc"}}>{steps.map((t,i)=><button key={i} onClick={()=>setStep(i+1)} style={{flex:1,padding:"10px 6px",border:"none",cursor:"pointer",fontSize:12,fontWeight:step===i+1?700:500,color:step===i+1?C1:step>i+1?P.green:"#94a3b8",background:step===i+1?"white":"transparent",borderBottom:step===i+1?`3px solid ${C1}`:"3px solid transparent"}}>{i+1}. {t}</button>)}</div>
+    <div className="steps-bar" style={{display:"flex",borderBottom:"1px solid #f1f5f9",background:"#fafbfc"}}>{steps.map((t,i)=><button key={i} onClick={()=>setStep(i+1)} style={{flex:1,padding:"10px 6px",border:"none",cursor:"pointer",fontSize:12,fontWeight:step===i+1?700:500,color:step===i+1?C1:step>i+1?P.green:"#94a3b8",background:step===i+1?"white":"transparent",borderBottom:step===i+1?`3px solid ${C1}`:"3px solid transparent"}}>{i+1}. {t}</button>)}</div>
     <div style={{padding:22,minHeight:260}}>
-      {step===1&&<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+      {step===1&&<div className="form-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
         <div style={{gridColumn:"span 2"}}><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>TÍTULO *</label><Inp value={form.titulo} onChange={v=>s("titulo",v)} placeholder="Título completo"/></div>
         <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>TIPO *</label><Sel value={form.tipoPublicacion} onChange={v=>s("tipoPublicacion",v)} options={TIPOS}/></div>
         <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>FECHA</label><Inp value={form.fechaPublicacion} onChange={v=>s("fechaPublicacion",v)} placeholder="DD/MM/AAAA"/></div>
@@ -799,6 +800,7 @@ export default function App(){
   const isAdmin=user?.rol==="admin";
   const loadData=useCallback(async()=>{if(!API_URL)return;setLoading(true);const r=await apiGet("getAll");if(r&&!r.error&&r.publicaciones){setData({publicaciones:r.publicaciones,autores:r.autores||[],pubAutores:r.pubAutores||[]});setConnected(true)}setLoading(false)},[]);
   useEffect(()=>{if(user)loadData()},[user,loadData]);
+  useEffect(()=>{let m=document.querySelector('meta[name="viewport"]');if(!m){m=document.createElement("meta");m.name="viewport";document.head.appendChild(m);}m.content="width=device-width,initial-scale=1,maximum-scale=1";},[]);
 
   const visiblePubs=useMemo(()=>{if(isAdmin)return data.publicaciones;const ids=data.pubAutores.filter(l=>l.autorId===user?.id).map(l=>l.pubId);return data.publicaciones.filter(p=>ids.includes(p.id))},[data,isAdmin,user]);
   const visibleAutores=useMemo(()=>isAdmin?data.autores:data.autores.filter(a=>a.id===user?.id),[data,isAdmin,user]);
@@ -854,11 +856,14 @@ export default function App(){
   if(isAdmin)menu.push({title:"ADMINISTRADOR",items:[{id:"docentes",label:"Gestionar Docentes",icon:UserPlus}]});
   menu.push({title:"EXPORTAR",items:[{id:"excel",label:"Descargar Excel",icon:FileSpreadsheet,fn:()=>exportExcel(visiblePubs,data.autores,data.pubAutores)},{id:"reporte",label:"Reporte Word",icon:FileDown,fn:()=>setShowReporteModal(true)}]});
 
-  return(<div style={{display:"flex",minHeight:"100vh",background:"#f4f5f7",fontFamily:"'DM Sans',system-ui,sans-serif"}}>
-    <style>{`@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap');@keyframes fadeIn{from{opacity:0}to{opacity:1}}@keyframes slideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}@keyframes toastIn{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:4px}`}</style>
+  return(<div style={{display:"flex",minHeight:"100vh",background:"#f4f5f7",fontFamily:"'DM Sans',system-ui,sans-serif",flexDirection:"row",position:"relative"}}>
+    <style>{`@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap');@keyframes fadeIn{from{opacity:0}to{opacity:1}}@keyframes slideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}@keyframes toastIn{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:4px}*{box-sizing:border-box}@media(max-width:767px){.pub-grid{grid-template-columns:1fr!important}.kpi-grid{grid-template-columns:repeat(3,1fr)!important}.chart-grid{grid-template-columns:1fr!important}.filter-row{flex-wrap:wrap!important;gap:6px!important}.modal-inner{margin:0!important;border-radius:16px 16px 0 0!important;max-width:100%!important;width:100%!important}.modal-wrap{align-items:flex-end!important;padding:0!important}.form-grid{grid-template-columns:1fr!important}.form-grid [style*="span 2"]{grid-column:span 1!important}.header-actions .sync-btn{display:none}.steps-bar button{font-size:10px!important;padding:8px 3px!important}}`}</style>
 
+    {/* OVERLAY MÓVIL */}
+    {mobileMenuOpen&&<div onClick={()=>setMobileMenuOpen(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.5)",zIndex:19,display:"none"}} className="mobile-overlay"/>}
+    <style>{`@media(max-width:767px){.mobile-overlay{display:block!important}.mobile-sidebar{position:fixed!important;left:0;top:0;height:100vh!important;width:260px!important;transform:translateX(${mobileMenuOpen?'0':'-100%'})!important;transition:transform .3s!important;z-index:20!important}.mobile-sidebar-hidden{display:none}.desktop-sidebar{display:flex}.main-content{margin-left:0!important}}`}</style>
     {/* SIDEBAR */}
-    <aside style={{width:sideOpen?240:56,flexShrink:0,background:`linear-gradient(180deg,${NAVY} 0%,${C1} 100%)`,display:"flex",flexDirection:"column",transition:"width .25s",position:"sticky",top:0,height:"100vh",overflow:"hidden",zIndex:10}}>
+    <aside className="desktop-sidebar mobile-sidebar" style={{width:sideOpen?240:56,flexShrink:0,background:`linear-gradient(180deg,${NAVY} 0%,${C1} 100%)`,display:"flex",flexDirection:"column",transition:"width .25s, transform .3s",position:"sticky",top:0,height:"100vh",overflow:"hidden",zIndex:10}}>
       <div style={{padding:sideOpen?"14px 14px 10px":"14px 8px 10px",borderBottom:"1px solid rgba(255,255,255,.1)",display:"flex",alignItems:"center",gap:8}}>
         <div style={{width:34,height:34,borderRadius:10,background:"rgba(255,255,255,.15)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><BookOpen size={16} style={{color:"white"}}/></div>
         {sideOpen&&<div><h1 style={{fontSize:14,fontWeight:800,color:"white",margin:0,fontFamily:"'Playfair Display',serif"}}>PubTracker</h1><p style={{fontSize:8,color:"rgba(255,255,255,.5)",margin:0,letterSpacing:1}}>FCSyP · UNO</p></div>}
@@ -866,7 +871,7 @@ export default function App(){
       <nav style={{flex:1,padding:"8px 6px",overflowY:"auto"}}>
         {menu.map(sec=><div key={sec.title} style={{marginBottom:12}}>
           {sideOpen&&<p style={{fontSize:9,fontWeight:800,color:sec.title==="ADMINISTRADOR"?"#fcd34d":"rgba(255,255,255,.4)",letterSpacing:1.5,padding:"0 8px",marginBottom:3}}>{sec.title}</p>}
-          {sec.items.map(it=><button key={it.id} onClick={()=>it.fn?it.fn():it.id==="nueva"?(setEditPub(null),setShowForm(true)):setView(it.id)} style={{width:"100%",display:"flex",alignItems:"center",gap:8,padding:sideOpen?"7px 10px":"7px 0",justifyContent:sideOpen?"flex-start":"center",borderRadius:9,border:"none",cursor:"pointer",marginBottom:1,transition:"all .15s",background:it.action?"rgba(255,255,255,.2)":view===it.id?"rgba(255,255,255,.18)":"transparent",color:it.action?"white":view===it.id?"white":"rgba(255,255,255,.65)",fontSize:12,fontWeight:view===it.id||it.action?700:400}}><it.icon size={15}/>{sideOpen&&<span>{it.label}</span>}</button>)}
+          {sec.items.map(it=><button key={it.id} onClick={()=>{setMobileMenuOpen(false);it.fn?it.fn():it.id==="nueva"?(setEditPub(null),setShowForm(true)):setView(it.id)}} style={{width:"100%",display:"flex",alignItems:"center",gap:8,padding:sideOpen?"7px 10px":"7px 0",justifyContent:sideOpen?"flex-start":"center",borderRadius:9,border:"none",cursor:"pointer",marginBottom:1,transition:"all .15s",background:it.action?"rgba(255,255,255,.2)":view===it.id?"rgba(255,255,255,.18)":"transparent",color:it.action?"white":view===it.id?"white":"rgba(255,255,255,.65)",fontSize:12,fontWeight:view===it.id||it.action?700:400}}><it.icon size={15}/>{sideOpen&&<span>{it.label}</span>}</button>)}
         </div>)}
       </nav>
       <div style={{padding:"8px 6px",borderTop:"1px solid rgba(255,255,255,.1)"}}>
@@ -884,16 +889,21 @@ export default function App(){
     </aside>
 
     {/* MAIN */}
-    <main style={{flex:1,overflow:"auto",display:"flex",flexDirection:"column"}}>
+    <main className="main-content" style={{flex:1,overflow:"auto",display:"flex",flexDirection:"column",minWidth:0}}>
       {/* Header */}
-      <div style={{background:"white",borderBottom:"1px solid #f1f5f9",padding:"12px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:5}}>
-        <div>
-          <h2 style={{fontSize:15,fontWeight:700,color:P.navy,margin:0}}>{view==="pubs"?(isAdmin?"Todas las Publicaciones":"Mis Publicaciones"):view==="dashboard"?"Dashboard":view==="autores"?"Producción por Autor":view==="indexacion"?"Bases de Indexación":view==="registro"?"Estado de Registro":view==="docentes"?"Gestionar Docentes":"Panel"}</h2>
-          <p style={{fontSize:11,color:"#94a3b8",margin:0}}>{isAdmin?"Vista Administrador — Acceso Total":`${user.nombres} ${user.apellidos} · ${stats.total} publicaciones`}</p>
+      <div style={{background:"white",borderBottom:"1px solid #f1f5f9",padding:"10px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:5}}>
+        <div style={{display:"flex",alignItems:"center",gap:10,minWidth:0}}>
+          {/* Hamburguesa solo en móvil */}
+          <button onClick={()=>setMobileMenuOpen(o=>!o)} style={{display:"none",padding:6,borderRadius:8,border:"none",background:C1Bg,cursor:"pointer",color:C1,flexShrink:0}} className="hamburger-btn"><Menu size={18}/></button>
+          <style>{`@media(max-width:767px){.hamburger-btn{display:flex!important}.header-title{font-size:13px!important}.header-sub{display:none!important}}`}</style>
+          <div style={{minWidth:0}}>
+            <h2 className="header-title" style={{fontSize:15,fontWeight:700,color:P.navy,margin:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{view==="pubs"?(isAdmin?"Todas las Publicaciones":"Mis Publicaciones"):view==="dashboard"?"Dashboard":view==="autores"?"Por Autor":view==="indexacion"?"Indexación":view==="registro"?"Registro":view==="docentes"?"Docentes":"Panel"}</h2>
+            <p className="header-sub" style={{fontSize:11,color:"#94a3b8",margin:0}}>{isAdmin?"Vista Administrador":`${user.nombres} · ${stats.total} publicaciones`}</p>
+          </div>
         </div>
-        <div style={{display:"flex",gap:8,alignItems:"center"}}>
+        <div style={{display:"flex",gap:6,alignItems:"center"}}>
           {loading&&<Loader2 size={16} style={{color:C1,animation:"spin 1s linear infinite"}}/>}
-          {API_URL&&<button onClick={loadData} style={{padding:"5px 10px",borderRadius:8,border:`1px solid ${C1}30`,background:C1Bg,cursor:"pointer",fontSize:11,color:C1,display:"flex",alignItems:"center",gap:4}}><RefreshCw size={12}/>Sync</button>}
+          {API_URL&&<button onClick={loadData} className="sync-btn" style={{padding:"5px 10px",borderRadius:8,border:`1px solid ${C1}30`,background:C1Bg,cursor:"pointer",fontSize:11,color:C1,display:"flex",alignItems:"center",gap:4}}><RefreshCw size={12}/>Sync</button>}
           <Btn primary small onClick={()=>{setEditPub(null);setShowForm(true)}} icon={Plus}>Nueva</Btn>
         </div>
       </div>
@@ -912,14 +922,14 @@ export default function App(){
         </div>
 
         {/* KPI Cards */}
-        <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:10,marginBottom:12}}>
+        <div className="kpi-grid" style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:10,marginBottom:12}}>
           {[
             {l:"Total",v:stats.total,c:C1,i:BookOpen},
             {l:"Publicadas",v:stats.publicadas,c:P.green,i:CheckCircle2},
             {l:"Aceptadas",v:stats.aceptadas,c:P.sky,i:Clock},
             {l:"Scopus",v:stats.scopus,c:P.gold,i:Star},
             {l:"Registradas",v:stats.reg,c:P.violet,i:ClipboardList},
-            {l:isAdmin?"Activos":"Mis Pubs",v:isAdmin?stats.autorRank.filter(a=>a.count>0).length:stats.total,c:P.slate,i:Users}
+            {l:isAdmin?"Activos":"Hrs Inv.",v:(()=>{if(isAdmin)return stats.autorRank.filter(a=>a.count>0).length;const me=data.autores.find(x=>x.id===user?.id);return me?.horasInvestigacion?me.horasInvestigacion+"h":"—"})(),c:P.green,i:Clock}
           ].map((s,i)=><div key={i} style={{background:"white",borderRadius:12,padding:"12px 14px",border:"1px solid #f1f5f9",boxShadow:"0 1px 3px rgba(0,0,0,.03)"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
               <div><p style={{fontSize:10,color:"#94a3b8",margin:0}}>{s.l}</p><p style={{fontSize:22,fontWeight:800,color:s.c,margin:"2px 0 0"}}>{s.v}</p></div>
@@ -929,7 +939,7 @@ export default function App(){
         </div>
 
         {/* Mini Charts */}
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
+        <div className="chart-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
           <div style={{background:"white",borderRadius:12,padding:"10px 14px",border:"1px solid #f1f5f9"}}>
             <p style={{fontSize:10,fontWeight:700,color:"#94a3b8",margin:"0 0 4px",textTransform:"uppercase",letterSpacing:.8}}>Por Tipo</p>
             <ResponsiveContainer width="100%" height={160}><PieChart margin={{top:16,right:16,bottom:16,left:16}}>
@@ -1062,6 +1072,7 @@ export default function App(){
                 <div style={{display:"flex",gap:6,alignItems:"center"}}>
                   <Bdg c={C1}>{fp.length} pubs{fAnio?` (${fAnio})`:""}</Bdg>
                   {a.scopus>0&&<Bdg c={P.gold} bg={P.goldBg}>{a.scopus} Scopus</Bdg>}
+                  {a.horasInvestigacion&&<Bdg c={P.green} bg={P.greenBg}><Clock size={9} style={{marginRight:2}}/>{a.horasInvestigacion}h inv/sem</Bdg>}
                   <Btn small icon={FileDown} onClick={()=>exportWord(a,data.publicaciones,data.pubAutores,{anio:fAnio})}>Word</Btn>
                 </div>
               </div>
@@ -1152,7 +1163,7 @@ export default function App(){
 
     {/* MODALES */}
     {detailPub&&<div style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{maxHeight:"92vh",overflowY:"auto",animation:"slideUp .3s",width:"100%",maxWidth:600}}><DetailModal pub={detailPub} autores={data.autores} links={data.pubAutores} onClose={()=>setDetailPub(null)} onEdit={p=>{setEditPub(p);setShowForm(true);}} onStatus={p=>setStatusPub(p)}/></div></div>}
-    {showProfile&&<div style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{maxHeight:"92vh",overflowY:"auto",animation:"slideUp .3s",width:"100%",maxWidth:580}}><ProfileModal user={user} autores={data.autores} onSave={handleSaveProfile} onClose={()=>setShowProfile(false)} isAdmin={isAdmin} allAutores={data.autores} onPhotoUploaded={handlePhotoUploaded}/></div></div>}
+    {showProfile&&<div className="modal-wrap" style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div className="modal-inner" style={{maxHeight:"92vh",overflowY:"auto",animation:"slideUp .3s",width:"100%",maxWidth:580}}><ProfileModal user={user} autores={data.autores} onSave={handleSaveProfile} onClose={()=>setShowProfile(false)} isAdmin={isAdmin} allAutores={data.autores} onPhotoUploaded={handlePhotoUploaded}/></div></div>}
     {showForm&&<div style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{maxHeight:"92vh",overflowY:"auto",animation:"slideUp .3s"}}><PubForm pub={editPub} autores={data.autores} pubAutores={data.pubAutores} onSave={handleSavePub} onCancel={()=>{setShowForm(false);setEditPub(null)}} currentUser={user}/></div></div>}
     {statusPub&&<div style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{animation:"slideUp .3s"}}><StatusModal pub={statusPub} onSave={handleStatus} onClose={()=>setStatusPub(null)}/></div></div>}
     {showDocForm&&<div style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{animation:"slideUp .3s"}}><DocenteForm onSave={handleAddDocente} onClose={()=>setShowDocForm(false)}/></div></div>}
