@@ -128,8 +128,8 @@ function exportWord(autor,pubs,links,filtros={}){
   const pubRows=aP.map((p,i)=>{
     const idx=[p.indexacion1,p.indexacion2,p.indexacion3].filter(Boolean).join(", ")||"—";
     const ec=p.estadoPublicacion==="Publicado"?"#047857":p.estadoPublicacion==="Aceptado"?"#0369a1":"#a16207";
-    const urlCell=p.url?`<a href="${p.url}" style="color:#1d4ed8;font-size:9px;">Publicación ↗</a>`:p.doi?`<a href="https://doi.org/${p.doi}" style="color:#c2410c;font-size:9px;">DOI ↗</a>`:p.evidencia?`<a href="${p.evidencia}" style="color:#6d28d9;font-size:9px;">📁 OneDrive ↗</a>`:"—";
-    return`<tr><td style="padding:4px 6px;border:1px solid #e2e8f0;text-align:center;color:${C1};font-size:10px;font-weight:700;">${i+1}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;"><strong>${p.titulo}</strong>${p.autoresExternos?`<br/><span style="font-size:8px;color:#6d28d9;">+ ${p.autoresExternos}</span>`:""}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;">${p.tipoPublicacion||"—"}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;color:${ec};font-weight:600;">${p.estadoPublicacion||"—"}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;text-align:center;font-weight:bold;">${p.cuartil&&p.cuartil!=="N/A"?p.cuartil:"—"}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;">${idx}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;text-align:center;">${urlCell}</td></tr>`;
+    const doiLink=p.doi?`<a href="https://doi.org/${p.doi}" style="color:#c2410c;font-size:9px;display:block;margin-bottom:2px;">🔗 DOI ↗</a>`:"";const urlLink=p.url?`<a href="${p.url}" style="color:#1d4ed8;font-size:9px;display:block;margin-bottom:2px;">🌐 URL ↗</a>`:"";const evLink=p.evidencia?`<a href="${p.evidencia}" style="color:#6d28d9;font-size:9px;display:block;">📁 OneDrive ↗</a>`:"";const urlCell=(doiLink||urlLink||evLink)||"—";
+    return`<tr><td style="padding:4px 6px;border:1px solid #e2e8f0;text-align:center;color:${C1};font-size:10px;font-weight:700;">${i+1}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;"><strong>${p.titulo}</strong>${p.autoresExternos?`<br/><span style="font-size:8px;color:#6d28d9;">+ ${p.autoresExternos}</span>`:""}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;">${p.tipoPublicacion||"—"}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;color:${ec};font-weight:600;">${p.estadoPublicacion||"—"}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;text-align:center;font-weight:bold;">${p.cuartil&&p.cuartil!=="N/A"?p.cuartil:"—"}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;">${idx}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;">${doiLink+urlLink+evLink||"—"}</td></tr>`;
   }).join("");
 
   const tipoRes={};aP.forEach(p=>{const t=p.tipoPublicacion||"Otro";tipoRes[t]=(tipoRes[t]||0)+1});
@@ -139,7 +139,7 @@ function exportWord(autor,pubs,links,filtros={}){
   /* ── Foto: convertir URL de Drive a thumbnail embebible ── */
   const fotoSrc=autor.fotoUrl?driveImgUrl(autor.fotoUrl):"";
   const fotoCell=fotoSrc
-    ?`<td style="width:90px;vertical-align:middle;padding:0 16px 0 0;"><img src="${fotoSrc}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid ${C1};display:block;" alt="Foto"/></td>`
+    ?`<td style="width:90px;vertical-align:middle;padding:0 16px 0 0;"><img src="${fotoSrc}" style="width:80px;height:80px;max-width:80px;max-height:80px;border-radius:50%;object-fit:cover;border:3px solid ${C1};display:block;mso-width-source:absolute;mso-height-source:absolute;" alt="Foto"/></td>`
     :`<td style="width:80px;vertical-align:middle;padding:0 16px 0 0;"><div style="width:80px;height:80px;border-radius:50%;background:${C1};color:white;font-size:28px;font-weight:900;text-align:center;line-height:80px;">${(autor.nombres||"U").charAt(0)}${(autor.apellidos||"").charAt(0)}</div></td>`;
 
   const html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><style>@page Section1{size:842pt 595pt;mso-page-orientation:landscape;margin:1.5cm 2cm}body{font-family:Arial,sans-serif;margin:0;padding:0;color:#1e293b;font-size:11px;mso-element:para-border-div}.hb{border-bottom:3px solid ${C1};padding-bottom:10px;margin-bottom:18px}.lt{font-size:14px;font-weight:bold;color:${C1};letter-spacing:1px}.ls{font-size:10px;color:#64748b}h2{font-size:12px;color:${NAVY};border-bottom:2px solid ${C1};padding-bottom:3px;margin:18px 0 8px;text-transform:uppercase;letter-spacing:.5px}table{width:100%;border-collapse:collapse;margin:6px 0}th{background:${C1};color:white;text-align:left;padding:6px 8px;border:1px solid ${C1};font-size:10px;text-transform:uppercase}.kt td{text-align:center;padding:10px;border:1px solid #d1d5db}.kn{font-size:20px;font-weight:bold}.ft{margin-top:24px;text-align:center;color:#94a3b8;font-size:9px;border-top:1px solid #e2e8f0;padding-top:8px}.ib{background:${C1Bg};border-left:4px solid ${C1};padding:8px 12px;margin-bottom:12px;border-radius:0 6px 6px 0}.ir{display:flex;gap:6px;margin-bottom:2px;font-size:10px}.il{font-weight:700;color:#475569;min-width:140px}.iv{color:#1e293b}</style></head><body style="mso-section-properties:url('#Section1')">
@@ -180,7 +180,8 @@ function exportWord(autor,pubs,links,filtros={}){
     <div class="ir"><span class="il">Período:</span><span class="iv">${periodo}</span></div>
     <div class="ir"><span class="il">Fecha del informe:</span><span class="iv">${fechaStr}</span></div>
     <div class="ir"><span class="il">Total de registros:</span><span class="iv">${aP.length} publicaciones${filtros.tipo?` · Tipo: ${filtros.tipo}`:""}</span></div>
-    ${autor.departamento?`<div class="ir"><span class="il">Departamento:</span><span class="iv">${autor.departamento}</span></div>`:""}
+    ${autor.departamento?`<div class="ir"><span class="il">Departamento / Carrera:</span><span class="iv">${autor.departamento}</span></div>`:""}
+    ${autor.horasInvestigacion?`<div class="ir"><span class="il">Horas de Investigación:</span><span class="iv" style="font-weight:700;color:#047857;">${autor.horasInvestigacion} horas/semana</span></div>`:""}
   </div>
 
   <h2>1. Resumen de Producción Científica</h2>
@@ -269,8 +270,8 @@ function exportWordConsolidado(pubs, autores, links, filtros={}){
     const autNm=aI.map(id=>{const a=autores.find(x=>x.id===id);return a?`${a.apellidos}`:"";}).filter(Boolean).join("; ");
     const idx=[p.indexacion1,p.indexacion2,p.indexacion3].filter(Boolean).join(", ")||"N/A";
     const ec=p.estadoPublicacion==="Publicado"?"#047857":p.estadoPublicacion==="Aceptado"?"#0369a1":"#a16207";
-    const urlCell=p.url?`<a href="${p.url}" style="color:#1d4ed8;font-size:9px;">Evidencia</a>`:p.doi?`<a href="https://doi.org/${p.doi}" style="color:#c2410c;font-size:9px;">DOI</a>`:"—";
-    return`<tr><td style="padding:4px 6px;border:1px solid #d1d5db;text-align:center;font-weight:bold;color:${C1};font-size:10px;">${i+1}</td><td style="padding:4px 6px;border:1px solid #d1d5db;font-size:10px;"><strong>${p.titulo}</strong></td><td style="padding:4px 6px;border:1px solid #d1d5db;font-size:10px;">${autNm||"—"}</td><td style="padding:4px 6px;border:1px solid #d1d5db;font-size:10px;">${p.tipoPublicacion||"—"}</td><td style="padding:4px 6px;border:1px solid #d1d5db;font-size:10px;color:${ec};font-weight:600;">${p.estadoPublicacion||"—"}</td><td style="padding:4px 6px;border:1px solid #d1d5db;font-size:10px;text-align:center;font-weight:bold;">${p.cuartil&&p.cuartil!=="N/A"?p.cuartil:"—"}</td><td style="padding:4px 6px;border:1px solid #d1d5db;font-size:10px;">${p.revista||"—"}</td><td style="padding:4px 6px;border:1px solid #d1d5db;font-size:10px;">${idx}</td><td style="padding:4px 6px;border:1px solid #d1d5db;font-size:10px;text-align:center;">${urlCell}</td></tr>`;
+    const gDoi=p.doi?`<a href="https://doi.org/${p.doi}" style="color:#c2410c;font-size:9px;display:block;margin-bottom:2px;">🔗 DOI ↗</a>`:"";const gUrl=p.url?`<a href="${p.url}" style="color:#1d4ed8;font-size:9px;display:block;margin-bottom:2px;">🌐 URL ↗</a>`:"";const gEv=p.evidencia?`<a href="${p.evidencia}" style="color:#6d28d9;font-size:9px;display:block;">📁 OneDrive ↗</a>`:"";const urlCell=gDoi||gUrl||gEv?"(ver cel.)":"—";
+    return`<tr><td style="padding:4px 6px;border:1px solid #d1d5db;text-align:center;font-weight:bold;color:${C1};font-size:10px;">${i+1}</td><td style="padding:4px 6px;border:1px solid #d1d5db;font-size:10px;"><strong>${p.titulo}</strong></td><td style="padding:4px 6px;border:1px solid #d1d5db;font-size:10px;">${autNm||"—"}</td><td style="padding:4px 6px;border:1px solid #d1d5db;font-size:10px;">${p.tipoPublicacion||"—"}</td><td style="padding:4px 6px;border:1px solid #d1d5db;font-size:10px;color:${ec};font-weight:600;">${p.estadoPublicacion||"—"}</td><td style="padding:4px 6px;border:1px solid #d1d5db;font-size:10px;text-align:center;font-weight:bold;">${p.cuartil&&p.cuartil!=="N/A"?p.cuartil:"—"}</td><td style="padding:4px 6px;border:1px solid #d1d5db;font-size:10px;">${p.revista||"—"}</td><td style="padding:4px 6px;border:1px solid #d1d5db;font-size:10px;">${idx}</td><td style="padding:4px 6px;border:1px solid #d1d5db;font-size:10px;">${gDoi+gUrl+gEv||"—"}</td></tr>`;
   }).join("");
 
   // Tipo resumen global
@@ -285,15 +286,15 @@ function exportWordConsolidado(pubs, autores, links, filtros={}){
     const aRows=aP.map((p,i)=>{
       const idx=[p.indexacion1,p.indexacion2,p.indexacion3].filter(Boolean).join(", ")||"N/A";
       const ec=p.estadoPublicacion==="Publicado"?"#047857":p.estadoPublicacion==="Aceptado"?"#0369a1":"#a16207";
-      const urlCell=p.url?`<a href="${p.url}" style="color:#1d4ed8;font-size:9px;">Evidencia</a>`:p.doi?`<a href="https://doi.org/${p.doi}" style="color:#c2410c;font-size:9px;">DOI</a>`:"—";
-      return`<tr><td style="padding:4px 6px;border:1px solid #e2e8f0;text-align:center;color:${C1};font-size:10px;font-weight:700;">${i+1}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;"><strong>${p.titulo}</strong></td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;">${p.tipoPublicacion||"—"}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;color:${ec};font-weight:600;">${p.estadoPublicacion||"—"}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;text-align:center;font-weight:bold;">${p.cuartil&&p.cuartil!=="N/A"?p.cuartil:"—"}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;">${idx}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;text-align:center;">${urlCell}</td></tr>`;
+      const aDoi=p.doi?`<a href="https://doi.org/${p.doi}" style="color:#c2410c;font-size:9px;display:block;margin-bottom:2px;">🔗 DOI ↗</a>`:"";const aUrl=p.url?`<a href="${p.url}" style="color:#1d4ed8;font-size:9px;display:block;margin-bottom:2px;">🌐 URL ↗</a>`:"";const aEv=p.evidencia?`<a href="${p.evidencia}" style="color:#6d28d9;font-size:9px;display:block;">📁 OneDrive ↗</a>`:"";const urlCell=aDoi||aUrl||aEv;
+      return`<tr><td style="padding:4px 6px;border:1px solid #e2e8f0;text-align:center;color:${C1};font-size:10px;font-weight:700;">${i+1}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;"><strong>${p.titulo}</strong></td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;">${p.tipoPublicacion||"—"}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;color:${ec};font-weight:600;">${p.estadoPublicacion||"—"}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;text-align:center;font-weight:bold;">${p.cuartil&&p.cuartil!=="N/A"?p.cuartil:"—"}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;">${idx}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;">${aDoi+aUrl+aEv||"—"}</td></tr>`;
     }).join("");
     const aLinks=[autor.orcid?`<a href="https://orcid.org/${autor.orcid}" style="color:#a6ce39;font-size:9px;font-weight:bold;">ORCID</a>`:"",autor.scopusId?`<a href="https://www.scopus.com/authid/detail.uri?authorId=${autor.scopusId}" style="color:#e9711c;font-size:9px;font-weight:bold;">Scopus</a>`:"",autor.scholarId?`<a href="https://scholar.google.com/citations?user=${autor.scholarId}" style="color:#4285F4;font-size:9px;font-weight:bold;">Scholar</a>`:""].filter(Boolean).join(" · ");
-    const fotoTag=autor.fotoUrl?`<img src="${autor.fotoUrl}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,0.5);margin-right:10px;vertical-align:middle;" alt=""/>`:""
+    const fotoTag=autor.fotoUrl?`<img src="${driveImgUrl(autor.fotoUrl)}" style="width:36px;height:36px;max-width:36px;max-height:36px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,0.5);margin-right:10px;vertical-align:middle;mso-width-source:absolute;mso-height-source:absolute;" alt=""/>`:""
     return`<div style="margin-bottom:20px;border:1px solid #e2e8f0;border-radius:6px;overflow:hidden;page-break-inside:avoid;">
       <div style="background:${C1};color:white;padding:7px 14px;display:flex;justify-content:space-between;align-items:center;">
         <div style="display:flex;align-items:center;">${fotoTag}<div><strong style="font-size:12px;">${autor.nombres} ${autor.apellidos}</strong>${autor.tituloAcademico?` <span style="font-size:10px;opacity:.8;">· ${autor.tituloAcademico}</span>`:""}</div></div>
-        <div style="font-size:10px;opacity:.8;">${aP.length} publicaciones${aLinks?` &nbsp;|&nbsp; ${aLinks}`:""}</div>
+        <div style="font-size:10px;opacity:.8;">${aP.length} publicaciones${autor.horasInvestigacion?` &nbsp;·&nbsp; ${autor.horasInvestigacion} hrs inv/sem`:""}${aLinks?` &nbsp;|&nbsp; ${aLinks}`:""}</div>
       </div>
       <table style="margin:0;font-size:10px;width:100%;border-collapse:collapse;">
         <tr><th style="background:${NAVY};color:white;padding:5px 6px;border:1px solid ${NAVY};font-size:9px;width:3%;">#</th><th style="background:${NAVY};color:white;padding:5px 6px;border:1px solid ${NAVY};font-size:9px;width:30%;">Título</th><th style="background:${NAVY};color:white;padding:5px 6px;border:1px solid ${NAVY};font-size:9px;width:9%;">Tipo</th><th style="background:${NAVY};color:white;padding:5px 6px;border:1px solid ${NAVY};font-size:9px;width:9%;">Estado</th><th style="background:${NAVY};color:white;padding:5px 6px;border:1px solid ${NAVY};font-size:9px;width:4%;">Q</th><th style="background:${NAVY};color:white;padding:5px 6px;border:1px solid ${NAVY};font-size:9px;width:22%;">Indexación</th><th style="background:${NAVY};color:white;padding:5px 6px;border:1px solid ${NAVY};font-size:9px;width:8%;">Evidencia</th></tr>
@@ -352,6 +353,7 @@ function ProfileModal({user, autores, onSave, onClose, isAdmin, allAutores, onPh
   const[linkedin,setLinkedin]=useState(autor.linkedin||"");
   const[telefono,setTelefono]=useState(autor.telefono||"");
   const[bio,setBio]=useState(autor.bio||"");
+  const[horasInv,setHorasInv]=useState(autor.horasInvestigacion||"");
   const[oldPass,setOldPass]=useState("");
   const[newPass,setNewPass]=useState("");
   const[newPass2,setNewPass2]=useState("");
@@ -394,7 +396,7 @@ function ProfileModal({user, autores, onSave, onClose, isAdmin, allAutores, onPh
   const handleSaveInfo=async()=>{
     if(!nombres.trim()||!apellidos.trim())return alert("Nombres y apellidos son requeridos");
     setSaving(true);
-    const updated={...autor,nombres:nombres.toUpperCase(),apellidos:apellidos.toUpperCase(),email,departamento:depto,tituloAcademico:titulo,fotoUrl:fotUrl,orcid,scopusId,scholarId:schId,researchgate:rgUrl,linkedin,telefono,bio};
+    const updated={...autor,nombres:nombres.toUpperCase(),apellidos:apellidos.toUpperCase(),email,departamento:depto,tituloAcademico:titulo,fotoUrl:fotUrl,orcid,scopusId,scholarId:schId,researchgate:rgUrl,linkedin,telefono,bio,horasInvestigacion:horasInv};
     await onSave(updated);
     setSaving(false);
   };
@@ -470,6 +472,7 @@ function ProfileModal({user, autores, onSave, onClose, isAdmin, allAutores, onPh
           </div>
 
           <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>LÍNEAS DE INVESTIGACIÓN / BIO</label><textarea value={bio} onChange={e=>setBio(e.target.value)} placeholder="Describe tus áreas de investigación, intereses académicos…" rows={3} style={{width:"100%",padding:"9px 12px",borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:13,color:"#1e293b",background:"white",outline:"none",boxSizing:"border-box",resize:"vertical",fontFamily:"inherit"}}/></div>
+          <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>HORAS DE INVESTIGACIÓN <span style={{fontWeight:400,color:"#94a3b8"}}>(horas/semana asignadas)</span></label><Inp value={horasInv} onChange={setHorasInv} placeholder="Ej: 8" icon={Clock}/></div>
         </div>}
 
         {/* ── Tab Perfiles Académicos ── */}
