@@ -859,23 +859,44 @@ export default function App(){
   return(<div style={{display:"flex",minHeight:"100vh",background:"#f4f5f7",fontFamily:"'DM Sans',system-ui,sans-serif",flexDirection:"row",position:"relative"}}>
     <style>{`@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap');@keyframes fadeIn{from{opacity:0}to{opacity:1}}@keyframes slideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}@keyframes toastIn{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:4px}*{box-sizing:border-box}@media(max-width:767px){.pub-grid{grid-template-columns:1fr!important}.kpi-grid{grid-template-columns:repeat(3,1fr)!important}.chart-grid{grid-template-columns:1fr!important}.filter-row{flex-wrap:wrap!important;gap:6px!important}.modal-inner{margin:0!important;border-radius:16px 16px 0 0!important;max-width:100%!important;width:100%!important}.modal-wrap{align-items:flex-end!important;padding:0!important}.form-grid{grid-template-columns:1fr!important}.form-grid [style*="span 2"]{grid-column:span 1!important}.header-actions .sync-btn{display:none}.steps-bar button{font-size:10px!important;padding:8px 3px!important}}`}</style>
 
-    {/* OVERLAY MÓVIL */}
-    {mobileMenuOpen&&<div onClick={()=>setMobileMenuOpen(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.5)",zIndex:19,display:"none"}} className="mobile-overlay"/>}
-    <style>{`@media(max-width:767px){.mobile-overlay{display:block!important}.mobile-sidebar{position:fixed!important;left:0;top:0;height:100vh!important;width:260px!important;transform:translateX(${mobileMenuOpen?'0':'-100%'})!important;transition:transform .3s!important;z-index:20!important}.mobile-sidebar-hidden{display:none}.desktop-sidebar{display:flex}.main-content{margin-left:0!important}}`}</style>
-    {/* SIDEBAR */}
-    <aside className="desktop-sidebar mobile-sidebar" style={{width:sideOpen?240:56,flexShrink:0,background:`linear-gradient(180deg,${NAVY} 0%,${C1} 100%)`,display:"flex",flexDirection:"column",transition:"width .25s, transform .3s",position:"sticky",top:0,height:"100vh",overflow:"hidden",zIndex:10}}>
-      <div style={{padding:sideOpen?"14px 14px 10px":"14px 8px 10px",borderBottom:"1px solid rgba(255,255,255,.1)",display:"flex",alignItems:"center",gap:8}}>
+    {/* OVERLAY MÓVIL — solo visible cuando el menú está abierto */}
+    {mobileMenuOpen&&<div onClick={()=>setMobileMenuOpen(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.5)",zIndex:19}}/>}
+    {/* SIDEBAR — en móvil es position:fixed fuera del flujo; en desktop es sticky */}
+    <aside style={{
+      background:`linear-gradient(180deg,${NAVY} 0%,${C1} 100%)`,
+      display:"flex",flexDirection:"column",overflow:"hidden",
+      // DESKTOP
+      ...(window.innerWidth>=768 ? {
+        width:sideOpen?240:56,
+        flexShrink:0,
+        position:"sticky",
+        top:0,
+        height:"100vh",
+        transition:"width .25s",
+        zIndex:10
+      } : {
+        // MÓVIL — fixed drawer, fuera del flujo
+        position:"fixed",
+        left:0,top:0,
+        width:260,
+        height:"100vh",
+        transform:mobileMenuOpen?"translateX(0)":"translateX(-100%)",
+        transition:"transform .3s",
+        zIndex:20
+      })
+    }}>
+      {(()=>{const showFull=sideOpen||window.innerWidth<768;return(<div style={{padding:showFull?"14px 14px 10px":"14px 8px 10px",borderBottom:"1px solid rgba(255,255,255,.1)",display:"flex",alignItems:"center",gap:8,justifyContent:showFull?"flex-start":"center"}}>
         <div style={{width:34,height:34,borderRadius:10,background:"rgba(255,255,255,.15)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><BookOpen size={16} style={{color:"white"}}/></div>
-        {sideOpen&&<div><h1 style={{fontSize:14,fontWeight:800,color:"white",margin:0,fontFamily:"'Playfair Display',serif"}}>PubTracker</h1><p style={{fontSize:8,color:"rgba(255,255,255,.5)",margin:0,letterSpacing:1}}>FCSyP · UNO</p></div>}
-      </div>
+        {showFull&&<div><h1 style={{fontSize:14,fontWeight:800,color:"white",margin:0,fontFamily:"'Playfair Display',serif"}}>PubTracker</h1><p style={{fontSize:8,color:"rgba(255,255,255,.5)",margin:0,letterSpacing:1}}>FCSyP · UNO</p></div>}
+      </div>);})()}
       <nav style={{flex:1,padding:"8px 6px",overflowY:"auto"}}>
         {menu.map(sec=><div key={sec.title} style={{marginBottom:12}}>
-          {sideOpen&&<p style={{fontSize:9,fontWeight:800,color:sec.title==="ADMINISTRADOR"?"#fcd34d":"rgba(255,255,255,.4)",letterSpacing:1.5,padding:"0 8px",marginBottom:3}}>{sec.title}</p>}
-          {sec.items.map(it=><button key={it.id} onClick={()=>{setMobileMenuOpen(false);it.fn?it.fn():it.id==="nueva"?(setEditPub(null),setShowForm(true)):setView(it.id)}} style={{width:"100%",display:"flex",alignItems:"center",gap:8,padding:sideOpen?"7px 10px":"7px 0",justifyContent:sideOpen?"flex-start":"center",borderRadius:9,border:"none",cursor:"pointer",marginBottom:1,transition:"all .15s",background:it.action?"rgba(255,255,255,.2)":view===it.id?"rgba(255,255,255,.18)":"transparent",color:it.action?"white":view===it.id?"white":"rgba(255,255,255,.65)",fontSize:12,fontWeight:view===it.id||it.action?700:400}}><it.icon size={15}/>{sideOpen&&<span>{it.label}</span>}</button>)}
+          {(sideOpen||window.innerWidth<768)&&<p style={{fontSize:9,fontWeight:800,color:sec.title==="ADMINISTRADOR"?"#fcd34d":"rgba(255,255,255,.4)",letterSpacing:1.5,padding:"0 8px",marginBottom:3}}>{sec.title}</p>}
+          {sec.items.map(it=>{const showFull=sideOpen||window.innerWidth<768;return<button key={it.id} onClick={()=>{setMobileMenuOpen(false);it.fn?it.fn():it.id==="nueva"?(setEditPub(null),setShowForm(true)):setView(it.id)}} style={{width:"100%",display:"flex",alignItems:"center",gap:8,padding:showFull?"7px 10px":"7px 0",justifyContent:showFull?"flex-start":"center",borderRadius:9,border:"none",cursor:"pointer",marginBottom:1,transition:"all .15s",background:it.action?"rgba(255,255,255,.2)":view===it.id?"rgba(255,255,255,.18)":"transparent",color:it.action?"white":view===it.id?"white":"rgba(255,255,255,.65)",fontSize:12,fontWeight:view===it.id||it.action?700:400}}><it.icon size={15}/>{showFull&&<span>{it.label}</span>}</button>})}
         </div>)}
       </nav>
       <div style={{padding:"8px 6px",borderTop:"1px solid rgba(255,255,255,.1)"}}>
-        {sideOpen&&<div style={{padding:"7px 10px",background:"rgba(255,255,255,.1)",borderRadius:9,marginBottom:6}}>
+        {(sideOpen||window.innerWidth<768)&&<div style={{padding:"7px 10px",background:"rgba(255,255,255,.1)",borderRadius:9,marginBottom:6}}>
           {isAdmin&&<div style={{display:"flex",alignItems:"center",gap:4,marginBottom:2}}><Shield size={11} style={{color:"#fcd34d"}}/><span style={{fontSize:9,fontWeight:700,color:"#fcd34d",textTransform:"uppercase",letterSpacing:1}}>Administrador</span></div>}
           <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
             {(()=>{const a=data.autores.find(x=>x.id===user.id)||user;const rawUrl=user.fotoUrl||a.fotoUrl||"";const photoSrc=rawUrl?driveImgUrl(rawUrl):avatarUrl(user.nombres,user.apellidos);return<img src={photoSrc} alt="" style={{width:36,height:36,borderRadius:"50%",objectFit:"cover",border:"2px solid rgba(255,255,255,.4)",flexShrink:0}} onError={e=>{e.target.onerror=null;e.target.src=avatarUrl(user.nombres,user.apellidos)}}/>})()}
@@ -883,8 +904,8 @@ export default function App(){
           </div>
           <button onClick={()=>setShowProfile(true)} style={{width:"100%",display:"flex",alignItems:"center",gap:5,padding:"4px 8px",borderRadius:7,border:"1px solid rgba(255,255,255,.2)",background:"rgba(255,255,255,.08)",cursor:"pointer",color:"rgba(255,255,255,.8)",fontSize:10,fontWeight:600}}><Settings size={11}/>Editar perfil</button>
         </div>}
-        <button onClick={()=>setUser(null)} style={{width:"100%",display:"flex",alignItems:"center",gap:6,padding:"7px 10px",justifyContent:sideOpen?"flex-start":"center",borderRadius:9,border:"none",background:"transparent",cursor:"pointer",color:"#fca5a5",fontSize:11}}><LogOut size={14}/>{sideOpen&&"Cerrar Sesión"}</button>
-        <button onClick={()=>setSideOpen(o=>!o)} style={{width:"100%",display:"flex",alignItems:"center",gap:6,padding:"7px 10px",justifyContent:sideOpen?"flex-start":"center",borderRadius:9,border:"none",background:"transparent",cursor:"pointer",color:"rgba(255,255,255,.4)",fontSize:11,marginTop:2}}>{sideOpen?<ChevronLeft size={14}/>:<ChevronRight size={14}/>}{sideOpen&&"Colapsar"}</button>
+        <button onClick={()=>{setUser(null);setMobileMenuOpen(false)}} style={{width:"100%",display:"flex",alignItems:"center",gap:6,padding:"7px 10px",justifyContent:(sideOpen||window.innerWidth<768)?"flex-start":"center",borderRadius:9,border:"none",background:"transparent",cursor:"pointer",color:"#fca5a5",fontSize:11}}><LogOut size={14}/>{(sideOpen||window.innerWidth<768)&&"Cerrar Sesión"}</button>
+        {window.innerWidth>=768&&<button onClick={()=>setSideOpen(o=>!o)} style={{width:"100%",display:"flex",alignItems:"center",gap:6,padding:"7px 10px",justifyContent:sideOpen?"flex-start":"center",borderRadius:9,border:"none",background:"transparent",cursor:"pointer",color:"rgba(255,255,255,.4)",fontSize:11,marginTop:2}}>{sideOpen?<ChevronLeft size={14}/>:<ChevronRight size={14}/>}{sideOpen&&"Colapsar"}</button>}
       </div>
     </aside>
 
@@ -929,7 +950,7 @@ export default function App(){
             {l:"Aceptadas",v:stats.aceptadas,c:P.sky,i:Clock},
             {l:"Scopus",v:stats.scopus,c:P.gold,i:Star},
             {l:"Registradas",v:stats.reg,c:P.violet,i:ClipboardList},
-            {l:isAdmin?"Activos":"Hrs Inv.",v:(()=>{if(isAdmin)return stats.autorRank.filter(a=>a.count>0).length;const me=data.autores.find(x=>x.id===user?.id);return me?.horasInvestigacion?me.horasInvestigacion+"h":"—"})(),c:P.green,i:Clock}
+            {l:isAdmin?"Activos":"Hrs Inv/sem",v:(()=>{if(isAdmin)return stats.autorRank.filter(a=>a.count>0).length;const me=data.autores.find(x=>x.id===user?.id)||user;const h=me?.horasInvestigacion;return h&&String(h).trim()&&String(h)!=="0"?String(h)+"h":"—"})(),c:P.green,i:Clock}
           ].map((s,i)=><div key={i} style={{background:"white",borderRadius:12,padding:"12px 14px",border:"1px solid #f1f5f9",boxShadow:"0 1px 3px rgba(0,0,0,.03)"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
               <div><p style={{fontSize:10,color:"#94a3b8",margin:0}}>{s.l}</p><p style={{fontSize:22,fontWeight:800,color:s.c,margin:"2px 0 0"}}>{s.v}</p></div>
