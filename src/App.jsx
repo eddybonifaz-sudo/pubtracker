@@ -111,23 +111,22 @@ function exportWord(autor,pubs,links,filtros={}){
   const pubRows=aP.map((p,i)=>{
     const idx=[p.indexacion1,p.indexacion2,p.indexacion3].filter(Boolean).join(", ")||"—";
     const ec=p.estadoPublicacion==="Publicado"?"#047857":p.estadoPublicacion==="Aceptado"?"#0369a1":"#a16207";
-    const doiCell=p.doi?`<a href="https://doi.org/${p.doi}" style="color:#0369a1;font-size:8px;word-break:break-all;">doi.org/${p.doi}</a>`:"—";
-    const urlCell=p.url?`<a href="${p.url}" style="color:#0369a1;font-size:8px;word-break:break-all;">Ver publicación ↗</a>`:"—";
-    const evCell=p.evidencia?`<a href="${p.evidencia}" style="color:#6d28d9;font-size:8px;word-break:break-all;font-weight:bold;">📁 Ver en OneDrive ↗</a>`:"—";
-    const rowBg=i%2===0?"#ffffff":"#f9fafb";
+    // Celda enlaces: DOI + URL + OneDrive apilados verticalmente
+    const enlacesDoi=p.doi?`<a href="https://doi.org/${p.doi}" style="color:#c2410c;font-size:8px;display:block;margin-bottom:2px;">DOI ↗</a>`:"";
+    const enlacesUrl=p.url?`<a href="${p.url}" style="color:#1d4ed8;font-size:8px;display:block;margin-bottom:2px;">Publicación ↗</a>`:"";
+    const enlacesEv=p.evidencia?`<a href="${p.evidencia}" style="color:#6d28d9;font-size:8px;display:block;">📁 OneDrive ↗</a>`:"";
+    const enlacesCell=(enlacesDoi||enlacesUrl||enlacesEv)||(enlacesDoi+enlacesUrl+enlacesEv)||"—";
+    const rowBg=i%2===0?"#ffffff":"#f8fafc";
     return`<tr style="background:${rowBg};">
-      <td style="padding:4px 4px;border:1px solid #d1d5db;text-align:center;font-weight:bold;color:${C1};font-size:9px;white-space:nowrap;">${i+1}</td>
-      <td style="padding:4px 4px;border:1px solid #d1d5db;font-size:8.5px;word-wrap:break-word;overflow-wrap:break-word;"><strong>${p.titulo}</strong>${p.autoresExternos?`<br/><span style="font-size:8px;color:#6d28d9;">+ ${p.autoresExternos}</span>`:""}</td>
-      <td style="padding:4px 4px;border:1px solid #d1d5db;font-size:8.5px;">${p.tipoPublicacion||"—"}</td>
-      <td style="padding:4px 4px;border:1px solid #d1d5db;font-size:8.5px;color:${ec};font-weight:600;">${p.estadoPublicacion||"—"}</td>
-      <td style="padding:4px 4px;border:1px solid #d1d5db;font-size:8.5px;text-align:center;font-weight:bold;">${p.cuartil&&p.cuartil!=="N/A"?p.cuartil:"—"}</td>
-      <td style="padding:4px 4px;border:1px solid #d1d5db;font-size:8.5px;word-wrap:break-word;">${p.revista||"—"}</td>
-      <td style="padding:4px 4px;border:1px solid #d1d5db;font-size:8.5px;white-space:nowrap;">${p.fechaPublicacion||"—"}</td>
-      <td style="padding:4px 4px;border:1px solid #d1d5db;font-size:8.5px;">${idx}</td>
-      <td style="padding:4px 4px;border:1px solid #d1d5db;font-size:8.5px;">${doiCell}</td>
-      <td style="padding:4px 4px;border:1px solid #d1d5db;font-size:8.5px;">${urlCell}</td>
-      <td style="padding:4px 4px;border:1px solid #d1d5db;font-size:8.5px;">${evCell}</td>
-      <td style="padding:4px 4px;border:1px solid #d1d5db;font-size:8.5px;text-align:center;white-space:nowrap;">${p.registrado==="Sí"?"✓ Sí":"✗ No"}</td>
+      <td style="padding:4px 6px;border:1px solid #d1d5db;text-align:center;font-weight:bold;color:${C1};font-size:10px;">${i+1}</td>
+      <td style="padding:4px 6px;border:1px solid #d1d5db;font-size:10px;"><strong>${p.titulo}</strong>${p.autoresExternos?`<br/><span style="font-size:8px;color:#6d28d9;">+ ${p.autoresExternos}</span>`:""}</td>
+      <td style="padding:4px 6px;border:1px solid #d1d5db;font-size:10px;">${p.tipoPublicacion||"—"}</td>
+      <td style="padding:4px 6px;border:1px solid #d1d5db;font-size:10px;color:${ec};font-weight:600;">${p.estadoPublicacion||"—"}</td>
+      <td style="padding:4px 6px;border:1px solid #d1d5db;font-size:10px;text-align:center;font-weight:bold;">${p.cuartil&&p.cuartil!=="N/A"?p.cuartil:"—"}</td>
+      <td style="padding:4px 6px;border:1px solid #d1d5db;font-size:10px;">${p.revista||"—"}<br/><span style="font-size:8px;color:#64748b;">${p.fechaPublicacion||""}</span></td>
+      <td style="padding:4px 6px;border:1px solid #d1d5db;font-size:10px;">${idx}</td>
+      <td style="padding:4px 6px;border:1px solid #d1d5db;font-size:10px;">${enlacesDoi+enlacesUrl+enlacesEv||"—"}</td>
+      <td style="padding:4px 6px;border:1px solid #d1d5db;font-size:10px;text-align:center;">${p.registrado==="Sí"?"✓ Sí":"✗ No"}</td>
     </tr>`}).join("");
   const tipoRes={};aP.forEach(p=>{const t=p.tipoPublicacion||"Otro";tipoRes[t]=(tipoRes[t]||0)+1});
   const tipoRows=Object.entries(tipoRes).map(([t,c])=>`<tr><td style="padding:5px 8px;border:1px solid #d1d5db;font-size:11px;">${t}</td><td style="padding:5px 8px;border:1px solid #d1d5db;font-size:11px;text-align:center;font-weight:700;">${c}</td></tr>`).join("");
@@ -146,16 +145,13 @@ function exportWord(autor,pubs,links,filtros={}){
   <h2>3. Detalle en Matriz</h2>
   <table class="mtx-tbl"><tr>
     <th style="width:3%;text-align:center;">#</th>
-    <th style="width:24%;">Título / Autores externos</th>
+    <th style="width:28%;">Título / Autores externos</th>
     <th style="width:10%;">Tipo</th>
     <th style="width:8%;">Estado</th>
     <th style="width:3%;text-align:center;">Q</th>
-    <th style="width:14%;">Revista/Editorial</th>
-    <th style="width:8%;">Fecha</th>
-    <th style="width:12%;">Indexación</th>
-    <th style="width:8%;">DOI</th>
-    <th style="width:7%;">URL</th>
-    <th style="width:8%;">OneDrive</th>
+    <th style="width:18%;">Revista/Editorial · Fecha</th>
+    <th style="width:14%;">Indexación</th>
+    <th style="width:11%;">DOI / URL / OneDrive</th>
     <th style="width:5%;text-align:center;">Reg.</th>
   </tr>${pubRows}</table>
   <h2>4. Fichas Individuales</h2>
@@ -267,7 +263,8 @@ function ProfileModal({user, autores, onSave, onClose, isAdmin, allAutores, onPh
   const[email,setEmail]=useState(autor.email||"");
   const[depto,setDepto]=useState(autor.departamento||"");
   const[titulo,setTitulo]=useState(autor.tituloAcademico||"");
-  const[fotUrl,setFotUrl]=useState(autor.fotoUrl||"");
+  // Priorizar user.fotoUrl que se actualiza reactivamente al subir foto
+  const[fotUrl,setFotUrl]=useState(user.fotoUrl||autor.fotoUrl||"");
   const[orcid,setOrcid]=useState(autor.orcid||"");
   const[scopusId,setScopusId]=useState(autor.scopusId||"");
   const[schId,setSchId]=useState(autor.scholarId||"");
@@ -379,7 +376,7 @@ function ProfileModal({user, autores, onSave, onClose, isAdmin, allAutores, onPh
               <img src={photoPreview} alt="" style={{width:52,height:52,borderRadius:"50%",objectFit:"cover",border:`2px solid ${C1}30`,flexShrink:0}} onError={e=>{e.target.src=`https://ui-avatars.com/api/?name=${encodeURIComponent(nombres)}&background=47090A&color=fff&size=64&bold=true`}}/>
               <div style={{flex:1}}>
                 {modoDemo
-                  ? <><Inp value={fotUrl} onChange={setFotUrl} placeholder="https://ejemplo.com/mi-foto.jpg" icon={Camera}/><p style={{fontSize:10,color:"#94a3b8",margin:"3px 0 0"}}>En modo demo pega la URL de una imagen pública</p></>
+                  ? <><Inp value={fotUrl} onChange={v=>{setFotUrl(v);if(onPhotoUploaded&&v)onPhotoUploaded(user.id,v);}} placeholder="https://ejemplo.com/mi-foto.jpg" icon={Camera}/><p style={{fontSize:10,color:"#94a3b8",margin:"3px 0 0"}}>En modo demo pega la URL de una imagen pública</p></>
                   : <><label style={{display:"inline-flex",alignItems:"center",gap:6,padding:"8px 14px",borderRadius:10,border:`1.5px dashed ${C1}60`,background:C1Bg,cursor:"pointer",fontSize:12,fontWeight:600,color:C1}}>
                       {uploadingPhoto?<><Loader2 size={14} style={{animation:"spin 1s linear infinite"}}/>Subiendo…</>:<><Camera size={14}/>Subir foto (JPG/PNG, máx 3 MB)</>}
                       <input type="file" accept="image/*" onChange={handleFotoUpload} style={{display:"none"}} disabled={uploadingPhoto}/>
@@ -730,13 +727,16 @@ export default function App(){
 
   const handleSaveProfile=async(updated)=>{
     setData(prev=>({...prev,autores:prev.autores.map(a=>a.id===updated.id?updated:a)}));
+    // Actualizar user también para que el sidebar y header reflejen los cambios al instante
+    setUser(prev=>prev&&prev.id===updated.id?{...prev,...updated}:prev);
     if(API_URL){const r=await apiPost({action:"updatePerfil",autor:updated});if(r?.ok)showToast("Perfil actualizado ✓");else showToast("Error al guardar","error")}
     else showToast("Perfil actualizado ✓");
     setShowProfile(false);
   };
-  // Actualiza la foto en data.autores inmediatamente tras subir a Drive
+  // Actualiza la foto en data.autores Y en user inmediatamente tras subir a Drive
   const handlePhotoUploaded=(userId,url)=>{
     setData(prev=>({...prev,autores:prev.autores.map(a=>a.id===userId?{...a,fotoUrl:url}:a)}));
+    setUser(prev=>prev&&prev.id===userId?{...prev,fotoUrl:url}:prev);
   };
   const getAut=useCallback(pid=>data.pubAutores.filter(l=>l.pubId===pid).map(l=>data.autores.find(a=>a.id===l.autorId)).filter(Boolean),[data]);
 
@@ -788,7 +788,7 @@ export default function App(){
         {sideOpen&&<div style={{padding:"7px 10px",background:"rgba(255,255,255,.1)",borderRadius:9,marginBottom:6}}>
           {isAdmin&&<div style={{display:"flex",alignItems:"center",gap:4,marginBottom:2}}><Shield size={11} style={{color:"#fcd34d"}}/><span style={{fontSize:9,fontWeight:700,color:"#fcd34d",textTransform:"uppercase",letterSpacing:1}}>Administrador</span></div>}
           <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
-            {(()=>{const a=data.autores.find(x=>x.id===user.id)||user;const photoSrc=a.fotoUrl||`https://ui-avatars.com/api/?name=${encodeURIComponent((user.nombres||"U")+" "+(user.apellidos||""))}&background=47090A&color=fff&size=64&bold=true`;return<img src={photoSrc} alt="" style={{width:32,height:32,borderRadius:"50%",objectFit:"cover",border:"2px solid rgba(255,255,255,.3)",flexShrink:0}} onError={e=>{e.target.src=`https://ui-avatars.com/api/?name=U&background=47090A&color=fff&size=64&bold=true`}}/>})()}
+            {(()=>{const a=data.autores.find(x=>x.id===user.id)||user;const photoSrc=user.fotoUrl||a.fotoUrl||`https://ui-avatars.com/api/?name=${encodeURIComponent((user.nombres||"U")+" "+(user.apellidos||""))}&background=47090A&color=fff&size=128&bold=true`;return<img src={photoSrc} alt="" style={{width:36,height:36,borderRadius:"50%",objectFit:"cover",border:"2px solid rgba(255,255,255,.4)",flexShrink:0}} onError={e=>{e.target.src=`https://ui-avatars.com/api/?name=${encodeURIComponent((user.nombres||"U").charAt(0))}&background=47090A&color=fff&size=128&bold=true`}}/>})()}
             <div style={{flex:1,minWidth:0}}><p style={{fontSize:11,fontWeight:600,color:"white",margin:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{user.nombres} {user.apellidos}</p><p style={{fontSize:10,color:"rgba(255,255,255,.5)",margin:0}}>{connected?"Google Sheets ✓":"Modo Demo"}</p></div>
           </div>
           <button onClick={()=>setShowProfile(true)} style={{width:"100%",display:"flex",alignItems:"center",gap:5,padding:"4px 8px",borderRadius:7,border:"1px solid rgba(255,255,255,.2)",background:"rgba(255,255,255,.08)",cursor:"pointer",color:"rgba(255,255,255,.8)",fontSize:10,fontWeight:600}}><Settings size={11}/>Editar perfil</button>
