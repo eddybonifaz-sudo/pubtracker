@@ -11,7 +11,7 @@ import {
   Layers, Clock, Star, Eye, Edit3, LogIn, Trash2,
   FileSpreadsheet, FileDown, RefreshCw, Shield, User, Mail, Lock, UserCheck,
   Settings, KeyRound, Link2, Phone, GraduationCap, Camera, ExternalLink,
-  AtSign, Linkedin, BookUser, FlaskConical
+  AtSign, Linkedin, BookUser, FlaskConical, Menu
 } from "lucide-react";
 
 /* ═══════════════════════════════════════════════════════════════
@@ -813,7 +813,7 @@ export default function App(){
     if(!m){m=document.createElement("meta");m.name="viewport";document.head.appendChild(m);}
     m.content="width=device-width,initial-scale=1,maximum-scale=1";
   },[]);
-  useEffect(()=>{let m=document.querySelector('meta[name="viewport"]');if(!m){m=document.createElement("meta");m.name="viewport";document.head.appendChild(m);}m.content="width=device-width,initial-scale=1,maximum-scale=1";},[]);
+
 
   const visiblePubs=useMemo(()=>{if(isAdmin)return data.publicaciones;const ids=data.pubAutores.filter(l=>l.autorId===user?.id).map(l=>l.pubId);return data.publicaciones.filter(p=>ids.includes(p.id))},[data,isAdmin,user]);
   const visibleAutores=useMemo(()=>isAdmin?data.autores:data.autores.filter(a=>a.id===user?.id),[data,isAdmin,user]);
@@ -919,7 +919,7 @@ export default function App(){
       <div style={{background:"white",borderBottom:"1px solid #f1f5f9",padding:"10px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:5}}>
         <div style={{display:"flex",alignItems:"center",gap:10,minWidth:0}}>
           {/* Hamburguesa solo en móvil */}
-          <button onClick={()=>setMobileMenuOpen(o=>!o)} style={{display:"none",padding:6,borderRadius:8,border:"none",background:C1Bg,cursor:"pointer",color:C1,flexShrink:0}} className="hamburger-btn"><Menu size={18}/></button>
+          {isMobile&&<button onClick={()=>setMobileMenuOpen(o=>!o)} style={{padding:6,borderRadius:8,border:"none",background:C1Bg,cursor:"pointer",color:C1,flexShrink:0,display:"flex",alignItems:"center"}}><Menu size={18}/></button>}
           <style>{`@media(max-width:767px){.hamburger-btn{display:flex!important}.header-title{font-size:13px!important}.header-sub{display:none!important}}`}</style>
           <div style={{minWidth:0}}>
             <h2 className="header-title" style={{fontSize:15,fontWeight:700,color:P.navy,margin:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{view==="pubs"?(isAdmin?"Todas las Publicaciones":"Mis Publicaciones"):view==="dashboard"?"Dashboard":view==="autores"?"Por Autor":view==="indexacion"?"Indexación":view==="registro"?"Registro":view==="docentes"?"Docentes":"Panel"}</h2>
