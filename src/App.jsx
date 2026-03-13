@@ -111,47 +111,51 @@ function exportWord(autor,pubs,links,filtros={}){
   const pubRows=aP.map((p,i)=>{
     const idx=[p.indexacion1,p.indexacion2,p.indexacion3].filter(Boolean).join(", ")||"—";
     const ec=p.estadoPublicacion==="Publicado"?"#047857":p.estadoPublicacion==="Aceptado"?"#0369a1":"#a16207";
-    const doiCell=p.doi?`<a href="https://doi.org/${p.doi}" style="color:#0369a1;font-size:9px;word-break:break-all;">doi.org/${p.doi}</a>`:"—";
-    const urlCell=p.url?`<a href="${p.url}" style="color:#0369a1;font-size:9px;word-break:break-all;">Ver publicación ↗</a>`:"—";
-    const evCell=p.evidencia?`<a href="${p.evidencia}" style="color:#6d28d9;font-size:9px;word-break:break-all;">Ver evidencia ↗</a>`:"—";
-    return`<tr>
-      <td style="padding:4px 5px;border:1px solid #d1d5db;text-align:center;font-weight:bold;color:${C1};font-size:10px;white-space:nowrap;">${i+1}</td>
-      <td style="padding:4px 5px;border:1px solid #d1d5db;font-size:9px;max-width:160px;"><strong style="font-size:9px;">${p.titulo}</strong>${p.autoresExternos?`<br/><span style="font-size:8px;color:#6d28d9;">+ ${p.autoresExternos}</span>`:""}</td>
-      <td style="padding:4px 5px;border:1px solid #d1d5db;font-size:9px;white-space:nowrap;">${p.tipoPublicacion||"—"}</td>
-      <td style="padding:4px 5px;border:1px solid #d1d5db;font-size:9px;color:${ec};font-weight:600;white-space:nowrap;">${p.estadoPublicacion||"—"}</td>
-      <td style="padding:4px 5px;border:1px solid #d1d5db;font-size:9px;text-align:center;font-weight:bold;">${p.cuartil&&p.cuartil!=="N/A"?p.cuartil:"—"}</td>
-      <td style="padding:4px 5px;border:1px solid #d1d5db;font-size:9px;">${p.revista||"—"}</td>
-      <td style="padding:4px 5px;border:1px solid #d1d5db;font-size:9px;">${p.fechaPublicacion||"—"}</td>
-      <td style="padding:4px 5px;border:1px solid #d1d5db;font-size:9px;">${idx}</td>
-      <td style="padding:4px 5px;border:1px solid #d1d5db;font-size:9px;">${doiCell}</td>
-      <td style="padding:4px 5px;border:1px solid #d1d5db;font-size:9px;">${urlCell}</td>
-      <td style="padding:4px 5px;border:1px solid #d1d5db;font-size:9px;">${evCell}</td>
-      <td style="padding:4px 5px;border:1px solid #d1d5db;font-size:9px;text-align:center;white-space:nowrap;">${p.registrado==="Sí"?"✓ Sí":"✗ No"}</td>
+    const doiCell=p.doi?`<a href="https://doi.org/${p.doi}" style="color:#0369a1;font-size:8px;word-break:break-all;">doi.org/${p.doi}</a>`:"—";
+    const urlCell=p.url?`<a href="${p.url}" style="color:#0369a1;font-size:8px;word-break:break-all;">Ver publicación ↗</a>`:"—";
+    const evCell=p.evidencia?`<a href="${p.evidencia}" style="color:#6d28d9;font-size:8px;word-break:break-all;font-weight:bold;">📁 Ver en OneDrive ↗</a>`:"—";
+    const rowBg=i%2===0?"#ffffff":"#f9fafb";
+    return`<tr style="background:${rowBg};">
+      <td style="padding:4px 4px;border:1px solid #d1d5db;text-align:center;font-weight:bold;color:${C1};font-size:9px;white-space:nowrap;">${i+1}</td>
+      <td style="padding:4px 4px;border:1px solid #d1d5db;font-size:8.5px;word-wrap:break-word;overflow-wrap:break-word;"><strong>${p.titulo}</strong>${p.autoresExternos?`<br/><span style="font-size:8px;color:#6d28d9;">+ ${p.autoresExternos}</span>`:""}</td>
+      <td style="padding:4px 4px;border:1px solid #d1d5db;font-size:8.5px;">${p.tipoPublicacion||"—"}</td>
+      <td style="padding:4px 4px;border:1px solid #d1d5db;font-size:8.5px;color:${ec};font-weight:600;">${p.estadoPublicacion||"—"}</td>
+      <td style="padding:4px 4px;border:1px solid #d1d5db;font-size:8.5px;text-align:center;font-weight:bold;">${p.cuartil&&p.cuartil!=="N/A"?p.cuartil:"—"}</td>
+      <td style="padding:4px 4px;border:1px solid #d1d5db;font-size:8.5px;word-wrap:break-word;">${p.revista||"—"}</td>
+      <td style="padding:4px 4px;border:1px solid #d1d5db;font-size:8.5px;white-space:nowrap;">${p.fechaPublicacion||"—"}</td>
+      <td style="padding:4px 4px;border:1px solid #d1d5db;font-size:8.5px;">${idx}</td>
+      <td style="padding:4px 4px;border:1px solid #d1d5db;font-size:8.5px;">${doiCell}</td>
+      <td style="padding:4px 4px;border:1px solid #d1d5db;font-size:8.5px;">${urlCell}</td>
+      <td style="padding:4px 4px;border:1px solid #d1d5db;font-size:8.5px;">${evCell}</td>
+      <td style="padding:4px 4px;border:1px solid #d1d5db;font-size:8.5px;text-align:center;white-space:nowrap;">${p.registrado==="Sí"?"✓ Sí":"✗ No"}</td>
     </tr>`}).join("");
   const tipoRes={};aP.forEach(p=>{const t=p.tipoPublicacion||"Otro";tipoRes[t]=(tipoRes[t]||0)+1});
   const tipoRows=Object.entries(tipoRes).map(([t,c])=>`<tr><td style="padding:5px 8px;border:1px solid #d1d5db;font-size:11px;">${t}</td><td style="padding:5px 8px;border:1px solid #d1d5db;font-size:11px;text-align:center;font-weight:700;">${c}</td></tr>`).join("");
   const autorLinks=[autor.orcid?`ORCID: ${autor.orcid}`:"",autor.scopusId?`Scopus ID: ${autor.scopusId}`:"",autor.scholarId?`Scholar: ${autor.scholarId}`:""].filter(Boolean).join(" · ");
-  const html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><style>@page Section1{size:842pt 595pt;mso-page-orientation:landscape;margin:1.5cm 2cm}body{font-family:Arial,sans-serif;margin:0;padding:0;color:#1e293b;font-size:11px;mso-element:para-border-div}.hb{border-bottom:3px solid ${C1};padding-bottom:10px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center}.lt{font-size:14px;font-weight:bold;color:${C1};letter-spacing:1px}.ls{font-size:10px;color:#64748b}h1{font-size:18px;color:${C1};text-align:center;margin:0 0 4px;border:none}h2{font-size:12px;color:${NAVY};border-bottom:2px solid ${C1};padding-bottom:4px;margin:20px 0 8px;text-transform:uppercase;letter-spacing:.5px}table{width:100%;border-collapse:collapse;margin:6px 0;font-size:10px}th{background:${C1};color:white;text-align:left;padding:5px 5px;border:1px solid ${C1};font-size:9px;text-transform:uppercase;letter-spacing:.3px}.kt td{text-align:center;padding:8px;border:1px solid #d1d5db}.kn{font-size:20px;font-weight:bold}.ft{margin-top:30px;text-align:center;color:#94a3b8;font-size:9px;border-top:1px solid #e2e8f0;padding-top:10px}.ib{background:${C1Bg};border-left:4px solid ${C1};padding:8px 12px;margin-bottom:12px;border-radius:0 6px 6px 0}.ir{display:flex;gap:6px;margin-bottom:3px;font-size:10px}.il{font-weight:700;color:#475569;min-width:140px}.iv{color:#1e293b}</style></head><body style="mso-section-properties:url('#Section1')">
+  const fotoHtml=autor.fotoUrl?`<img src="${autor.fotoUrl}" style="width:70px;height:70px;border-radius:50%;object-fit:cover;border:3px solid ${C1};margin-right:14px;vertical-align:middle;" alt="Foto"/>`:`<div style="width:70px;height:70px;border-radius:50%;background:${C1};color:white;display:inline-flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;margin-right:14px;vertical-align:middle;letter-spacing:1px;">${(autor.nombres||"U").charAt(0)}${(autor.apellidos||"").charAt(0)}</div>`;
+  const html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><style>@page Section1{size:842pt 595pt;mso-page-orientation:landscape;margin:1.5cm 2cm}body{font-family:Arial,sans-serif;margin:0;padding:0;color:#1e293b;font-size:11px;mso-element:para-border-div}.hb{border-bottom:3px solid ${C1};padding-bottom:10px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center}.lt{font-size:14px;font-weight:bold;color:${C1};letter-spacing:1px}.ls{font-size:10px;color:#64748b}h1{font-size:18px;color:${C1};text-align:center;margin:0 0 4px;border:none}h2{font-size:12px;color:${NAVY};border-bottom:2px solid ${C1};padding-bottom:4px;margin:20px 0 8px;text-transform:uppercase;letter-spacing:.5px}table{width:100%;border-collapse:collapse;margin:6px 0;font-size:10px}th{background:${C1};color:white;text-align:left;padding:5px 5px;border:1px solid ${C1};font-size:9px;text-transform:uppercase;letter-spacing:.3px}.kt td{text-align:center;padding:8px;border:1px solid #d1d5db}.kn{font-size:20px;font-weight:bold}.ft{margin-top:30px;text-align:center;color:#94a3b8;font-size:9px;border-top:1px solid #e2e8f0;padding-top:10px}.ib{background:${C1Bg};border-left:4px solid ${C1};padding:8px 12px;margin-bottom:12px;border-radius:0 6px 6px 0}.ir{display:flex;gap:6px;margin-bottom:3px;font-size:10px}.il{font-weight:700;color:#475569;min-width:140px}.iv{color:#1e293b}.mtx-tbl{table-layout:fixed;width:100%;font-size:9px}.mtx-tbl th{padding:5px 4px;font-size:8.5px;white-space:normal;word-wrap:break-word}.mtx-tbl td{padding:4px 4px;border:1px solid #d1d5db;font-size:8.5px;word-wrap:break-word;overflow-wrap:break-word;vertical-align:top}</style></head><body style="mso-section-properties:url('#Section1')">
   <div class="hb"><div><div class="lt">UNIVERSIDAD DE OTAVALO</div><div class="ls">Facultad de Ciencias Sociales y Pedagógicas</div><div class="ls">Coordinación de Investigación</div></div><div style="text-align:right"><div style="font-size:10px;color:#94a3b8;">PubTracker · Sistema de Gestión de Publicaciones</div><div style="font-size:10px;color:#94a3b8;">${fechaStr}</div></div></div>
-  <div style="text-align:center;margin-bottom:16px;"><h1>Plan Individual de Publicaciones</h1><p style="font-size:14px;font-weight:bold;color:${NAVY};margin:4px 0;">${autor.nombres} ${autor.apellidos}</p>${autor.tituloAcademico?`<p style="font-size:11px;color:#64748b;margin:2px 0;">${autor.tituloAcademico}</p>`:""}<p style="font-size:11px;color:#64748b;margin:2px 0;">${autor.email||""}</p>${autorLinks?`<p style="font-size:10px;color:#94a3b8;margin:2px 0;">${autorLinks}</p>`:""}<div style="display:flex;justify-content:center;gap:10px;margin-top:6px;">${autor.orcid?`<a href="https://orcid.org/${autor.orcid}" style="color:#a6ce39;font-size:10px;font-weight:bold;">ORCID ↗</a>`:""} ${autor.scopusId?`<a href="https://www.scopus.com/authid/detail.uri?authorId=${autor.scopusId}" style="color:#e9711c;font-size:10px;font-weight:bold;">Scopus ↗</a>`:""} ${autor.scholarId?`<a href="https://scholar.google.com/citations?user=${autor.scholarId}" style="color:#4285F4;font-size:10px;font-weight:bold;">Scholar ↗</a>`:""} ${autor.researchgate?`<a href="${autor.researchgate}" style="color:#00CCBB;font-size:10px;font-weight:bold;">ResearchGate ↗</a>`:""} ${autor.linkedin?`<a href="${autor.linkedin}" style="color:#0A66C2;font-size:10px;font-weight:bold;">LinkedIn ↗</a>`:""}</div></div>
+  <div style="text-align:center;margin-bottom:16px;">
+    <div style="display:inline-flex;align-items:center;justify-content:center;margin-bottom:10px;">${fotoHtml}<div style="text-align:left"><h1 style="text-align:left;margin:0 0 3px;">${autor.nombres} ${autor.apellidos}</h1>${autor.tituloAcademico?`<p style="font-size:12px;color:#64748b;margin:2px 0;">${autor.tituloAcademico}</p>`:""}<p style="font-size:11px;color:#64748b;margin:2px 0;">${autor.email||""}</p>${autorLinks?`<p style="font-size:10px;color:#94a3b8;margin:2px 0;">${autorLinks}</p>`:""}</div></div>
+    <div style="display:flex;justify-content:center;gap:10px;margin-top:6px;">${autor.orcid?`<a href="https://orcid.org/${autor.orcid}" style="color:#a6ce39;font-size:10px;font-weight:bold;">ORCID ↗</a>`:""} ${autor.scopusId?`<a href="https://www.scopus.com/authid/detail.uri?authorId=${autor.scopusId}" style="color:#e9711c;font-size:10px;font-weight:bold;">Scopus ↗</a>`:""} ${autor.scholarId?`<a href="https://scholar.google.com/citations?user=${autor.scholarId}" style="color:#4285F4;font-size:10px;font-weight:bold;">Scholar ↗</a>`:""} ${autor.researchgate?`<a href="${autor.researchgate}" style="color:#00CCBB;font-size:10px;font-weight:bold;">ResearchGate ↗</a>`:""} ${autor.linkedin?`<a href="${autor.linkedin}" style="color:#0A66C2;font-size:10px;font-weight:bold;">LinkedIn ↗</a>`:""}</div></div>
   <div class="ib"><div class="ir"><span class="il">Período:</span><span class="iv">${periodo}</span></div><div class="ir"><span class="il">Fecha del informe:</span><span class="iv">${fechaStr}</span></div><div class="ir"><span class="il">Total de registros:</span><span class="iv">${aP.length} publicaciones${filtros.tipo?` · Tipo: ${filtros.tipo}`:""}</span></div>${autor.departamento?`<div class="ir"><span class="il">Departamento:</span><span class="iv">${autor.departamento}</span></div>`:""}</div>
   <h2>1. Resumen de Producción Científica</h2>
   <table class="kt"><tr><td><div class="kn" style="color:${C1};">${aP.length}</div><div style="font-size:10px;color:#64748b;">Total</div></td><td><div class="kn" style="color:#047857;">${pub}</div><div style="font-size:10px;color:#64748b;">Publicadas</div></td><td><div class="kn" style="color:#0369a1;">${enProceso}</div><div style="font-size:10px;color:#64748b;">En Proceso</div></td><td><div class="kn" style="color:#a16207;">${sc}</div><div style="font-size:10px;color:#64748b;">Scopus</div></td><td><div class="kn" style="color:#6d28d9;">${wos}</div><div style="font-size:10px;color:#64748b;">WoS</div></td><td><div class="kn" style="color:#0891b2;">${latindex}</div><div style="font-size:10px;color:#64748b;">Latindex</div></td></tr></table>
   <h2>2. Distribución por Tipo</h2>
   <table><tr><th style="width:70%;">Tipo de Publicación</th><th style="width:30%;text-align:center;">Cantidad</th></tr>${tipoRows}<tr style="background:${C1Bg};font-weight:bold;"><td style="padding:5px 8px;border:1px solid #d1d5db;font-size:11px;color:${C1};">TOTAL</td><td style="padding:5px 8px;border:1px solid #d1d5db;font-size:11px;text-align:center;color:${C1};">${aP.length}</td></tr></table>
   <h2>3. Detalle en Matriz</h2>
-  <table style="table-layout:fixed;width:100%;"><tr>
+  <table class="mtx-tbl"><tr>
     <th style="width:3%;text-align:center;">#</th>
-    <th style="width:22%;">Título</th>
-    <th style="width:9%;">Tipo</th>
-    <th style="width:7%;">Estado</th>
+    <th style="width:24%;">Título / Autores externos</th>
+    <th style="width:10%;">Tipo</th>
+    <th style="width:8%;">Estado</th>
     <th style="width:3%;text-align:center;">Q</th>
-    <th style="width:13%;">Revista/Editorial</th>
-    <th style="width:7%;">Fecha</th>
-    <th style="width:11%;">Indexación</th>
-    <th style="width:9%;">DOI</th>
-    <th style="width:8%;">URL Publicación</th>
-    <th style="width:9%;">Evidencia</th>
+    <th style="width:14%;">Revista/Editorial</th>
+    <th style="width:8%;">Fecha</th>
+    <th style="width:12%;">Indexación</th>
+    <th style="width:8%;">DOI</th>
+    <th style="width:7%;">URL</th>
+    <th style="width:8%;">OneDrive</th>
     <th style="width:5%;text-align:center;">Reg.</th>
   </tr>${pubRows}</table>
   <h2>4. Fichas Individuales</h2>
@@ -209,9 +213,10 @@ function exportWordConsolidado(pubs, autores, links, filtros={}){
       return`<tr><td style="padding:4px 6px;border:1px solid #e2e8f0;text-align:center;color:${C1};font-size:10px;font-weight:700;">${i+1}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;"><strong>${p.titulo}</strong></td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;">${p.tipoPublicacion||"—"}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;color:${ec};font-weight:600;">${p.estadoPublicacion||"—"}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;text-align:center;font-weight:bold;">${p.cuartil&&p.cuartil!=="N/A"?p.cuartil:"—"}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;">${idx}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;text-align:center;">${urlCell}</td></tr>`;
     }).join("");
     const aLinks=[autor.orcid?`<a href="https://orcid.org/${autor.orcid}" style="color:#a6ce39;font-size:9px;font-weight:bold;">ORCID</a>`:"",autor.scopusId?`<a href="https://www.scopus.com/authid/detail.uri?authorId=${autor.scopusId}" style="color:#e9711c;font-size:9px;font-weight:bold;">Scopus</a>`:"",autor.scholarId?`<a href="https://scholar.google.com/citations?user=${autor.scholarId}" style="color:#4285F4;font-size:9px;font-weight:bold;">Scholar</a>`:""].filter(Boolean).join(" · ");
+    const fotoTag=autor.fotoUrl?`<img src="${autor.fotoUrl}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,0.5);margin-right:10px;vertical-align:middle;" alt=""/>`:""
     return`<div style="margin-bottom:20px;border:1px solid #e2e8f0;border-radius:6px;overflow:hidden;page-break-inside:avoid;">
       <div style="background:${C1};color:white;padding:7px 14px;display:flex;justify-content:space-between;align-items:center;">
-        <div><strong style="font-size:12px;">${autor.nombres} ${autor.apellidos}</strong>${autor.tituloAcademico?` <span style="font-size:10px;opacity:.8;">· ${autor.tituloAcademico}</span>`:""}</div>
+        <div style="display:flex;align-items:center;">${fotoTag}<div><strong style="font-size:12px;">${autor.nombres} ${autor.apellidos}</strong>${autor.tituloAcademico?` <span style="font-size:10px;opacity:.8;">· ${autor.tituloAcademico}</span>`:""}</div></div>
         <div style="font-size:10px;opacity:.8;">${aP.length} publicaciones${aLinks?` &nbsp;|&nbsp; ${aLinks}`:""}</div>
       </div>
       <table style="margin:0;font-size:10px;width:100%;border-collapse:collapse;">
@@ -635,7 +640,7 @@ function DetailModal({pub, autores, links, onClose, onEdit, onStatus}){
         <Row label="Registrado Dir. Inv.">{pub.registrado==="Sí"?<span style={{color:P.green,fontWeight:700}}>✓ Sí</span>:<span style={{color:"#94a3b8"}}>✗ No</span>}</Row>
         {pub.doi&&<Row label="DOI"><a href={`https://doi.org/${pub.doi}`} target="_blank" rel="noreferrer" style={{color:"#c2410c",fontWeight:600,fontSize:12,wordBreak:"break-all"}}>{pub.doi} ↗</a></Row>}
         {pub.url&&<Row label="URL Publicación"><a href={pub.url} target="_blank" rel="noreferrer" style={{color:"#1d4ed8",fontWeight:600,fontSize:12,wordBreak:"break-all"}}>{pub.url} ↗</a></Row>}
-        {pub.evidencia&&<Row label="Evidencia / Respaldo"><a href={pub.evidencia} target="_blank" rel="noreferrer" style={{color:"#7c3aed",fontWeight:600,fontSize:12,wordBreak:"break-all"}}>Ver carpeta de respaldo ↗</a></Row>}
+        {pub.evidencia&&<Row label="OneDrive / Respaldo"><a href={pub.evidencia} target="_blank" rel="noreferrer" style={{color:"#7c3aed",fontWeight:600,fontSize:12,wordBreak:"break-all",display:"inline-flex",alignItems:"center",gap:4}}>📁 Ver carpeta OneDrive ↗</a></Row>}
       </div>
 
       {/* Footer acciones */}
@@ -896,16 +901,17 @@ export default function App(){
           </div>
           <div style={{background:"white",borderRadius:12,padding:14,border:"1px solid #f1f5f9"}}>
             <h3 style={{fontSize:12,fontWeight:700,color:P.navy,margin:"0 0 10px"}}>Ranking Autores</h3>
-            <div>{stats.autorRank.filter(a=>a.count>0).slice(0,8).map((a,i)=><div key={a.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:"1px solid #f8fafc"}}>
+            <div>{stats.autorRank.filter(a=>a.count>0).slice(0,8).map((a,i)=>{const photoSrc=a.fotoUrl||`https://ui-avatars.com/api/?name=${encodeURIComponent(a.nombres+" "+a.apellidos)}&background=47090A&color=fff&size=64&bold=true`;return<div key={a.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:"1px solid #f8fafc"}}>
               <div style={{display:"flex",alignItems:"center",gap:8}}>
-                <span style={{width:20,height:20,borderRadius:"50%",background:i<3?C1Bg:"#f1f5f9",color:i<3?C1:"#94a3b8",fontSize:10,fontWeight:700,display:"inline-flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{i+1}</span>
+                <span style={{width:18,height:18,borderRadius:"50%",background:i<3?C1Bg:"#f1f5f9",color:i<3?C1:"#94a3b8",fontSize:9,fontWeight:700,display:"inline-flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{i+1}</span>
+                <img src={photoSrc} alt="" style={{width:28,height:28,borderRadius:"50%",objectFit:"cover",border:`2px solid ${i<3?C1+"40":"#e2e8f0"}`,flexShrink:0}} onError={e=>{e.target.src=`https://ui-avatars.com/api/?name=${encodeURIComponent(a.nombres+" "+a.apellidos)}&background=47090A&color=fff&size=64&bold=true`}}/>
                 <span style={{fontSize:12,fontWeight:i<3?700:500,color:P.navy}}>{a.apellidos}, {a.nombres.split(" ")[0]}</span>
               </div>
               <div style={{display:"flex",gap:6,alignItems:"center"}}>
                 <Bdg c={C1}>{a.count}</Bdg>
                 {a.scopus>0&&<Bdg c={P.gold} bg={P.goldBg}>{a.scopus} Sc</Bdg>}
               </div>
-            </div>)}</div>
+            </div>})}</div>
           </div>
         </div>}
 
@@ -929,7 +935,7 @@ export default function App(){
                     <h4 onClick={()=>setDetailPub(p)} style={{fontSize:12,fontWeight:600,color:P.navy,margin:0,lineHeight:1.4,cursor:"pointer",flex:1}} title="Ver detalle">{p.titulo}</h4>
                     {p.doi&&<a href={`https://doi.org/${p.doi}`} target="_blank" rel="noreferrer" onClick={e=>e.stopPropagation()} title={`DOI: ${p.doi}`} style={{display:"inline-flex",alignItems:"center",flexShrink:0,padding:"2px 5px",borderRadius:5,background:"#fff7ed",border:"1px solid #fed7aa",color:"#c2410c",textDecoration:"none"}}><ExternalLink size={10}/></a>}
                     {p.url&&<a href={p.url} target="_blank" rel="noreferrer" onClick={e=>e.stopPropagation()} title="Ver publicación" style={{display:"inline-flex",alignItems:"center",flexShrink:0,padding:"2px 5px",borderRadius:5,background:"#eff6ff",border:"1px solid #bfdbfe",color:"#1d4ed8",textDecoration:"none"}}><ExternalLink size={10}/></a>}
-                    {p.evidencia&&<a href={p.evidencia} target="_blank" rel="noreferrer" onClick={e=>e.stopPropagation()} title="Ver evidencia / respaldo" style={{display:"inline-flex",alignItems:"center",flexShrink:0,padding:"2px 5px",borderRadius:5,background:"#f5f3ff",border:"1px solid #ddd6fe",color:"#7c3aed",textDecoration:"none"}}><ExternalLink size={10}/></a>}
+                    {p.evidencia&&<a href={p.evidencia} target="_blank" rel="noreferrer" onClick={e=>e.stopPropagation()} title="Ver evidencia OneDrive" style={{display:"inline-flex",alignItems:"center",flexShrink:0,padding:"2px 6px",borderRadius:5,background:"#f5f3ff",border:"1px solid #ddd6fe",color:"#7c3aed",textDecoration:"none",fontSize:9,fontWeight:700,gap:3}}><ExternalLink size={9}/>OD</a>}
                   </div>
                   <div style={{display:"flex",alignItems:"center",gap:4,flexWrap:"wrap",marginBottom:3}}>
                     <TipoBdg tipo={p.tipoPublicacion}/>
@@ -941,7 +947,7 @@ export default function App(){
                     <EBdg e={p.estadoPublicacion}/><QBdg q={p.cuartil}/>
                     {p.doi&&<a href={`https://doi.org/${p.doi}`} target="_blank" rel="noreferrer" title={`DOI: ${p.doi}`} style={{display:"inline-flex",alignItems:"center",gap:3,padding:"2px 7px",borderRadius:6,background:"#fff7ed",border:"1px solid #fed7aa",fontSize:10,fontWeight:600,color:"#c2410c",textDecoration:"none"}}><ExternalLink size={9}/>DOI</a>}
                     {p.url&&<a href={p.url} target="_blank" rel="noreferrer" title="Ver publicación" style={{display:"inline-flex",alignItems:"center",gap:3,padding:"2px 7px",borderRadius:6,background:"#eff6ff",border:"1px solid #bfdbfe",fontSize:10,fontWeight:600,color:"#1d4ed8",textDecoration:"none"}}><ExternalLink size={9}/>URL</a>}
-                    {p.evidencia&&<a href={p.evidencia} target="_blank" rel="noreferrer" title="Ver carpeta de evidencia / respaldo" style={{display:"inline-flex",alignItems:"center",gap:3,padding:"2px 7px",borderRadius:6,background:"#f5f3ff",border:"1px solid #ddd6fe",fontSize:10,fontWeight:600,color:"#7c3aed",textDecoration:"none"}}><ExternalLink size={9}/>Evidencia</a>}
+                    {p.evidencia&&<a href={p.evidencia} target="_blank" rel="noreferrer" title="Ver carpeta OneDrive de evidencia" style={{display:"inline-flex",alignItems:"center",gap:3,padding:"2px 7px",borderRadius:6,background:"#f5f3ff",border:"1px solid #ddd6fe",fontSize:10,fontWeight:600,color:"#7c3aed",textDecoration:"none"}}><ExternalLink size={9}/>OneDrive</a>}
                   </div>
                 </div>
                 <div style={{display:"flex",gap:4,flexShrink:0}}>
@@ -961,9 +967,13 @@ export default function App(){
           {stats.autorRank.filter(a=>a.count>0).map(a=>{
             const pubs=data.publicaciones.filter(p=>data.pubAutores.some(l=>l.pubId===p.id&&l.autorId===a.id));
             const fp=fAnio?pubs.filter(p=>parseYear(p.fechaPublicacion)===parseInt(fAnio)):pubs;
+            const photoSrc=a.fotoUrl||`https://ui-avatars.com/api/?name=${encodeURIComponent(a.nombres+" "+a.apellidos)}&background=47090A&color=fff&size=128&bold=true`;
             return<div key={a.id} style={{background:"white",borderRadius:12,padding:14,border:"1px solid #f1f5f9"}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-                <div><h3 style={{fontSize:13,fontWeight:700,color:P.navy,margin:0}}>{a.nombres} {a.apellidos}</h3><p style={{fontSize:10,color:"#94a3b8",margin:0}}>{a.email}</p></div>
+                <div style={{display:"flex",alignItems:"center",gap:10}}>
+                  <img src={photoSrc} alt="" style={{width:40,height:40,borderRadius:"50%",objectFit:"cover",border:`2px solid ${C1}30`,flexShrink:0}} onError={e=>{e.target.src=`https://ui-avatars.com/api/?name=${encodeURIComponent(a.nombres+" "+a.apellidos)}&background=47090A&color=fff&size=128&bold=true`}}/>
+                  <div><h3 style={{fontSize:13,fontWeight:700,color:P.navy,margin:0}}>{a.nombres} {a.apellidos}</h3><p style={{fontSize:10,color:"#94a3b8",margin:0}}>{a.email}{a.tituloAcademico&&<span style={{marginLeft:6,fontWeight:600,color:C1}}>{a.tituloAcademico}</span>}</p></div>
+                </div>
                 <div style={{display:"flex",gap:6,alignItems:"center"}}>
                   <Bdg c={C1}>{fp.length} pubs{fAnio?` (${fAnio})`:""}</Bdg>
                   {a.scopus>0&&<Bdg c={P.gold} bg={P.goldBg}>{a.scopus} Scopus</Bdg>}
@@ -975,7 +985,8 @@ export default function App(){
                   <div style={{flex:1,minWidth:0}}><p style={{fontSize:11,fontWeight:500,color:P.navy,margin:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.titulo}</p>
                   <div style={{display:"flex",gap:4,marginTop:2,alignItems:"center"}}><TipoBdg tipo={p.tipoPublicacion}/>
                     {p.doi&&<a href={`https://doi.org/${p.doi}`} target="_blank" rel="noreferrer" style={{display:"inline-flex",alignItems:"center",gap:2,padding:"1px 5px",borderRadius:5,background:"#fff7ed",border:"1px solid #fed7aa",fontSize:9,fontWeight:600,color:"#c2410c",textDecoration:"none"}}><ExternalLink size={8}/>DOI</a>}
-                    {p.url&&<a href={p.url} target="_blank" rel="noreferrer" style={{display:"inline-flex",alignItems:"center",gap:2,padding:"1px 5px",borderRadius:5,background:"#eff6ff",border:"1px solid #bfdbfe",fontSize:9,fontWeight:600,color:"#1d4ed8",textDecoration:"none"}}><ExternalLink size={8}/>Evidencia</a>}
+                    {p.url&&<a href={p.url} target="_blank" rel="noreferrer" style={{display:"inline-flex",alignItems:"center",gap:2,padding:"1px 5px",borderRadius:5,background:"#eff6ff",border:"1px solid #bfdbfe",fontSize:9,fontWeight:600,color:"#1d4ed8",textDecoration:"none"}}><ExternalLink size={8}/>URL</a>}
+                    {p.evidencia&&<a href={p.evidencia} target="_blank" rel="noreferrer" style={{display:"inline-flex",alignItems:"center",gap:2,padding:"1px 5px",borderRadius:5,background:"#f5f3ff",border:"1px solid #ddd6fe",fontSize:9,fontWeight:600,color:"#7c3aed",textDecoration:"none"}}><ExternalLink size={8}/>OneDrive</a>}
                   </div></div>
                   <div style={{display:"flex",gap:4,marginLeft:8,flexShrink:0}}><EBdg e={p.estadoPublicacion}/><QBdg q={p.cuartil}/></div>
                 </div>)}
@@ -1033,9 +1044,10 @@ export default function App(){
           <div style={{background:"white",borderRadius:12,border:"1px solid #f1f5f9",overflow:"hidden"}}>
             <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
               <thead><tr style={{borderBottom:"2px solid #f1f5f9",background:"#fafbfc"}}>
-                {["NOMBRES","APELLIDOS","EMAIL","PUBS","SCOPUS","ACCIONES"].map(h=><th key={h} style={{textAlign:h==="PUBS"||h==="SCOPUS"?"center":"left",padding:"10px 12px",color:"#94a3b8",fontSize:10,fontWeight:700}}>{h}</th>)}
+                {["FOTO","NOMBRES","APELLIDOS","EMAIL","PUBS","SCOPUS","ACCIONES"].map(h=><th key={h} style={{textAlign:h==="PUBS"||h==="SCOPUS"||h==="FOTO"?"center":"left",padding:"10px 12px",color:"#94a3b8",fontSize:10,fontWeight:700}}>{h}</th>)}
               </tr></thead>
-              <tbody>{stats.autorRank.map(a=><tr key={a.id} style={{borderBottom:"1px solid #f8fafc"}}>
+              <tbody>{stats.autorRank.map(a=>{const photoSrc=a.fotoUrl||`https://ui-avatars.com/api/?name=${encodeURIComponent(a.nombres+" "+a.apellidos)}&background=47090A&color=fff&size=64&bold=true`;return<tr key={a.id} style={{borderBottom:"1px solid #f8fafc"}}>
+                <td style={{padding:"8px 12px",textAlign:"center"}}><img src={photoSrc} alt="" style={{width:32,height:32,borderRadius:"50%",objectFit:"cover",border:`2px solid ${C1}20`}} onError={e=>{e.target.src=`https://ui-avatars.com/api/?name=${encodeURIComponent(a.nombres+" "+a.apellidos)}&background=47090A&color=fff&size=64&bold=true`}}/></td>
                 <td style={{padding:"10px 12px",fontWeight:600,color:P.navy}}>{a.nombres}</td>
                 <td style={{padding:"10px 12px",color:"#475569"}}>{a.apellidos}</td>
                 <td style={{padding:"10px 12px",color:"#94a3b8"}}>{a.email||"—"}</td>
@@ -1045,7 +1057,7 @@ export default function App(){
                   <Btn small icon={FileDown} onClick={()=>exportWord(a,data.publicaciones,data.pubAutores)}>Word</Btn>
                   <button onClick={()=>setDeleteAutor(a)} style={{padding:"4px 8px",borderRadius:8,border:"1px solid #ffe4e6",background:"#fff5f5",cursor:"pointer",fontSize:11,color:P.rose,display:"inline-flex",alignItems:"center",gap:4,fontWeight:600}}><Trash2 size={11}/>Eliminar</button>
                 </div></td>
-              </tr>)}</tbody>
+              </tr>})}</tbody>
             </table>
           </div>
         </div>}
