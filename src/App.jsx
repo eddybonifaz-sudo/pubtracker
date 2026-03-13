@@ -449,7 +449,10 @@ function ProfileModal({user, autores, onSave, onClose, isAdmin, allAutores, onPh
             <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>DEPARTAMENTO / CARRERA</label><Inp value={depto} onChange={setDepto} placeholder="Ej: Educación Básica" icon={GraduationCap}/></div>
             <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>TÍTULO ACADÉMICO</label><Inp value={titulo} onChange={setTitulo} placeholder="Ej: Dr., Mg., MSc."/></div>
           </div>
-          <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>TELÉFONO / WHATSAPP</label><Inp value={telefono} onChange={setTelefono} placeholder="+593 98 765 4321" icon={Phone}/></div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+            <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>TELÉFONO / WHATSAPP</label><Inp value={telefono} onChange={setTelefono} placeholder="+593 98 765 4321" icon={Phone}/></div>
+            <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>HORAS DE INVESTIGACIÓN <span style={{fontWeight:400,color:"#94a3b8"}}>(h/semana)</span></label><Inp value={horasInv} onChange={setHorasInv} placeholder="Ej: 8" icon={Clock}/></div>
+          </div>
 
           {/* ── FOTO: subida a Drive ── */}
           <div>
@@ -472,7 +475,6 @@ function ProfileModal({user, autores, onSave, onClose, isAdmin, allAutores, onPh
           </div>
 
           <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>LÍNEAS DE INVESTIGACIÓN / BIO</label><textarea value={bio} onChange={e=>setBio(e.target.value)} placeholder="Describe tus áreas de investigación, intereses académicos…" rows={3} style={{width:"100%",padding:"9px 12px",borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:13,color:"#1e293b",background:"white",outline:"none",boxSizing:"border-box",resize:"vertical",fontFamily:"inherit"}}/></div>
-          <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>HORAS DE INVESTIGACIÓN <span style={{fontWeight:400,color:"#94a3b8"}}>(horas/semana asignadas)</span></label><Inp value={horasInv} onChange={setHorasInv} placeholder="Ej: 8" icon={Clock}/></div>
         </div>}
 
         {/* ── Tab Perfiles Académicos ── */}
