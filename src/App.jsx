@@ -787,6 +787,8 @@ export default function App(){
   const[deletePub,setDeletePub]=useState(null);
   const[deleteAutor,setDeleteAutor]=useState(null);
   const[sideOpen,setSideOpen]=useState(true);
+  const[mobileMenuOpen,setMobileMenuOpen]=useState(false);
+  const[isMobile,setIsMobile]=useState(()=>typeof window!=="undefined"&&window.innerWidth<768);
   const[toast,setToast]=useState(null);
   const[loading,setLoading]=useState(false);
   const[connected,setConnected]=useState(false);
@@ -800,6 +802,17 @@ export default function App(){
   const isAdmin=user?.rol==="admin";
   const loadData=useCallback(async()=>{if(!API_URL)return;setLoading(true);const r=await apiGet("getAll");if(r&&!r.error&&r.publicaciones){setData({publicaciones:r.publicaciones,autores:r.autores||[],pubAutores:r.pubAutores||[]});setConnected(true)}setLoading(false)},[]);
   useEffect(()=>{if(user)loadData()},[user,loadData]);
+  useEffect(()=>{
+    const fn=()=>{const m=window.innerWidth<768;setIsMobile(m);if(m)setSideOpen(false);};
+    fn();
+    window.addEventListener("resize",fn);
+    return()=>window.removeEventListener("resize",fn);
+  },[]);
+  useEffect(()=>{
+    let m=document.querySelector('meta[name="viewport"]');
+    if(!m){m=document.createElement("meta");m.name="viewport";document.head.appendChild(m);}
+    m.content="width=device-width,initial-scale=1,maximum-scale=1";
+  },[]);
   useEffect(()=>{let m=document.querySelector('meta[name="viewport"]');if(!m){m=document.createElement("meta");m.name="viewport";document.head.appendChild(m);}m.content="width=device-width,initial-scale=1,maximum-scale=1";},[]);
 
   const visiblePubs=useMemo(()=>{if(isAdmin)return data.publicaciones;const ids=data.pubAutores.filter(l=>l.autorId===user?.id).map(l=>l.pubId);return data.publicaciones.filter(p=>ids.includes(p.id))},[data,isAdmin,user]);
@@ -865,38 +878,29 @@ export default function App(){
     <aside style={{
       background:`linear-gradient(180deg,${NAVY} 0%,${C1} 100%)`,
       display:"flex",flexDirection:"column",overflow:"hidden",
-      // DESKTOP
-      ...(window.innerWidth>=768 ? {
-        width:sideOpen?240:56,
-        flexShrink:0,
-        position:"sticky",
-        top:0,
-        height:"100vh",
-        transition:"width .25s",
-        zIndex:10
-      } : {
-        // MÓVIL — fixed drawer, fuera del flujo
-        position:"fixed",
-        left:0,top:0,
-        width:260,
-        height:"100vh",
+      ...(isMobile ? {
+        position:"fixed",left:0,top:0,
+        width:260,height:"100vh",
         transform:mobileMenuOpen?"translateX(0)":"translateX(-100%)",
-        transition:"transform .3s",
-        zIndex:20
+        transition:"transform .3s",zIndex:20
+      } : {
+        width:sideOpen?240:56,flexShrink:0,
+        position:"sticky",top:0,height:"100vh",
+        transition:"width .25s",zIndex:10
       })
     }}>
-      {(()=>{const showFull=sideOpen||window.innerWidth<768;return(<div style={{padding:showFull?"14px 14px 10px":"14px 8px 10px",borderBottom:"1px solid rgba(255,255,255,.1)",display:"flex",alignItems:"center",gap:8,justifyContent:showFull?"flex-start":"center"}}>
+      <div style={{padding:(isMobile||sideOpen)?"14px 14px 10px":"14px 8px 10px",borderBottom:"1px solid rgba(255,255,255,.1)",display:"flex",alignItems:"center",gap:8,justifyContent:(isMobile||sideOpen)?"flex-start":"center"}}>
         <div style={{width:34,height:34,borderRadius:10,background:"rgba(255,255,255,.15)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><BookOpen size={16} style={{color:"white"}}/></div>
-        {showFull&&<div><h1 style={{fontSize:14,fontWeight:800,color:"white",margin:0,fontFamily:"'Playfair Display',serif"}}>PubTracker</h1><p style={{fontSize:8,color:"rgba(255,255,255,.5)",margin:0,letterSpacing:1}}>FCSyP · UNO</p></div>}
-      </div>);})()}
+        {(isMobile||sideOpen)&&<div><h1 style={{fontSize:14,fontWeight:800,color:"white",margin:0,fontFamily:"'Playfair Display',serif"}}>PubTracker</h1><p style={{fontSize:8,color:"rgba(255,255,255,.5)",margin:0,letterSpacing:1}}>FCSyP · UNO</p></div>}
+      </div>
       <nav style={{flex:1,padding:"8px 6px",overflowY:"auto"}}>
         {menu.map(sec=><div key={sec.title} style={{marginBottom:12}}>
-          {(sideOpen||window.innerWidth<768)&&<p style={{fontSize:9,fontWeight:800,color:sec.title==="ADMINISTRADOR"?"#fcd34d":"rgba(255,255,255,.4)",letterSpacing:1.5,padding:"0 8px",marginBottom:3}}>{sec.title}</p>}
-          {sec.items.map(it=>{const showFull=sideOpen||window.innerWidth<768;return<button key={it.id} onClick={()=>{setMobileMenuOpen(false);it.fn?it.fn():it.id==="nueva"?(setEditPub(null),setShowForm(true)):setView(it.id)}} style={{width:"100%",display:"flex",alignItems:"center",gap:8,padding:showFull?"7px 10px":"7px 0",justifyContent:showFull?"flex-start":"center",borderRadius:9,border:"none",cursor:"pointer",marginBottom:1,transition:"all .15s",background:it.action?"rgba(255,255,255,.2)":view===it.id?"rgba(255,255,255,.18)":"transparent",color:it.action?"white":view===it.id?"white":"rgba(255,255,255,.65)",fontSize:12,fontWeight:view===it.id||it.action?700:400}}><it.icon size={15}/>{showFull&&<span>{it.label}</span>}</button>})}
+          {(isMobile||sideOpen)&&<p style={{fontSize:9,fontWeight:800,color:sec.title==="ADMINISTRADOR"?"#fcd34d":"rgba(255,255,255,.4)",letterSpacing:1.5,padding:"0 8px",marginBottom:3}}>{sec.title}</p>}
+          {sec.items.map(it=>{const showFull=isMobile||sideOpen;return<button key={it.id} onClick={()=>{setMobileMenuOpen(false);it.fn?it.fn():it.id==="nueva"?(setEditPub(null),setShowForm(true)):setView(it.id)}} style={{width:"100%",display:"flex",alignItems:"center",gap:8,padding:showFull?"7px 10px":"7px 0",justifyContent:showFull?"flex-start":"center",borderRadius:9,border:"none",cursor:"pointer",marginBottom:1,transition:"all .15s",background:it.action?"rgba(255,255,255,.2)":view===it.id?"rgba(255,255,255,.18)":"transparent",color:it.action?"white":view===it.id?"white":"rgba(255,255,255,.65)",fontSize:12,fontWeight:view===it.id||it.action?700:400}}><it.icon size={15}/>{showFull&&<span>{it.label}</span>}</button>})}
         </div>)}
       </nav>
       <div style={{padding:"8px 6px",borderTop:"1px solid rgba(255,255,255,.1)"}}>
-        {(sideOpen||window.innerWidth<768)&&<div style={{padding:"7px 10px",background:"rgba(255,255,255,.1)",borderRadius:9,marginBottom:6}}>
+        {(isMobile||sideOpen)&&<div style={{padding:"7px 10px",background:"rgba(255,255,255,.1)",borderRadius:9,marginBottom:6}}>
           {isAdmin&&<div style={{display:"flex",alignItems:"center",gap:4,marginBottom:2}}><Shield size={11} style={{color:"#fcd34d"}}/><span style={{fontSize:9,fontWeight:700,color:"#fcd34d",textTransform:"uppercase",letterSpacing:1}}>Administrador</span></div>}
           <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
             {(()=>{const a=data.autores.find(x=>x.id===user.id)||user;const rawUrl=user.fotoUrl||a.fotoUrl||"";const photoSrc=rawUrl?driveImgUrl(rawUrl):avatarUrl(user.nombres,user.apellidos);return<img src={photoSrc} alt="" style={{width:36,height:36,borderRadius:"50%",objectFit:"cover",border:"2px solid rgba(255,255,255,.4)",flexShrink:0}} onError={e=>{e.target.onerror=null;e.target.src=avatarUrl(user.nombres,user.apellidos)}}/>})()}
@@ -904,8 +908,8 @@ export default function App(){
           </div>
           <button onClick={()=>setShowProfile(true)} style={{width:"100%",display:"flex",alignItems:"center",gap:5,padding:"4px 8px",borderRadius:7,border:"1px solid rgba(255,255,255,.2)",background:"rgba(255,255,255,.08)",cursor:"pointer",color:"rgba(255,255,255,.8)",fontSize:10,fontWeight:600}}><Settings size={11}/>Editar perfil</button>
         </div>}
-        <button onClick={()=>{setUser(null);setMobileMenuOpen(false)}} style={{width:"100%",display:"flex",alignItems:"center",gap:6,padding:"7px 10px",justifyContent:(sideOpen||window.innerWidth<768)?"flex-start":"center",borderRadius:9,border:"none",background:"transparent",cursor:"pointer",color:"#fca5a5",fontSize:11}}><LogOut size={14}/>{(sideOpen||window.innerWidth<768)&&"Cerrar Sesión"}</button>
-        {window.innerWidth>=768&&<button onClick={()=>setSideOpen(o=>!o)} style={{width:"100%",display:"flex",alignItems:"center",gap:6,padding:"7px 10px",justifyContent:sideOpen?"flex-start":"center",borderRadius:9,border:"none",background:"transparent",cursor:"pointer",color:"rgba(255,255,255,.4)",fontSize:11,marginTop:2}}>{sideOpen?<ChevronLeft size={14}/>:<ChevronRight size={14}/>}{sideOpen&&"Colapsar"}</button>}
+        <button onClick={()=>{setUser(null);setMobileMenuOpen(false)}} style={{width:"100%",display:"flex",alignItems:"center",gap:6,padding:"7px 10px",justifyContent:(isMobile||sideOpen)?"flex-start":"center",borderRadius:9,border:"none",background:"transparent",cursor:"pointer",color:"#fca5a5",fontSize:11}}><LogOut size={14}/>{(isMobile||sideOpen)&&"Cerrar Sesión"}</button>
+        {!isMobile&&<button onClick={()=>setSideOpen(o=>!o)} style={{width:"100%",display:"flex",alignItems:"center",gap:6,padding:"7px 10px",justifyContent:sideOpen?"flex-start":"center",borderRadius:9,border:"none",background:"transparent",cursor:"pointer",color:"rgba(255,255,255,.4)",fontSize:11,marginTop:2}}>{sideOpen?<ChevronLeft size={14}/>:<ChevronRight size={14}/>}{sideOpen&&"Colapsar"}</button>}
       </div>
     </aside>
 
