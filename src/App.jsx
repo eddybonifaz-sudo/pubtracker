@@ -800,7 +800,30 @@ export default function App(){
 
   const showToast=(m,t="success")=>{setToast({m,t});setTimeout(()=>setToast(null),3500)};
   const isAdmin=user?.rol==="admin";
-  const loadData=useCallback(async()=>{if(!API_URL)return;setLoading(true);const r=await apiGet("getAll");if(r&&!r.error&&r.publicaciones){setData({publicaciones:r.publicaciones,autores:r.autores||[],pubAutores:r.pubAutores||[]});setConnected(true)}setLoading(false)},[]);
+  const CACHE_KEY="pubtracker_data_v1";
+  const CACHE_TTL=5*60*1000; // 5 minutos
+  const loadData=useCallback(async(background=false)=>{
+    if(!API_URL)return;
+    // Mostrar cache inmediatamente si existe y es reciente
+    try{
+      const raw=sessionStorage.getItem(CACHE_KEY);
+      if(raw){const{ts,data:cached}=JSON.parse(raw);
+        if(Date.now()-ts<CACHE_TTL){
+          setData(cached);setConnected(true);
+          if(!background)setLoading(false);
+          if(Date.now()-ts<60000)return; // < 1 min: no refrescar
+        }
+      }
+    }catch(e){}
+    if(!background)setLoading(true);
+    const r=await apiGet("getAll");
+    if(r&&!r.error&&r.publicaciones){
+      const fresh={publicaciones:r.publicaciones,autores:r.autores||[],pubAutores:r.pubAutores||[]};
+      setData(fresh);setConnected(true);
+      try{sessionStorage.setItem(CACHE_KEY,JSON.stringify({ts:Date.now(),data:fresh}))}catch(e){}
+    }
+    setLoading(false);
+  },[]);
   useEffect(()=>{if(user)loadData()},[user,loadData]);
   useEffect(()=>{
     const fn=()=>{const m=window.innerWidth<768;setIsMobile(m);if(m)setSideOpen(false);};
@@ -819,16 +842,16 @@ export default function App(){
   const visibleAutores=useMemo(()=>isAdmin?data.autores:data.autores.filter(a=>a.id===user?.id),[data,isAdmin,user]);
   const years=useMemo(()=>{const ys=new Set();visiblePubs.forEach(p=>{const y=parseYear(p.fechaPublicacion);if(y)ys.add(y)});return Array.from(ys).sort((a,b)=>b-a)},[visiblePubs]);
 
-  const handleSavePub=async(pub,autorIds)=>{const isEd=!!editPub;setData(prev=>{const np=[...prev.publicaciones];const nl=prev.pubAutores.filter(l=>l.pubId!==pub.id);if(!pub.id)pub.id="P"+Date.now().toString(36);const ex=np.findIndex(p=>p.id===pub.id);if(ex>=0)np[ex]=pub;else np.push(pub);autorIds.forEach((a,i)=>nl.push({pubId:pub.id,autorId:a,orden:i+1}));return{...prev,publicaciones:np,pubAutores:nl}});setShowForm(false);setEditPub(null);if(API_URL){const action=isEd?"updatePub":"addPub";const body=isEd?{action,id:pub.id,pub,autoresIds:autorIds}:{action,pub,autoresIds:autorIds,userId:user?.id};const r=await apiPost(body);if(r?.ok){showToast(isEd?"Actualizada ✓":"Registrada ✓");loadData()}else showToast("Error: "+(r?.error||""),"error")}else showToast(isEd?"Actualizada":"Registrada")};
+  const handleSavePub=async(pub,autorIds)=>{const isEd=!!editPub;setData(prev=>{const np=[...prev.publicaciones];const nl=prev.pubAutores.filter(l=>l.pubId!==pub.id);if(!pub.id)pub.id="P"+Date.now().toString(36);const ex=np.findIndex(p=>p.id===pub.id);if(ex>=0)np[ex]=pub;else np.push(pub);autorIds.forEach((a,i)=>nl.push({pubId:pub.id,autorId:a,orden:i+1}));return{...prev,publicaciones:np,pubAutores:nl}});setShowForm(false);setEditPub(null);if(API_URL){const action=isEd?"updatePub":"addPub";const body=isEd?{action,id:pub.id,pub,autoresIds:autorIds}:{action,pub,autoresIds:autorIds,userId:user?.id};const r=await apiPost(body);if(r?.ok){showToast(isEd?"Actualizada ✓":"Registrada ✓");loadData(true)}else showToast("Error: "+(r?.error||""),"error")}else showToast(isEd?"Actualizada":"Registrada")};
   const handleStatus=async(id,estado,registrado)=>{setData(prev=>({...prev,publicaciones:prev.publicaciones.map(p=>p.id===id?{...p,estadoPublicacion:estado,registrado}:p)}));setStatusPub(null);if(API_URL){const r=await apiPost({action:"updateStatus",id,estado,registrado});if(r?.ok)showToast("Estado actualizado ✓");else showToast("Error sync","error")}else showToast("Estado actualizado")};
-  const handleDeletePub=async(pubId)=>{setData(prev=>({...prev,publicaciones:prev.publicaciones.filter(p=>p.id!==pubId),pubAutores:prev.pubAutores.filter(l=>l.pubId!==pubId)}));setDeletePub(null);if(API_URL){const r=await apiPost({action:"deletePub",id:pubId});if(r?.ok){showToast("Eliminada ✓");loadData()}else showToast("Error","error")}else showToast("Eliminada")};
-  const handleDeleteAutor=async(autorId)=>{const pubIds=data.pubAutores.filter(l=>l.autorId===autorId).map(l=>l.pubId);setData(prev=>({...prev,autores:prev.autores.filter(a=>a.id!==autorId),publicaciones:prev.publicaciones.filter(p=>!pubIds.includes(p.id)),pubAutores:prev.pubAutores.filter(l=>l.autorId!==autorId&&!pubIds.includes(l.pubId))}));setDeleteAutor(null);if(API_URL){const r=await apiPost({action:"deleteAutor",id:autorId});if(r?.ok){showToast("Docente eliminado ✓");loadData()}else showToast("Error","error")}else showToast("Docente eliminado")};
-  const handleAddDocente=async(doc)=>{const id="A"+Date.now().toString(36);setData(prev=>({...prev,autores:[...prev.autores,{id,nombres:doc.nombres,apellidos:doc.apellidos,email:doc.email,rol:"autor",activo:true}]}));setShowDocForm(false);if(API_URL){const r=await apiPost({action:"addAutor",...doc});if(r?.ok){showToast("Docente registrado ✓");loadData()}else showToast("Error: "+(r?.error||""),"error")}else showToast("Docente agregado")};
+  const handleDeletePub=async(pubId)=>{setData(prev=>({...prev,publicaciones:prev.publicaciones.filter(p=>p.id!==pubId),pubAutores:prev.pubAutores.filter(l=>l.pubId!==pubId)}));setDeletePub(null);if(API_URL){const r=await apiPost({action:"deletePub",id:pubId});if(r?.ok){showToast("Eliminada ✓");loadData(true)}else showToast("Error","error")}else showToast("Eliminada")};
+  const handleDeleteAutor=async(autorId)=>{const pubIds=data.pubAutores.filter(l=>l.autorId===autorId).map(l=>l.pubId);setData(prev=>({...prev,autores:prev.autores.filter(a=>a.id!==autorId),publicaciones:prev.publicaciones.filter(p=>!pubIds.includes(p.id)),pubAutores:prev.pubAutores.filter(l=>l.autorId!==autorId&&!pubIds.includes(l.pubId))}));setDeleteAutor(null);if(API_URL){const r=await apiPost({action:"deleteAutor",id:autorId});if(r?.ok){showToast("Docente eliminado ✓");loadData(true)}else showToast("Error","error")}else showToast("Docente eliminado")};
+  const handleAddDocente=async(doc)=>{const id="A"+Date.now().toString(36);setData(prev=>({...prev,autores:[...prev.autores,{id,nombres:doc.nombres,apellidos:doc.apellidos,email:doc.email,rol:"autor",activo:true}]}));setShowDocForm(false);if(API_URL){const r=await apiPost({action:"addAutor",...doc});if(r?.ok){showToast("Docente registrado ✓");loadData(true)}else showToast("Error: "+(r?.error||""),"error")}else showToast("Docente agregado")};
 
   const handleSaveProfile=async(updated)=>{
     setData(prev=>({...prev,autores:prev.autores.map(a=>a.id===updated.id?updated:a)}));
-    // Actualizar user también para que el sidebar y header reflejen los cambios al instante
     setUser(prev=>prev&&prev.id===updated.id?{...prev,...updated}:prev);
+    try{sessionStorage.removeItem("pubtracker_data_v1")}catch(e){}
     if(API_URL){const r=await apiPost({action:"updatePerfil",autor:updated});if(r?.ok)showToast("Perfil actualizado ✓");else showToast("Error al guardar","error")}
     else showToast("Perfil actualizado ✓");
     setShowProfile(false);
@@ -837,6 +860,7 @@ export default function App(){
   const handlePhotoUploaded=(userId,url)=>{
     setData(prev=>({...prev,autores:prev.autores.map(a=>a.id===userId?{...a,fotoUrl:url}:a)}));
     setUser(prev=>prev&&prev.id===userId?{...prev,fotoUrl:url}:prev);
+    try{sessionStorage.removeItem("pubtracker_data_v1")}catch(e){}
   };
   const getAut=useCallback(pid=>data.pubAutores.filter(l=>l.pubId===pid).map(l=>data.autores.find(a=>a.id===l.autorId)).filter(Boolean),[data]);
 
@@ -928,7 +952,7 @@ export default function App(){
         </div>
         <div style={{display:"flex",gap:6,alignItems:"center"}}>
           {loading&&<Loader2 size={16} style={{color:C1,animation:"spin 1s linear infinite"}}/>}
-          {API_URL&&<button onClick={loadData} className="sync-btn" style={{padding:"5px 10px",borderRadius:8,border:`1px solid ${C1}30`,background:C1Bg,cursor:"pointer",fontSize:11,color:C1,display:"flex",alignItems:"center",gap:4}}><RefreshCw size={12}/>Sync</button>}
+          {API_URL&&<button onClick={()=>{try{sessionStorage.removeItem("pubtracker_data_v1")}catch(e){}loadData()}} className="sync-btn" style={{padding:"5px 10px",borderRadius:8,border:`1px solid ${C1}30`,background:C1Bg,cursor:"pointer",fontSize:11,color:C1,display:"flex",alignItems:"center",gap:4}}><RefreshCw size={12}/>Sync</button>}
           <Btn primary small onClick={()=>{setEditPub(null);setShowForm(true)}} icon={Plus}>Nueva</Btn>
         </div>
       </div>
