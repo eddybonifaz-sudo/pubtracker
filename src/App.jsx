@@ -10,7 +10,8 @@ import {
   ClipboardList, BookMarked, Save, CheckCircle2, XCircle,
   Layers, Clock, Star, Eye, Edit3, LogIn, Trash2,
   FileSpreadsheet, FileDown, RefreshCw, Shield, User, Mail, Lock, UserCheck,
-  Settings, KeyRound
+  Settings, KeyRound, Link2, Phone, GraduationCap, Camera, ExternalLink,
+  AtSign, Linkedin, BookUser, FlaskConical
 } from "lucide-react";
 
 /* ═══════════════════════════════════════════════════════════════
@@ -107,29 +108,231 @@ function exportWord(autor,pubs,links,filtros={}){
   const today=new Date();
   const fechaStr=today.toLocaleDateString("es-EC",{year:"numeric",month:"long",day:"numeric"});
   const periodo=filtros.anio?`Año ${filtros.anio}`:`Enero – Diciembre ${today.getFullYear()}`;
-  const pubRows=aP.map((p,i)=>{const idx=[p.indexacion1,p.indexacion2,p.indexacion3].filter(Boolean).join(", ")||"N/A";const ec=p.estadoPublicacion==="Publicado"?"#047857":p.estadoPublicacion==="Aceptado"?"#0369a1":"#a16207";return`<tr><td style="padding:6px 8px;border:1px solid #d1d5db;text-align:center;font-weight:bold;color:${C1};font-size:11px;">${i+1}</td><td style="padding:6px 8px;border:1px solid #d1d5db;font-size:11px;"><strong>${p.titulo}</strong>${p.autoresExternos?`<br/><span style="font-size:10px;color:#6d28d9;">Coautores: ${p.autoresExternos}</span>`:""}</td><td style="padding:6px 8px;border:1px solid #d1d5db;font-size:11px;">${p.tipoPublicacion||"—"}</td><td style="padding:6px 8px;border:1px solid #d1d5db;font-size:11px;color:${ec};font-weight:600;">${p.estadoPublicacion||"—"}</td><td style="padding:6px 8px;border:1px solid #d1d5db;font-size:11px;text-align:center;font-weight:bold;">${p.cuartil&&p.cuartil!=="N/A"?p.cuartil:"—"}</td><td style="padding:6px 8px;border:1px solid #d1d5db;font-size:11px;">${p.revista||"—"}</td><td style="padding:6px 8px;border:1px solid #d1d5db;font-size:11px;">${p.issn||"—"}</td><td style="padding:6px 8px;border:1px solid #d1d5db;font-size:11px;">${p.fechaPublicacion||"—"}</td><td style="padding:6px 8px;border:1px solid #d1d5db;font-size:11px;">${idx}</td><td style="padding:6px 8px;border:1px solid #d1d5db;font-size:11px;text-align:center;">${p.registrado==="Sí"?"✓ Sí":"✗ No"}</td></tr>`}).join("");
+  const pubRows=aP.map((p,i)=>{const idx=[p.indexacion1,p.indexacion2,p.indexacion3].filter(Boolean).join(", ")||"N/A";const ec=p.estadoPublicacion==="Publicado"?"#047857":p.estadoPublicacion==="Aceptado"?"#0369a1":"#a16207";const urlCell=p.url?`<a href="${p.url}" style="color:#0369a1;font-size:10px;">Ver publicación</a>`:p.doi?`<a href="https://doi.org/${p.doi}" style="color:#0369a1;font-size:10px;">Ver DOI</a>`:"—";return`<tr><td style="padding:6px 8px;border:1px solid #d1d5db;text-align:center;font-weight:bold;color:${C1};font-size:11px;">${i+1}</td><td style="padding:6px 8px;border:1px solid #d1d5db;font-size:11px;"><strong>${p.titulo}</strong>${p.autoresExternos?`<br/><span style="font-size:10px;color:#6d28d9;">Coautores: ${p.autoresExternos}</span>`:""}</td><td style="padding:6px 8px;border:1px solid #d1d5db;font-size:11px;">${p.tipoPublicacion||"—"}</td><td style="padding:6px 8px;border:1px solid #d1d5db;font-size:11px;color:${ec};font-weight:600;">${p.estadoPublicacion||"—"}</td><td style="padding:6px 8px;border:1px solid #d1d5db;font-size:11px;text-align:center;font-weight:bold;">${p.cuartil&&p.cuartil!=="N/A"?p.cuartil:"—"}</td><td style="padding:6px 8px;border:1px solid #d1d5db;font-size:11px;">${p.revista||"—"}</td><td style="padding:6px 8px;border:1px solid #d1d5db;font-size:11px;">${p.issn||"—"}</td><td style="padding:6px 8px;border:1px solid #d1d5db;font-size:11px;">${p.fechaPublicacion||"—"}</td><td style="padding:6px 8px;border:1px solid #d1d5db;font-size:11px;">${idx}</td><td style="padding:6px 8px;border:1px solid #d1d5db;font-size:11px;text-align:center;">${urlCell}</td><td style="padding:6px 8px;border:1px solid #d1d5db;font-size:11px;text-align:center;">${p.registrado==="Sí"?"✓ Sí":"✗ No"}</td></tr>`}).join("");
   const tipoRes={};aP.forEach(p=>{const t=p.tipoPublicacion||"Otro";tipoRes[t]=(tipoRes[t]||0)+1});
   const tipoRows=Object.entries(tipoRes).map(([t,c])=>`<tr><td style="padding:5px 8px;border:1px solid #d1d5db;font-size:11px;">${t}</td><td style="padding:5px 8px;border:1px solid #d1d5db;font-size:11px;text-align:center;font-weight:700;">${c}</td></tr>`).join("");
+  const autorLinks=[autor.orcid?`ORCID: ${autor.orcid}`:"",autor.scopusId?`Scopus ID: ${autor.scopusId}`:"",autor.scholarId?`Scholar: ${autor.scholarId}`:""].filter(Boolean).join(" · ");
   const html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><style>@page{size:A4;margin:2cm 2.5cm}body{font-family:Arial,sans-serif;margin:0;padding:0;color:#1e293b;font-size:12px}.hb{border-bottom:3px solid ${C1};padding-bottom:10px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center}.lt{font-size:14px;font-weight:bold;color:${C1};letter-spacing:1px}.ls{font-size:10px;color:#64748b}h1{font-size:18px;color:${C1};text-align:center;margin:0 0 4px;border:none}h2{font-size:13px;color:${NAVY};border-bottom:2px solid ${C1};padding-bottom:4px;margin:20px 0 10px;text-transform:uppercase;letter-spacing:.5px}table{width:100%;border-collapse:collapse;margin:8px 0;font-size:11px}th{background:${C1};color:white;text-align:left;padding:7px 8px;border:1px solid ${C1};font-size:10px;text-transform:uppercase;letter-spacing:.3px}.kt td{text-align:center;padding:10px;border:1px solid #d1d5db}.kn{font-size:22px;font-weight:bold}.ft{margin-top:30px;text-align:center;color:#94a3b8;font-size:9px;border-top:1px solid #e2e8f0;padding-top:10px}.ib{background:${C1Bg};border-left:4px solid ${C1};padding:10px 14px;margin-bottom:14px;border-radius:0 6px 6px 0}.ir{display:flex;gap:6px;margin-bottom:3px;font-size:11px}.il{font-weight:700;color:#475569;min-width:160px}.iv{color:#1e293b}</style></head><body>
   <div class="hb"><div><div class="lt">UNIVERSIDAD DE OTAVALO</div><div class="ls">Facultad de Ciencias Sociales y Pedagógicas</div><div class="ls">Coordinación de Investigación</div></div><div style="text-align:right"><div style="font-size:10px;color:#94a3b8;">PubTracker · Sistema de Gestión de Publicaciones</div><div style="font-size:10px;color:#94a3b8;">${fechaStr}</div></div></div>
-  <div style="text-align:center;margin-bottom:16px;"><h1>Plan Individual de Publicaciones</h1><p style="font-size:14px;font-weight:bold;color:${NAVY};margin:4px 0;">${autor.nombres} ${autor.apellidos}</p><p style="font-size:11px;color:#64748b;margin:2px 0;">${autor.email||""}</p></div>
-  <div class="ib"><div class="ir"><span class="il">Período:</span><span class="iv">${periodo}</span></div><div class="ir"><span class="il">Fecha del informe:</span><span class="iv">${fechaStr}</span></div><div class="ir"><span class="il">Total de registros:</span><span class="iv">${aP.length} publicaciones${filtros.tipo?` · Tipo: ${filtros.tipo}`:""}</span></div></div>
+  <div style="text-align:center;margin-bottom:16px;"><h1>Plan Individual de Publicaciones</h1><p style="font-size:14px;font-weight:bold;color:${NAVY};margin:4px 0;">${autor.nombres} ${autor.apellidos}</p>${autor.tituloAcademico?`<p style="font-size:11px;color:#64748b;margin:2px 0;">${autor.tituloAcademico}</p>`:""}<p style="font-size:11px;color:#64748b;margin:2px 0;">${autor.email||""}</p>${autorLinks?`<p style="font-size:10px;color:#94a3b8;margin:2px 0;">${autorLinks}</p>`:""}<div style="display:flex;justify-content:center;gap:10px;margin-top:6px;">${autor.orcid?`<a href="https://orcid.org/${autor.orcid}" style="color:#a6ce39;font-size:10px;font-weight:bold;">ORCID ↗</a>`:""} ${autor.scopusId?`<a href="https://www.scopus.com/authid/detail.uri?authorId=${autor.scopusId}" style="color:#e9711c;font-size:10px;font-weight:bold;">Scopus ↗</a>`:""} ${autor.scholarId?`<a href="https://scholar.google.com/citations?user=${autor.scholarId}" style="color:#4285F4;font-size:10px;font-weight:bold;">Scholar ↗</a>`:""} ${autor.researchgate?`<a href="${autor.researchgate}" style="color:#00CCBB;font-size:10px;font-weight:bold;">ResearchGate ↗</a>`:""} ${autor.linkedin?`<a href="${autor.linkedin}" style="color:#0A66C2;font-size:10px;font-weight:bold;">LinkedIn ↗</a>`:""}</div></div>
+  <div class="ib"><div class="ir"><span class="il">Período:</span><span class="iv">${periodo}</span></div><div class="ir"><span class="il">Fecha del informe:</span><span class="iv">${fechaStr}</span></div><div class="ir"><span class="il">Total de registros:</span><span class="iv">${aP.length} publicaciones${filtros.tipo?` · Tipo: ${filtros.tipo}`:""}</span></div>${autor.departamento?`<div class="ir"><span class="il">Departamento:</span><span class="iv">${autor.departamento}</span></div>`:""}</div>
   <h2>1. Resumen de Producción Científica</h2>
   <table class="kt"><tr><td><div class="kn" style="color:${C1};">${aP.length}</div><div style="font-size:10px;color:#64748b;">Total</div></td><td><div class="kn" style="color:#047857;">${pub}</div><div style="font-size:10px;color:#64748b;">Publicadas</div></td><td><div class="kn" style="color:#0369a1;">${enProceso}</div><div style="font-size:10px;color:#64748b;">En Proceso</div></td><td><div class="kn" style="color:#a16207;">${sc}</div><div style="font-size:10px;color:#64748b;">Scopus</div></td><td><div class="kn" style="color:#6d28d9;">${wos}</div><div style="font-size:10px;color:#64748b;">WoS</div></td><td><div class="kn" style="color:#0891b2;">${latindex}</div><div style="font-size:10px;color:#64748b;">Latindex</div></td></tr></table>
   <h2>2. Distribución por Tipo</h2>
   <table><tr><th style="width:70%;">Tipo de Publicación</th><th style="width:30%;text-align:center;">Cantidad</th></tr>${tipoRows}<tr style="background:${C1Bg};font-weight:bold;"><td style="padding:5px 8px;border:1px solid #d1d5db;font-size:11px;color:${C1};">TOTAL</td><td style="padding:5px 8px;border:1px solid #d1d5db;font-size:11px;text-align:center;color:${C1};">${aP.length}</td></tr></table>
   <h2>3. Detalle en Matriz</h2>
-  <table><tr><th style="width:3%;text-align:center;">#</th><th style="width:24%;">Título</th><th style="width:10%;">Tipo</th><th style="width:9%;">Estado</th><th style="width:4%;text-align:center;">Q</th><th style="width:14%;">Revista/Editorial</th><th style="width:8%;">ISSN/ISBN</th><th style="width:8%;">Fecha</th><th style="width:12%;">Indexación</th><th style="width:8%;text-align:center;">Reg.</th></tr>${pubRows}</table>
+  <table><tr><th style="width:3%;text-align:center;">#</th><th style="width:22%;">Título</th><th style="width:9%;">Tipo</th><th style="width:8%;">Estado</th><th style="width:4%;text-align:center;">Q</th><th style="width:13%;">Revista/Editorial</th><th style="width:7%;">ISSN/ISBN</th><th style="width:7%;">Fecha</th><th style="width:11%;">Indexación</th><th style="width:8%;text-align:center;">Evidencia</th><th style="width:8%;text-align:center;">Reg.</th></tr>${pubRows}</table>
   <h2>4. Fichas Individuales</h2>
-  ${aP.map((p,i)=>{const idx=[p.indexacion1,p.indexacion2,p.indexacion3].filter(Boolean).join(", ")||"N/A";return`<div style="margin-bottom:14px;border:1px solid #e2e8f0;border-radius:6px;overflow:hidden;"><div style="background:${C1};color:white;padding:6px 12px;font-size:11px;font-weight:bold;">Publicación ${i+1}</div><table style="margin:0;font-size:10px;"><tr><td colspan="2" style="padding:6px 8px;border:1px solid #e2e8f0;font-weight:700;">${p.titulo}</td></tr><tr><td style="padding:4px 8px;border:1px solid #e2e8f0;font-weight:600;color:#475569;width:25%;">Tipo:</td><td style="padding:4px 8px;border:1px solid #e2e8f0;">${p.tipoPublicacion||"—"}</td></tr><tr style="background:#fafafa;"><td style="padding:4px 8px;border:1px solid #e2e8f0;font-weight:600;color:#475569;">Estado:</td><td style="padding:4px 8px;border:1px solid #e2e8f0;">${p.estadoPublicacion||"—"}</td></tr><tr><td style="padding:4px 8px;border:1px solid #e2e8f0;font-weight:600;color:#475569;">Revista/Editorial:</td><td style="padding:4px 8px;border:1px solid #e2e8f0;">${p.revista||"—"}</td></tr><tr style="background:#fafafa;"><td style="padding:4px 8px;border:1px solid #e2e8f0;font-weight:600;color:#475569;">ISSN/ISBN:</td><td style="padding:4px 8px;border:1px solid #e2e8f0;">${p.issn||"—"}</td></tr><tr><td style="padding:4px 8px;border:1px solid #e2e8f0;font-weight:600;color:#475569;">Fecha:</td><td style="padding:4px 8px;border:1px solid #e2e8f0;">${p.fechaPublicacion||"—"}</td></tr><tr style="background:#fafafa;"><td style="padding:4px 8px;border:1px solid #e2e8f0;font-weight:600;color:#475569;">Indexación:</td><td style="padding:4px 8px;border:1px solid #e2e8f0;">${idx}</td></tr>${p.cuartil&&p.cuartil!=="N/A"?`<tr><td style="padding:4px 8px;border:1px solid #e2e8f0;font-weight:600;color:#475569;">Cuartil:</td><td style="padding:4px 8px;border:1px solid #e2e8f0;font-weight:bold;color:${C1};">${p.cuartil}</td></tr>`:""}<tr><td style="padding:4px 8px;border:1px solid #e2e8f0;font-weight:600;color:#475569;">Registrado UO:</td><td style="padding:4px 8px;border:1px solid #e2e8f0;">${p.registrado==="Sí"?"✓ Sí":"✗ No"}</td></tr>${p.autoresExternos?`<tr style="background:#fafafa;"><td style="padding:4px 8px;border:1px solid #e2e8f0;font-weight:600;color:#6d28d9;">Autores Externos:</td><td style="padding:4px 8px;border:1px solid #e2e8f0;color:#6d28d9;">${p.autoresExternos}</td></tr>`:""}</table></div>`}).join("")}
+  ${aP.map((p,i)=>{const idx=[p.indexacion1,p.indexacion2,p.indexacion3].filter(Boolean).join(", ")||"N/A";return`<div style="margin-bottom:14px;border:1px solid #e2e8f0;border-radius:6px;overflow:hidden;"><div style="background:${C1};color:white;padding:6px 12px;font-size:11px;font-weight:bold;">Publicación ${i+1}</div><table style="margin:0;font-size:10px;"><tr><td colspan="2" style="padding:6px 8px;border:1px solid #e2e8f0;font-weight:700;">${p.titulo}</td></tr><tr><td style="padding:4px 8px;border:1px solid #e2e8f0;font-weight:600;color:#475569;width:25%;">Tipo:</td><td style="padding:4px 8px;border:1px solid #e2e8f0;">${p.tipoPublicacion||"—"}</td></tr><tr style="background:#fafafa;"><td style="padding:4px 8px;border:1px solid #e2e8f0;font-weight:600;color:#475569;">Estado:</td><td style="padding:4px 8px;border:1px solid #e2e8f0;">${p.estadoPublicacion||"—"}</td></tr><tr><td style="padding:4px 8px;border:1px solid #e2e8f0;font-weight:600;color:#475569;">Revista/Editorial:</td><td style="padding:4px 8px;border:1px solid #e2e8f0;">${p.revista||"—"}</td></tr><tr style="background:#fafafa;"><td style="padding:4px 8px;border:1px solid #e2e8f0;font-weight:600;color:#475569;">ISSN/ISBN:</td><td style="padding:4px 8px;border:1px solid #e2e8f0;">${p.issn||"—"}</td></tr><tr><td style="padding:4px 8px;border:1px solid #e2e8f0;font-weight:600;color:#475569;">Fecha:</td><td style="padding:4px 8px;border:1px solid #e2e8f0;">${p.fechaPublicacion||"—"}</td></tr><tr style="background:#fafafa;"><td style="padding:4px 8px;border:1px solid #e2e8f0;font-weight:600;color:#475569;">Indexación:</td><td style="padding:4px 8px;border:1px solid #e2e8f0;">${idx}</td></tr>${p.cuartil&&p.cuartil!=="N/A"?`<tr><td style="padding:4px 8px;border:1px solid #e2e8f0;font-weight:600;color:#475569;">Cuartil:</td><td style="padding:4px 8px;border:1px solid #e2e8f0;font-weight:bold;color:${C1};">${p.cuartil}</td></tr>`:""}<tr><td style="padding:4px 8px;border:1px solid #e2e8f0;font-weight:600;color:#475569;">Registrado UO:</td><td style="padding:4px 8px;border:1px solid #e2e8f0;">${p.registrado==="Sí"?"✓ Sí":"✗ No"}</td></tr>${p.doi?`<tr style="background:#fafafa;"><td style="padding:4px 8px;border:1px solid #e2e8f0;font-weight:600;color:#475569;">DOI:</td><td style="padding:4px 8px;border:1px solid #e2e8f0;"><a href="https://doi.org/${p.doi}" style="color:#0369a1;">${p.doi}</a></td></tr>`:""} ${p.url?`<tr><td style="padding:4px 8px;border:1px solid #e2e8f0;font-weight:600;color:#475569;">Evidencia:</td><td style="padding:4px 8px;border:1px solid #e2e8f0;"><a href="${p.url}" style="color:#0369a1;font-weight:600;">Ver publicación →</a></td></tr>`:""} ${p.autoresExternos?`<tr style="background:#fafafa;"><td style="padding:4px 8px;border:1px solid #e2e8f0;font-weight:600;color:#6d28d9;">Autores Externos:</td><td style="padding:4px 8px;border:1px solid #e2e8f0;color:#6d28d9;">${p.autoresExternos}</td></tr>`:""}</table></div>`}).join("")}
   <div class="ft"><p>PubTracker · Coordinación de Investigación · Facultad de Ciencias Sociales y Pedagógicas · Universidad de Otavalo</p><p>Informe generado el ${fechaStr}</p></div>
 </body></html>`;
   const blob=new Blob(["\ufeff",html],{type:"application/msword"});const u=URL.createObjectURL(blob);const a=document.createElement("a");a.href=u;a.download=`Informe_${autor.apellidos.replace(/\s/g,"_")}_${filtros.anio||new Date().getFullYear()}.doc`;a.click();URL.revokeObjectURL(u);
 }
 
-/* ════════════════════════
-   MODAL REPORTE
-   ════════════════════════ */
+/* ════════════════════════════════════════
+   MODAL PERFIL DEL INVESTIGADOR
+   ════════════════════════════════════════ */
+function ProfileModal({user, autores, onSave, onClose, isAdmin, allAutores}){
+  const autor = autores.find(a=>a.id===user.id) || user;
+  const[tab,setTab]=useState("info");
+  const[nombres,setNombres]=useState(autor.nombres||"");
+  const[apellidos,setApellidos]=useState(autor.apellidos||"");
+  const[email,setEmail]=useState(autor.email||"");
+  const[depto,setDepto]=useState(autor.departamento||"");
+  const[titulo,setTitulo]=useState(autor.tituloAcademico||"");
+  const[fotUrl,setFotUrl]=useState(autor.fotoUrl||"");
+  const[orcid,setOrcid]=useState(autor.orcid||"");
+  const[scopusId,setScopusId]=useState(autor.scopusId||"");
+  const[schId,setSchId]=useState(autor.scholarId||"");
+  const[rgUrl,setRgUrl]=useState(autor.researchgate||"");
+  const[linkedin,setLinkedin]=useState(autor.linkedin||"");
+  const[telefono,setTelefono]=useState(autor.telefono||"");
+  const[bio,setBio]=useState(autor.bio||"");
+  const[oldPass,setOldPass]=useState("");
+  const[newPass,setNewPass]=useState("");
+  const[newPass2,setNewPass2]=useState("");
+  const[passMsg,setPassMsg]=useState(null);
+  const[saving,setSaving]=useState(false);
+  const[uploadingPhoto,setUploadingPhoto]=useState(false);
+
+  const modoDemo = !API_URL;
+  const tabs=[{id:"info",label:"Información",icon:User},{id:"redes",label:"Perfiles Académicos",icon:Link2},{id:"seguridad",label:"Seguridad",icon:Lock}];
+
+  /* ── Subir foto a Google Drive via Apps Script ── */
+  const handleFotoUpload=async(e)=>{
+    const file=e.target.files?.[0];
+    if(!file)return;
+    if(!file.type.startsWith("image/"))return alert("Solo se permiten imágenes (JPG, PNG, WebP)");
+    if(file.size>3*1024*1024)return alert("La imagen no debe superar 3 MB");
+    if(modoDemo){alert("En modo demo la foto no se puede subir a Drive.\nPega directamente la URL de una imagen pública.");return;}
+    setUploadingPhoto(true);
+    try{
+      const reader=new FileReader();
+      reader.onload=async(ev)=>{
+        const b64=ev.target.result.split(",")[1];
+        const r=await apiPost({action:"uploadFoto",userId:user.id,fileName:file.name,mimeType:file.type,base64:b64});
+        if(r?.ok&&r.url){setFotUrl(r.url);showToastLocal("Foto subida ✓");}
+        else alert("Error al subir la foto: "+(r?.error||"intente de nuevo"));
+        setUploadingPhoto(false);
+      };
+      reader.readAsDataURL(file);
+    }catch{setUploadingPhoto(false);alert("Error al procesar la imagen");}
+  };
+
+  /* ── Toast local dentro del modal ── */
+  const[localToast,setLocalToast]=useState(null);
+  const showToastLocal=(m)=>{setLocalToast(m);setTimeout(()=>setLocalToast(null),3000)};
+
+  const handleSaveInfo=async()=>{
+    if(!nombres.trim()||!apellidos.trim())return alert("Nombres y apellidos son requeridos");
+    setSaving(true);
+    const updated={...autor,nombres:nombres.toUpperCase(),apellidos:apellidos.toUpperCase(),email,departamento:depto,tituloAcademico:titulo,fotoUrl:fotUrl,orcid,scopusId,scholarId:schId,researchgate:rgUrl,linkedin,telefono,bio};
+    await onSave(updated);
+    setSaving(false);
+  };
+
+  const handleChangePass=async()=>{
+    setPassMsg(null);
+    if(!newPass||newPass.length<6)return setPassMsg({ok:false,msg:"La nueva contraseña debe tener al menos 6 caracteres"});
+    if(newPass!==newPass2)return setPassMsg({ok:false,msg:"Las contraseñas no coinciden"});
+    setSaving(true);
+    const r=await apiPost({action:"changePassword",userId:user.id,oldPassword:oldPass,newPassword:newPass});
+    setPassMsg(r?.ok?{ok:true,msg:"Contraseña actualizada ✓"}:{ok:false,msg:r?.error||"Error al cambiar contraseña"});
+    setSaving(false);
+    setOldPass("");setNewPass("");setNewPass2("");
+  };
+
+  const photoPreview = fotUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(nombres+" "+apellidos)}&background=47090A&color=fff&size=128&bold=true`;
+
+  return(
+    <div style={{background:"white",borderRadius:16,overflow:"hidden",maxWidth:580,width:"100%",boxShadow:"0 20px 60px rgba(0,0,0,.18)"}}>
+      {/* Header con foto */}
+      <div style={{background:`linear-gradient(135deg,${NAVY},${C1})`,padding:"22px 24px 16px",color:"white",display:"flex",alignItems:"center",gap:16}}>
+        <div style={{position:"relative",flexShrink:0}}>
+          <img src={photoPreview} alt="foto" style={{width:72,height:72,borderRadius:"50%",border:"3px solid rgba(255,255,255,.4)",objectFit:"cover",background:"#fff"}} onError={e=>{e.target.src=`https://ui-avatars.com/api/?name=${encodeURIComponent(nombres)}&background=47090A&color=fff&size=128&bold=true`}}/>
+        </div>
+        <div style={{flex:1,minWidth:0}}>
+          <h2 style={{fontSize:16,fontWeight:800,margin:0,fontFamily:"'Playfair Display',serif"}}>{nombres} {apellidos}</h2>
+          <p style={{fontSize:11,color:"rgba(255,255,255,.6)",margin:"3px 0 0"}}>{depto||"Facultad de Ciencias Sociales y Pedagógicas"}</p>
+          {titulo&&<p style={{fontSize:10,color:"rgba(255,255,255,.5)",margin:"2px 0 0"}}>{titulo}</p>}
+        </div>
+        <button onClick={onClose} style={{border:"none",background:"rgba(255,255,255,.15)",cursor:"pointer",color:"white",borderRadius:8,padding:6}}><X size={16}/></button>
+      </div>
+
+      {/* Tabs */}
+      <div style={{display:"flex",borderBottom:"1px solid #f1f5f9",background:"#fafbfc"}}>
+        {tabs.map(t=><button key={t.id} onClick={()=>setTab(t.id)} style={{flex:1,padding:"10px 6px",border:"none",cursor:"pointer",fontSize:11,fontWeight:tab===t.id?700:500,color:tab===t.id?C1:"#94a3b8",background:tab===t.id?"white":"transparent",borderBottom:tab===t.id?`3px solid ${C1}`:"3px solid transparent",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}><t.icon size={13}/>{t.label}</button>)}
+      </div>
+
+      {localToast&&<div style={{background:P.greenBg,color:P.green,padding:"8px 16px",fontSize:12,fontWeight:600,display:"flex",alignItems:"center",gap:6,borderBottom:"1px solid #d1fae5"}}><CheckCircle2 size={13}/>{localToast}</div>}
+
+      <div style={{padding:22,minHeight:260,maxHeight:"55vh",overflowY:"auto"}}>
+
+        {/* ── Tab Información ── */}
+        {tab==="info"&&<div style={{display:"flex",flexDirection:"column",gap:12}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+            <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>NOMBRES</label><Inp value={nombres} onChange={setNombres} placeholder="NOMBRES"/></div>
+            <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>APELLIDOS</label><Inp value={apellidos} onChange={setApellidos} placeholder="APELLIDOS"/></div>
+          </div>
+          <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>EMAIL INSTITUCIONAL</label><Inp value={email} onChange={setEmail} placeholder="correo@uotavalo.edu.ec" type="email" icon={Mail}/></div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+            <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>DEPARTAMENTO / CARRERA</label><Inp value={depto} onChange={setDepto} placeholder="Ej: Educación Básica" icon={GraduationCap}/></div>
+            <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>TÍTULO ACADÉMICO</label><Inp value={titulo} onChange={setTitulo} placeholder="Ej: Dr., Mg., MSc."/></div>
+          </div>
+          <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>TELÉFONO / WHATSAPP</label><Inp value={telefono} onChange={setTelefono} placeholder="+593 98 765 4321" icon={Phone}/></div>
+
+          {/* ── FOTO: subida a Drive ── */}
+          <div>
+            <label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:4}}>FOTO DE PERFIL</label>
+            <div style={{display:"flex",gap:10,alignItems:"center"}}>
+              <img src={photoPreview} alt="" style={{width:52,height:52,borderRadius:"50%",objectFit:"cover",border:`2px solid ${C1}30`,flexShrink:0}} onError={e=>{e.target.src=`https://ui-avatars.com/api/?name=${encodeURIComponent(nombres)}&background=47090A&color=fff&size=64&bold=true`}}/>
+              <div style={{flex:1}}>
+                {modoDemo
+                  ? <><Inp value={fotUrl} onChange={setFotUrl} placeholder="https://ejemplo.com/mi-foto.jpg" icon={Camera}/><p style={{fontSize:10,color:"#94a3b8",margin:"3px 0 0"}}>En modo demo pega la URL de una imagen pública</p></>
+                  : <><label style={{display:"inline-flex",alignItems:"center",gap:6,padding:"8px 14px",borderRadius:10,border:`1.5px dashed ${C1}60`,background:C1Bg,cursor:"pointer",fontSize:12,fontWeight:600,color:C1}}>
+                      {uploadingPhoto?<><Loader2 size={14} style={{animation:"spin 1s linear infinite"}}/>Subiendo…</>:<><Camera size={14}/>Subir foto (JPG/PNG, máx 3 MB)</>}
+                      <input type="file" accept="image/*" onChange={handleFotoUpload} style={{display:"none"}} disabled={uploadingPhoto}/>
+                    </label>
+                    {fotUrl&&<p style={{fontSize:10,color:P.green,margin:"4px 0 0",display:"flex",alignItems:"center",gap:4}}><CheckCircle2 size={11}/>Foto guardada en Drive</p>}
+                    <p style={{fontSize:10,color:"#94a3b8",margin:"3px 0 0"}}>La imagen se sube a la carpeta PubTracker en tu Google Drive</p>
+                  </>
+                }
+              </div>
+            </div>
+          </div>
+
+          <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>LÍNEAS DE INVESTIGACIÓN / BIO</label><textarea value={bio} onChange={e=>setBio(e.target.value)} placeholder="Describe tus áreas de investigación, intereses académicos…" rows={3} style={{width:"100%",padding:"9px 12px",borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:13,color:"#1e293b",background:"white",outline:"none",boxSizing:"border-box",resize:"vertical",fontFamily:"inherit"}}/></div>
+        </div>}
+
+        {/* ── Tab Perfiles Académicos ── */}
+        {tab==="redes"&&<div style={{display:"flex",flexDirection:"column",gap:14}}>
+          <div style={{background:C1Bg,borderRadius:10,padding:"10px 14px",border:`1px solid ${C1}20`}}><p style={{fontSize:11,color:C1,margin:0,fontWeight:600}}>Estos identificadores aparecerán en tu informe Word y son visibles para el administrador</p></div>
+          <div>
+            <label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>ORCID iD</label>
+            <Inp value={orcid} onChange={setOrcid} placeholder="0000-0000-0000-0000" icon={AtSign}/>
+            <p style={{fontSize:10,color:"#94a3b8",margin:"2px 0 0"}}>Regístrate en <a href="https://orcid.org" target="_blank" rel="noreferrer" style={{color:C1}}>orcid.org</a> si aún no tienes</p>
+          </div>
+          <div>
+            <label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>SCOPUS AUTHOR ID</label>
+            <Inp value={scopusId} onChange={setScopusId} placeholder="Ej: 57234567890" icon={FlaskConical}/>
+          </div>
+          <div>
+            <label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>GOOGLE SCHOLAR ID</label>
+            <Inp value={schId} onChange={setSchId} placeholder="Código en la URL de tu perfil Scholar" icon={BookUser}/>
+          </div>
+          <div>
+            <label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>RESEARCHGATE</label>
+            <Inp value={rgUrl} onChange={setRgUrl} placeholder="https://www.researchgate.net/profile/Tu-Nombre" icon={Link2}/>
+          </div>
+          <div>
+            <label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>LINKEDIN</label>
+            <Inp value={linkedin} onChange={setLinkedin} placeholder="https://www.linkedin.com/in/tu-perfil" icon={Linkedin}/>
+          </div>
+          {(orcid||scopusId||schId||rgUrl||linkedin)&&<div style={{background:"#f8fafc",borderRadius:10,padding:"10px 14px",border:"1px solid #f1f5f9"}}>
+            <p style={{fontSize:10,fontWeight:700,color:"#94a3b8",margin:"0 0 8px",textTransform:"uppercase"}}>Vista previa de enlaces</p>
+            <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+              {orcid&&<a href={`https://orcid.org/${orcid}`} target="_blank" rel="noreferrer" style={{display:"inline-flex",alignItems:"center",gap:4,padding:"4px 10px",borderRadius:20,background:"#a6ce39",color:"white",fontSize:11,fontWeight:600,textDecoration:"none"}}><AtSign size={11}/>ORCID</a>}
+              {scopusId&&<a href={`https://www.scopus.com/authid/detail.uri?authorId=${scopusId}`} target="_blank" rel="noreferrer" style={{display:"inline-flex",alignItems:"center",gap:4,padding:"4px 10px",borderRadius:20,background:"#e9711c",color:"white",fontSize:11,fontWeight:600,textDecoration:"none"}}><FlaskConical size={11}/>Scopus</a>}
+              {schId&&<a href={`https://scholar.google.com/citations?user=${schId}`} target="_blank" rel="noreferrer" style={{display:"inline-flex",alignItems:"center",gap:4,padding:"4px 10px",borderRadius:20,background:"#4285F4",color:"white",fontSize:11,fontWeight:600,textDecoration:"none"}}><BookUser size={11}/>Scholar</a>}
+              {rgUrl&&<a href={rgUrl} target="_blank" rel="noreferrer" style={{display:"inline-flex",alignItems:"center",gap:4,padding:"4px 10px",borderRadius:20,background:"#00CCBB",color:"white",fontSize:11,fontWeight:600,textDecoration:"none"}}><Link2 size={11}/>ResearchGate</a>}
+              {linkedin&&<a href={linkedin} target="_blank" rel="noreferrer" style={{display:"inline-flex",alignItems:"center",gap:4,padding:"4px 10px",borderRadius:20,background:"#0A66C2",color:"white",fontSize:11,fontWeight:600,textDecoration:"none"}}><Linkedin size={11}/>LinkedIn</a>}
+            </div>
+          </div>}
+        </div>}
+
+        {/* ── Tab Seguridad ── */}
+        {tab==="seguridad"&&<div style={{display:"flex",flexDirection:"column",gap:12}}>
+          {modoDemo
+            /* ── MODO DEMO: cambio de clave deshabilitado ── */
+            ? <div style={{textAlign:"center",padding:"30px 20px"}}>
+                <div style={{width:52,height:52,borderRadius:14,background:"#f1f5f9",display:"inline-flex",alignItems:"center",justifyContent:"center",marginBottom:12}}><Lock size={24} style={{color:"#94a3b8"}}/></div>
+                <h4 style={{fontSize:14,fontWeight:700,color:P.navy,margin:"0 0 8px"}}>Cambio de contraseña no disponible</h4>
+                <p style={{fontSize:12,color:"#64748b",margin:0,lineHeight:1.6}}>En modo demo no está conectado a Google Sheets.<br/>El cambio de contraseña estará disponible cuando la aplicación esté desplegada con el backend activo.</p>
+                <div style={{marginTop:16,padding:"10px 14px",background:P.goldBg,borderRadius:10,border:"1px solid #fde68a"}}><p style={{fontSize:11,color:P.gold,margin:0,fontWeight:600}}>Para producción: el Apps Script debe implementar la acción <code>changePassword</code></p></div>
+              </div>
+            /* ── MODO CONECTADO: formulario normal ── */
+            : <>
+                <div style={{background:P.goldBg,borderRadius:10,padding:"10px 14px",border:"1px solid #fde68a"}}><p style={{fontSize:11,color:P.gold,margin:0,fontWeight:600}}>🔐 Por seguridad ingresa tu contraseña actual antes de cambiarla</p></div>
+                <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>CONTRASEÑA ACTUAL</label><Inp value={oldPass} onChange={setOldPass} placeholder="Tu contraseña actual" type="password" icon={Lock}/></div>
+                <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>NUEVA CONTRASEÑA</label><Inp value={newPass} onChange={setNewPass} placeholder="Mínimo 6 caracteres" type="password" icon={KeyRound}/></div>
+                <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>CONFIRMAR CONTRASEÑA</label><Inp value={newPass2} onChange={setNewPass2} placeholder="Repite la nueva contraseña" type="password" icon={KeyRound}/></div>
+                {passMsg&&<div style={{background:passMsg.ok?P.greenBg:P.roseBg,color:passMsg.ok?P.green:P.rose,padding:"8px 12px",borderRadius:10,fontSize:12,display:"flex",alignItems:"center",gap:6}}>{passMsg.ok?<CheckCircle2 size={14}/>:<AlertCircle size={14}/>}{passMsg.msg}</div>}
+                <Btn primary onClick={handleChangePass} disabled={saving||!oldPass||!newPass||!newPass2} icon={Lock}>Cambiar Contraseña</Btn>
+              </>
+          }
+        </div>}
+      </div>
+
+      {/* Footer */}
+      {tab!=="seguridad"&&<div style={{display:"flex",gap:8,justifyContent:"flex-end",padding:"12px 22px",borderTop:"1px solid #f1f5f9",background:"#fafbfc"}}>
+        <Btn onClick={onClose}>Cancelar</Btn>
+        <Btn primary onClick={handleSaveInfo} disabled={saving||uploadingPhoto} icon={saving?Loader2:Save}>{saving?"Guardando…":"Guardar Perfil"}</Btn>
+      </div>}
+    </div>
+  );
+}
+
+
 function ReporteModal({autores,pubs,links,onClose}){
   const[fAnio,setFAnio]=useState("");const[fTipo,setFTipo]=useState("");const[fAutorId,setFAutorId]=useState("");
   const years=useMemo(()=>{const ys=new Set();pubs.forEach(p=>{const y=parseYear(p.fechaPublicacion);if(y)ys.add(y)});return Array.from(ys).sort((a,b)=>b-a)},[pubs]);
@@ -284,6 +487,7 @@ export default function App(){
   const[statusPub,setStatusPub]=useState(null);
   const[showDocForm,setShowDocForm]=useState(false);
   const[showReporteModal,setShowReporteModal]=useState(false);
+  const[showProfile,setShowProfile]=useState(false);
   const[deletePub,setDeletePub]=useState(null);
   const[deleteAutor,setDeleteAutor]=useState(null);
   const[sideOpen,setSideOpen]=useState(true);
@@ -310,6 +514,13 @@ export default function App(){
   const handleDeletePub=async(pubId)=>{setData(prev=>({...prev,publicaciones:prev.publicaciones.filter(p=>p.id!==pubId),pubAutores:prev.pubAutores.filter(l=>l.pubId!==pubId)}));setDeletePub(null);if(API_URL){const r=await apiPost({action:"deletePub",id:pubId});if(r?.ok){showToast("Eliminada ✓");loadData()}else showToast("Error","error")}else showToast("Eliminada")};
   const handleDeleteAutor=async(autorId)=>{const pubIds=data.pubAutores.filter(l=>l.autorId===autorId).map(l=>l.pubId);setData(prev=>({...prev,autores:prev.autores.filter(a=>a.id!==autorId),publicaciones:prev.publicaciones.filter(p=>!pubIds.includes(p.id)),pubAutores:prev.pubAutores.filter(l=>l.autorId!==autorId&&!pubIds.includes(l.pubId))}));setDeleteAutor(null);if(API_URL){const r=await apiPost({action:"deleteAutor",id:autorId});if(r?.ok){showToast("Docente eliminado ✓");loadData()}else showToast("Error","error")}else showToast("Docente eliminado")};
   const handleAddDocente=async(doc)=>{const id="A"+Date.now().toString(36);setData(prev=>({...prev,autores:[...prev.autores,{id,nombres:doc.nombres,apellidos:doc.apellidos,email:doc.email,rol:"autor",activo:true}]}));setShowDocForm(false);if(API_URL){const r=await apiPost({action:"addAutor",...doc});if(r?.ok){showToast("Docente registrado ✓");loadData()}else showToast("Error: "+(r?.error||""),"error")}else showToast("Docente agregado")};
+
+  const handleSaveProfile=async(updated)=>{
+    setData(prev=>({...prev,autores:prev.autores.map(a=>a.id===updated.id?updated:a)}));
+    if(API_URL){const r=await apiPost({action:"updatePerfil",autor:updated});if(r?.ok)showToast("Perfil actualizado ✓");else showToast("Error al guardar","error")}
+    else showToast("Perfil actualizado ✓");
+    setShowProfile(false);
+  };
   const getAut=useCallback(pid=>data.pubAutores.filter(l=>l.pubId===pid).map(l=>data.autores.find(a=>a.id===l.autorId)).filter(Boolean),[data]);
 
   const filteredPubs=useMemo(()=>{let l=visiblePubs;if(search)l=l.filter(p=>p.titulo?.toLowerCase().includes(search.toLowerCase())||p.revista?.toLowerCase().includes(search.toLowerCase()));if(fEstado)l=l.filter(p=>p.estadoPublicacion===fEstado);if(fTipo)l=l.filter(p=>p.tipoPublicacion===fTipo);if(fAnio)l=l.filter(p=>parseYear(p.fechaPublicacion)===parseInt(fAnio));if(fAutor&&isAdmin){const ids=data.pubAutores.filter(x=>x.autorId===fAutor).map(x=>x.pubId);l=l.filter(p=>ids.includes(p.id))}return l},[visiblePubs,data,search,fEstado,fTipo,fAutor,fAnio,isAdmin]);
@@ -336,6 +547,7 @@ export default function App(){
   const menu=[
     {title:"GESTIÓN",items:[{id:"pubs",label:"Mis Publicaciones",icon:Library},{id:"nueva",label:"Nueva Publicación",icon:Plus,action:true}]},
     {title:"ANÁLISIS",items:[{id:"dashboard",label:"Dashboard",icon:LayoutDashboard},{id:"autores",label:"Por Autor",icon:Users},{id:"indexacion",label:"Indexación",icon:Globe},{id:"registro",label:"Estado Registro",icon:ClipboardList}]},
+    {title:"CUENTA",items:[{id:"perfil",label:"Mi Perfil",icon:User,fn:()=>setShowProfile(true)}]},
   ];
   if(isAdmin)menu.push({title:"ADMINISTRADOR",items:[{id:"docentes",label:"Gestionar Docentes",icon:UserPlus}]});
   menu.push({title:"EXPORTAR",items:[{id:"excel",label:"Descargar Excel",icon:FileSpreadsheet,fn:()=>exportExcel(visiblePubs,data.autores,data.pubAutores)},{id:"reporte",label:"Reporte Word",icon:FileDown,fn:()=>setShowReporteModal(true)}]});
@@ -358,8 +570,11 @@ export default function App(){
       <div style={{padding:"8px 6px",borderTop:"1px solid rgba(255,255,255,.1)"}}>
         {sideOpen&&<div style={{padding:"7px 10px",background:"rgba(255,255,255,.1)",borderRadius:9,marginBottom:6}}>
           {isAdmin&&<div style={{display:"flex",alignItems:"center",gap:4,marginBottom:2}}><Shield size={11} style={{color:"#fcd34d"}}/><span style={{fontSize:9,fontWeight:700,color:"#fcd34d",textTransform:"uppercase",letterSpacing:1}}>Administrador</span></div>}
-          <p style={{fontSize:11,fontWeight:600,color:"white",margin:0}}>{user.nombres} {user.apellidos}</p>
-          <p style={{fontSize:10,color:"rgba(255,255,255,.5)",margin:0}}>{connected?"Google Sheets ✓":"Modo Demo"}</p>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
+            {(()=>{const a=data.autores.find(x=>x.id===user.id)||user;const photoSrc=a.fotoUrl||`https://ui-avatars.com/api/?name=${encodeURIComponent((user.nombres||"U")+" "+(user.apellidos||""))}&background=47090A&color=fff&size=64&bold=true`;return<img src={photoSrc} alt="" style={{width:32,height:32,borderRadius:"50%",objectFit:"cover",border:"2px solid rgba(255,255,255,.3)",flexShrink:0}} onError={e=>{e.target.src=`https://ui-avatars.com/api/?name=U&background=47090A&color=fff&size=64&bold=true`}}/>})()}
+            <div style={{flex:1,minWidth:0}}><p style={{fontSize:11,fontWeight:600,color:"white",margin:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{user.nombres} {user.apellidos}</p><p style={{fontSize:10,color:"rgba(255,255,255,.5)",margin:0}}>{connected?"Google Sheets ✓":"Modo Demo"}</p></div>
+          </div>
+          <button onClick={()=>setShowProfile(true)} style={{width:"100%",display:"flex",alignItems:"center",gap:5,padding:"4px 8px",borderRadius:7,border:"1px solid rgba(255,255,255,.2)",background:"rgba(255,255,255,.08)",cursor:"pointer",color:"rgba(255,255,255,.8)",fontSize:10,fontWeight:600}}><Settings size={11}/>Editar perfil</button>
         </div>}
         <button onClick={()=>setUser(null)} style={{width:"100%",display:"flex",alignItems:"center",gap:6,padding:"7px 10px",justifyContent:sideOpen?"flex-start":"center",borderRadius:9,border:"none",background:"transparent",cursor:"pointer",color:"#fca5a5",fontSize:11}}><LogOut size={14}/>{sideOpen&&"Cerrar Sesión"}</button>
         <button onClick={()=>setSideOpen(o=>!o)} style={{width:"100%",display:"flex",alignItems:"center",gap:6,padding:"7px 10px",justifyContent:sideOpen?"flex-start":"center",borderRadius:9,border:"none",background:"transparent",cursor:"pointer",color:"rgba(255,255,255,.4)",fontSize:11,marginTop:2}}>{sideOpen?<ChevronLeft size={14}/>:<ChevronRight size={14}/>}{sideOpen&&"Colapsar"}</button>
@@ -611,6 +826,7 @@ export default function App(){
     </main>
 
     {/* MODALES */}
+    {showProfile&&<div style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{maxHeight:"92vh",overflowY:"auto",animation:"slideUp .3s",width:"100%",maxWidth:580}}><ProfileModal user={user} autores={data.autores} onSave={handleSaveProfile} onClose={()=>setShowProfile(false)} isAdmin={isAdmin} allAutores={data.autores}/></div></div>}
     {showForm&&<div style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{maxHeight:"92vh",overflowY:"auto",animation:"slideUp .3s"}}><PubForm pub={editPub} autores={data.autores} pubAutores={data.pubAutores} onSave={handleSavePub} onCancel={()=>{setShowForm(false);setEditPub(null)}} currentUser={user}/></div></div>}
     {statusPub&&<div style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{animation:"slideUp .3s"}}><StatusModal pub={statusPub} onSave={handleStatus} onClose={()=>setStatusPub(null)}/></div></div>}
     {showDocForm&&<div style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{animation:"slideUp .3s"}}><DocenteForm onSave={handleAddDocente} onClose={()=>setShowDocForm(false)}/></div></div>}
