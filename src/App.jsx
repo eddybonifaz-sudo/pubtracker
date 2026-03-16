@@ -11,7 +11,7 @@ import {
   Layers, Clock, Star, Eye, Edit3, LogIn, Trash2,
   FileSpreadsheet, FileDown, RefreshCw, Shield, User, Mail, Lock, UserCheck,
   Settings, KeyRound, Link2, Phone, GraduationCap, Camera, ExternalLink,
-  AtSign, Linkedin, BookUser, FlaskConical, Menu
+  AtSign, Linkedin, BookUser, FlaskConical, Menu, FolderOpen, Sprout, Hash, Activity
 } from "lucide-react";
 
 /* ═══════════════════════════════════════════════════════════════
@@ -619,7 +619,7 @@ function AuthScreen({onLogin}){
    ════════════════════════ */
 function PubForm({pub,autores,pubAutores,onSave,onCancel,currentUser}){
   const isE=!!pub;const[step,setStep]=useState(1);
-  const[form,setForm]=useState(()=>pub?{...pub}:{titulo:"",tipoPublicacion:"",estadoPublicacion:"En preparación",fechaPublicacion:"",cuartil:"N/A",revista:"",issn:"",volumen:"",numero:"",paginas:"",doi:"",url:"",evidencia:"",indexacion1:"",indexacion2:"",indexacion3:"",registrado:"No",autoresExternos:""});
+  const[form,setForm]=useState(()=>pub?{...pub}:{titulo:"",tipoPublicacion:"",estadoPublicacion:"En preparación",fechaPublicacion:"",cuartil:"N/A",revista:"",issn:"",volumen:"",numero:"",paginas:"",doi:"",url:"",evidencia:"",indexacion1:"",indexacion2:"",indexacion3:"",registrado:"No",autoresExternos:"",valoracion:""});
   const[selA,setSelA]=useState(()=>pub?pubAutores.filter(l=>l.pubId===pub.id).map(l=>l.autorId):(currentUser?.rol!=="admin"?[currentUser?.id].filter(Boolean):[]));
   const s=(k,v)=>setForm(p=>({...p,[k]:v}));
   const submit=()=>{if(!form.titulo.trim())return alert("Título requerido");if(selA.length===0)return alert("Seleccione al menos un autor");onSave({...form,id:pub?.id},selA)};
@@ -650,6 +650,7 @@ function PubForm({pub,autores,pubAutores,onSave,onCancel,currentUser}){
         <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>DOI</label><Inp value={form.doi} onChange={v=>s("doi",v)}/></div>
         <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>URL PUBLICACIÓN <span style={{fontWeight:400,color:"#94a3b8"}}>(enlace a la revista/editorial)</span></label><Inp value={form.url} onChange={v=>s("url",v)} placeholder="https://revista.ejemplo.com/articulo"/></div>
         <div style={{gridColumn:"span 2"}}><label style={{fontSize:10,fontWeight:600,color:"#6d28d9",display:"block",marginBottom:3}}>EVIDENCIA / RESPALDO <span style={{fontWeight:400,color:"#94a3b8"}}>(carpeta OneDrive, Drive, o archivo de constancia)</span></label><Inp value={form.evidencia||""} onChange={v=>s("evidencia",v)} placeholder="https://onedrive.live.com/..." icon={ExternalLink}/></div>
+        <div style={{gridColumn:"span 2",background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:10,padding:"12px 14px"}}><label style={{fontSize:10,fontWeight:700,color:P.green,display:"block",marginBottom:4}}>VALORACIÓN CUANTITATIVA <span style={{fontWeight:400,color:"#94a3b8"}}>(0.00 – 1.00 · escala Dirección de Investigación)</span></label><div style={{display:"flex",alignItems:"center",gap:12}}><input type="number" min="0" max="1" step="0.01" value={form.valoracion||""} onChange={e=>{const v=e.target.value;if(v===""||(/^\d*\.?\d{0,2}$/.test(v)&&parseFloat(v)>=0&&parseFloat(v)<=1))s("valoracion",v)}} placeholder="Ej: 0.75" style={{width:110,padding:"9px 12px",borderRadius:10,border:`1.5px solid ${P.green}50`,fontSize:14,fontWeight:700,color:P.green,background:"white",outline:"none",boxSizing:"border-box",textAlign:"center"}}/>{form.valoracion&&<div style={{flex:1,height:8,background:"#f1f5f9",borderRadius:4,overflow:"hidden"}}><div style={{width:`${Math.min(1,parseFloat(form.valoracion||0))*100}%`,height:"100%",background:parseFloat(form.valoracion||0)>=0.75?P.green:parseFloat(form.valoracion||0)>=0.5?P.gold:C1,borderRadius:4,transition:"width .3s"}}/></div>}<span style={{fontSize:11,color:"#94a3b8",minWidth:30}}>{form.valoracion?`${Math.round(parseFloat(form.valoracion)*100)}%`:""}</span></div><p style={{fontSize:10,color:"#64748b",margin:"6px 0 0"}}>Este valor refleja el impacto y relevancia de la publicación: &lt;0.50 = baja · 0.50–0.74 = media · ≥0.75 = alta</p></div>
       </div>}
       {step===3&&<div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12}}>
         <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>ESTADO</label><Sel value={form.estadoPublicacion} onChange={v=>s("estadoPublicacion",v)} options={ESTADOS}/></div>
@@ -724,6 +725,7 @@ function DetailModal({pub, autores, links, onClose, onEdit, onStatus}){
         {pub.doi&&<Row label="DOI"><a href={`https://doi.org/${pub.doi}`} target="_blank" rel="noreferrer" style={{color:"#c2410c",fontWeight:600,fontSize:12,wordBreak:"break-all"}}>{pub.doi} ↗</a></Row>}
         {pub.url&&<Row label="URL Publicación"><a href={pub.url} target="_blank" rel="noreferrer" style={{color:"#1d4ed8",fontWeight:600,fontSize:12,wordBreak:"break-all"}}>{pub.url} ↗</a></Row>}
         {pub.evidencia&&<Row label="OneDrive / Respaldo"><a href={pub.evidencia} target="_blank" rel="noreferrer" style={{color:"#7c3aed",fontWeight:600,fontSize:12,wordBreak:"break-all",display:"inline-flex",alignItems:"center",gap:4}}>📁 Ver carpeta OneDrive ↗</a></Row>}
+        {pub.valoracion&&<Row label="Valoración DI">{(()=>{const v=parseFloat(pub.valoracion);const c2=v>=0.75?P.green:v>=0.5?P.gold:C1;return<div style={{display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:15,fontWeight:800,color:c2}}>{v.toFixed(2)}</span><div style={{width:80,height:6,background:"#f1f5f9",borderRadius:3,overflow:"hidden"}}><div style={{width:`${v*100}%`,height:"100%",background:c2,borderRadius:3}}/></div><span style={{fontSize:10,color:"#94a3b8"}}>{v>=0.75?"Alta":v>=0.5?"Media":"Baja"}</span></div>;})()}</Row>}
       </div>
 
       {/* Footer acciones */}
@@ -797,6 +799,20 @@ export default function App(){
   const[fTipo,setFTipo]=useState("");
   const[fAutor,setFAutor]=useState("");
   const[fAnio,setFAnio]=useState("");
+  // ── Módulo 2: Proyectos ──
+  const[dataM2,setDataM2]=useState({proyectos:[],participantes:[],estudiantes:[],seguimiento:[],objetivos:[],proyPubs:[]});
+  const[loadingM2,setLoadingM2]=useState(false);
+  const[showProyForm,setShowProyForm]=useState(false);
+  const[editProy,setEditProy]=useState(null);
+  const[detailProy,setDetailProy]=useState(null);
+  const[deleteProy,setDeleteProy]=useState(null);
+  // ── Módulo 3: Semilleros ──
+  const[dataM3,setDataM3]=useState({semilleros:[],semIntegrantes:[],semPubs:[]});
+  const[loadingM3,setLoadingM3]=useState(false);
+  const[showSemForm,setShowSemForm]=useState(false);
+  const[editSem,setEditSem]=useState(null);
+  const[detailSem,setDetailSem]=useState(null);
+  const[deleteSem,setDeleteSem]=useState(null);
 
   const showToast=(m,t="success")=>{setToast({m,t});setTimeout(()=>setToast(null),3500)};
   const isAdmin=user?.rol==="admin";
@@ -825,6 +841,23 @@ export default function App(){
     setLoading(false);
   },[]);
   useEffect(()=>{if(user)loadData()},[user,loadData]);
+  const loadM2=useCallback(async(background=false)=>{
+    if(!API_URL)return;
+    if(!background)setLoadingM2(true);
+    const r=await apiGet("getProyectos");
+    if(r&&!r.error){setDataM2({proyectos:r.proyectos||[],participantes:r.participantes||[],
+      estudiantes:r.estudiantes||[],seguimiento:r.seguimiento||[],objetivos:r.objetivos||[],proyPubs:r.proyPubs||[]});}
+    setLoadingM2(false);
+  },[]);
+  useEffect(()=>{if(user&&view==="proyectos")loadM2()},[user,view,loadM2]);
+  const loadM3=useCallback(async(background=false)=>{
+    if(!API_URL)return;
+    if(!background)setLoadingM3(true);
+    const r=await apiGet("getSemilleros");
+    if(r&&!r.error){setDataM3({semilleros:r.semilleros||[],semIntegrantes:r.semIntegrantes||[],semPubs:r.semPubs||[]});}
+    setLoadingM3(false);
+  },[]);
+  useEffect(()=>{if(user&&view==="semilleros")loadM3()},[user,view,loadM3]);
   useEffect(()=>{
     const fn=()=>{const m=window.innerWidth<768;setIsMobile(m);if(m)setSideOpen(false);};
     fn();
@@ -883,11 +916,115 @@ export default function App(){
     return{total,publicadas,scopus,reg,aceptadas,porTipo,porIdx,porAnio,autorRank};
   },[dashPubs,visibleAutores,data]);
 
+  // ── M2 Handlers ──────────────────────────────────────
+  const handleSaveProy=async(proy,partics,ests,objs)=>{
+    const isEd=!!editProy;
+    const tempId=proy.id||("PR"+Date.now().toString(36));
+    const full={...proy,id:tempId};
+    setDataM2(prev=>{
+      const np=[...prev.proyectos];const ex=np.findIndex(x=>x.id===full.id);
+      if(ex>=0)np[ex]=full;else np.push(full);
+      const nPart=prev.participantes.filter(p=>p.proyectoId!==full.id);
+      partics.forEach(p=>nPart.push({proyectoId:full.id,...p}));
+      const nEst=prev.estudiantes.filter(e=>e.proyectoId!==full.id);
+      ests.forEach(e=>nEst.push({proyectoId:full.id,...e}));
+      const nObj=prev.objetivos.filter(o=>o.proyectoId!==full.id);
+      objs.forEach((o,i)=>nObj.push({proyectoId:full.id,numero:i+1,...o}));
+      return{...prev,proyectos:np,participantes:nPart,estudiantes:nEst,objetivos:nObj};
+    });
+    setShowProyForm(false);setEditProy(null);
+    if(API_URL){
+      const action=isEd?"updateProyecto":"addProyecto";
+      const body=isEd?{action,id:full.id,proyecto:proy,participantes:partics,estudiantes:ests,objetivos:objs}:{action,proyecto:proy,participantes:partics,estudiantes:ests,objetivos:objs};
+      const r=await apiPost(body);
+      if(r?.ok){showToast(isEd?"Proyecto actualizado ✓":"Proyecto registrado ✓");loadM2(true);}
+      else showToast("Error: "+(r?.error||""),"error");
+    }else showToast(isEd?"Proyecto actualizado":"Proyecto registrado");
+  };
+  const handleDeleteProy=async()=>{
+    if(!deleteProy)return;
+    setDataM2(prev=>({...prev,proyectos:prev.proyectos.filter(p=>p.id!==deleteProy.id),
+      participantes:prev.participantes.filter(p=>p.proyectoId!==deleteProy.id),
+      estudiantes:prev.estudiantes.filter(e=>e.proyectoId!==deleteProy.id),
+      seguimiento:prev.seguimiento.filter(s=>s.proyectoId!==deleteProy.id),
+      objetivos:prev.objetivos.filter(o=>o.proyectoId!==deleteProy.id),
+      proyPubs:prev.proyPubs.filter(r=>r.proyectoId!==deleteProy.id)}));
+    setDeleteProy(null);setDetailProy(null);
+    if(API_URL){const r=await apiPost({action:"deleteProyecto",id:deleteProy.id});if(r?.ok)showToast("Proyecto eliminado ✓");else showToast("Error","error");}
+    else showToast("Proyecto eliminado");
+  };
+  const handleAddSeguimiento=async(seg)=>{
+    const tempId="S"+Date.now().toString(36);
+    setDataM2(prev=>({...prev,seguimiento:[{id:tempId,...seg},...prev.seguimiento]}));
+    if(API_URL){const r=await apiPost({action:"addSeguimiento",seguimiento:seg,userId:user?.id});if(r?.ok)loadM2(true);else showToast("Error guardando avance","error");}
+  };
+  const handleVincularPub=async(proyId,pubId)=>{
+    if(dataM2.proyPubs.some(r=>String(r.proyectoId)===String(proyId)&&String(r.pubId)===String(pubId)))return;
+    setDataM2(prev=>({...prev,proyPubs:[...prev.proyPubs,{proyectoId:proyId,pubId,fechaVinculo:new Date().toISOString()}]}));
+    if(API_URL){const r=await apiPost({action:"vincularPub",proyectoId:proyId,pubId});if(r?.ok)showToast("Publicación vinculada ✓");else showToast("Error","error");}
+    else showToast("Vinculada");
+  };
+  const handleDesvincularPub=async(proyId,pubId)=>{
+    setDataM2(prev=>({...prev,proyPubs:prev.proyPubs.filter(r=>!(String(r.proyectoId)===String(proyId)&&String(r.pubId)===String(pubId)))}));
+    if(API_URL){await apiPost({action:"desvincularPub",proyectoId:proyId,pubId});showToast("Desvinculada");}
+  };
+
+  // ── M3 Handlers ──────────────────────────────────────
+  const handleSaveSem=async(sem,integrantes)=>{
+    const isEd=!!editSem;
+    const tempId=sem.id||("SM"+Date.now().toString(36));
+    const full={...sem,id:tempId};
+    setDataM3(prev=>{
+      const ns=[...prev.semilleros];const ex=ns.findIndex(x=>x.id===full.id);
+      if(ex>=0)ns[ex]=full;else ns.push(full);
+      const ni=prev.semIntegrantes.filter(i=>i.semilleroId!==full.id);
+      integrantes.forEach(i=>ni.push({semilleroId:full.id,...i}));
+      return{...prev,semilleros:ns,semIntegrantes:ni};
+    });
+    setShowSemForm(false);setEditSem(null);
+    if(API_URL){
+      const action=isEd?"updateSemillero":"addSemillero";
+      const body=isEd?{action,id:full.id,semillero:sem}:{action,semillero:sem,integrantes};
+      const r=await apiPost(body);
+      if(r?.ok){showToast(isEd?"Semillero actualizado ✓":"Semillero registrado ✓");loadM3(true);}
+      else showToast("Error: "+(r?.error||""),"error");
+    }else showToast(isEd?"Semillero actualizado":"Semillero registrado");
+  };
+  const handleDeleteSem=async()=>{
+    if(!deleteSem)return;
+    setDataM3(prev=>({...prev,
+      semilleros:prev.semilleros.filter(s=>s.id!==deleteSem.id),
+      semIntegrantes:prev.semIntegrantes.filter(i=>i.semilleroId!==deleteSem.id),
+      semPubs:prev.semPubs.filter(r=>r.semilleroId!==deleteSem.id)}));
+    setDeleteSem(null);setDetailSem(null);
+    if(API_URL){const r=await apiPost({action:"deleteSemillero",id:deleteSem.id});if(r?.ok)showToast("Semillero eliminado ✓");else showToast("Error","error");}
+    else showToast("Semillero eliminado");
+  };
+  const handleAddIntegrante=async(semId,integ)=>{
+    setDataM3(prev=>({...prev,semIntegrantes:[...prev.semIntegrantes,{semilleroId:semId,...integ}]}));
+    if(API_URL){const r=await apiPost({action:"addIntegrante",semilleroId:semId,integrante:integ});if(r?.ok)loadM3(true);else showToast("Error","error");}
+  };
+  const handleRemoveIntegrante=async(semId,cedula)=>{
+    setDataM3(prev=>({...prev,semIntegrantes:prev.semIntegrantes.filter(i=>!(i.semilleroId===semId&&i.cedula===cedula))}));
+    if(API_URL){await apiPost({action:"removeIntegrante",semilleroId:semId,cedula});}
+  };
+  const handleVincularPubSem=async(semId,pubId)=>{
+    if(dataM3.semPubs.some(r=>String(r.semilleroId)===String(semId)&&String(r.pubId)===String(pubId)))return;
+    setDataM3(prev=>({...prev,semPubs:[...prev.semPubs,{semilleroId:semId,pubId,fechaVinculo:new Date().toISOString()}]}));
+    if(API_URL){const r=await apiPost({action:"vincularPubSem",semilleroId:semId,pubId});if(r?.ok)showToast("Publicación vinculada ✓");}
+    else showToast("Vinculada");
+  };
+  const handleDesvincularPubSem=async(semId,pubId)=>{
+    setDataM3(prev=>({...prev,semPubs:prev.semPubs.filter(r=>!(String(r.semilleroId)===String(semId)&&String(r.pubId)===String(pubId)))}));
+    if(API_URL){await apiPost({action:"desvincularPubSem",semilleroId:semId,pubId});showToast("Desvinculada");}
+  };
+
   if(!user)return<AuthScreen onLogin={setUser}/>;
 
   const menu=[
     {title:"GESTIÓN",items:[{id:"pubs",label:"Mis Publicaciones",icon:Library},{id:"nueva",label:"Nueva Publicación",icon:Plus,action:true}]},
     {title:"ANÁLISIS",items:[{id:"dashboard",label:"Dashboard",icon:LayoutDashboard},{id:"autores",label:"Por Autor",icon:Users},{id:"indexacion",label:"Indexación",icon:Globe},{id:"registro",label:"Estado Registro",icon:ClipboardList}]},
+    {title:"PROYECTOS",items:[{id:"proyectos",label:"Proyectos I+D",icon:FlaskConical},{id:"semilleros",label:"Semilleros",icon:Sprout}]},
     {title:"CUENTA",items:[{id:"perfil",label:"Mi Perfil",icon:User,fn:()=>setShowProfile(true)}]},
   ];
   if(isAdmin)menu.push({title:"ADMINISTRADOR",items:[{id:"docentes",label:"Gestionar Docentes",icon:UserPlus}]});
@@ -946,7 +1083,7 @@ export default function App(){
           {isMobile&&<button onClick={()=>setMobileMenuOpen(o=>!o)} style={{padding:6,borderRadius:8,border:"none",background:C1Bg,cursor:"pointer",color:C1,flexShrink:0,display:"flex",alignItems:"center"}}><Menu size={18}/></button>}
           <style>{`@media(max-width:767px){.hamburger-btn{display:flex!important}.header-title{font-size:13px!important}.header-sub{display:none!important}}`}</style>
           <div style={{minWidth:0}}>
-            <h2 className="header-title" style={{fontSize:15,fontWeight:700,color:P.navy,margin:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{view==="pubs"?(isAdmin?"Todas las Publicaciones":"Mis Publicaciones"):view==="dashboard"?"Dashboard":view==="autores"?"Por Autor":view==="indexacion"?"Indexación":view==="registro"?"Registro":view==="docentes"?"Docentes":"Panel"}</h2>
+            <h2 className="header-title" style={{fontSize:15,fontWeight:700,color:P.navy,margin:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{view==="pubs"?(isAdmin?"Todas las Publicaciones":"Mis Publicaciones"):view==="dashboard"?"Dashboard":view==="autores"?"Por Autor":view==="indexacion"?"Indexación":view==="registro"?"Registro":view==="docentes"?"Docentes":view==="proyectos"?"Proyectos de Investigación":view==="semilleros"?"Semilleros de Investigación":"Panel"}</h2>
             <p className="header-sub" style={{fontSize:11,color:"#94a3b8",margin:0}}>{isAdmin?"Vista Administrador":`${user.nombres} · ${stats.total} publicaciones`}</p>
           </div>
         </div>
@@ -1187,6 +1324,35 @@ export default function App(){
           </div>
         </div>}
 
+        {/* MÓDULO 3: SEMILLEROS */}
+        {view==="semilleros"&&<ViewSemilleros
+          semilleros={dataM3.semilleros}
+          semIntegrantes={dataM3.semIntegrantes}
+          semPubs={dataM3.semPubs}
+          autores={data.autores}
+          pubs={data.publicaciones}
+          isAdmin={isAdmin}
+          currentUser={user}
+          onNuevo={()=>{setEditSem(null);setShowSemForm(true);}}
+          onDetail={s=>setDetailSem(s)}
+        />}
+
+        {/* MÓDULO 2: PROYECTOS */}
+        {view==="proyectos"&&<ViewProyectos
+          proyectos={dataM2.proyectos}
+          participantes={dataM2.participantes}
+          estudiantes={dataM2.estudiantes}
+          seguimiento={dataM2.seguimiento}
+          objetivos={dataM2.objetivos}
+          proyPubs={dataM2.proyPubs}
+          autores={data.autores}
+          pubs={data.publicaciones}
+          isAdmin={isAdmin}
+          currentUser={user}
+          onNuevo={()=>{setEditProy(null);setShowProyForm(true);}}
+          onDetail={p=>setDetailProy(p)}
+        />}
+
         {/* GESTIONAR DOCENTES */}
         {view==="docentes"&&isAdmin&&<div>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
@@ -1227,6 +1393,969 @@ export default function App(){
     {showReporteModal&&<div style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{animation:"slideUp .3s"}}><ReporteModal autores={isAdmin?data.autores:visibleAutores} pubs={visiblePubs} links={data.pubAutores} onClose={()=>setShowReporteModal(false)} isAdmin={isAdmin}/></div></div>}
     {deletePub&&<div style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{animation:"slideUp .3s"}}><ConfirmDelete title="Eliminar Publicación" message={`¿Seguro que deseas eliminar "${deletePub.titulo}"? Esta acción no se puede deshacer.`} onConfirm={()=>handleDeletePub(deletePub.id)} onCancel={()=>setDeletePub(null)}/></div></div>}
     {deleteAutor&&<div style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{animation:"slideUp .3s"}}><ConfirmDelete title="Eliminar Docente" message={`¿Seguro que deseas eliminar a ${deleteAutor.nombres} ${deleteAutor.apellidos} y TODAS sus publicaciones? Esta acción no se puede deshacer.`} onConfirm={()=>handleDeleteAutor(deleteAutor.id)} onCancel={()=>setDeleteAutor(null)}/></div></div>}
+    {/* M3: Formulario Semillero */}
+    {showSemForm&&<div style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{maxHeight:"92vh",overflowY:"auto",animation:"slideUp .3s",width:"100%",maxWidth:640}}><SemilleroForm semillero={editSem?{...editSem,integrantes:dataM3.semIntegrantes.filter(i=>i.semilleroId===editSem.id)}:null} autores={data.autores} onSave={handleSaveSem} onCancel={()=>{setShowSemForm(false);setEditSem(null);}}/></div></div>}
+    {/* M3: Detalle Semillero */}
+    {detailSem&&<div style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{maxHeight:"92vh",overflowY:"auto",animation:"slideUp .3s",width:"100%",maxWidth:680}}><SemilleroDetail semillero={detailSem} autores={data.autores} pubs={data.publicaciones} integrantes={dataM3.semIntegrantes} semPubs={dataM3.semPubs} onClose={()=>setDetailSem(null)} onEdit={s=>{setEditSem(s);setDetailSem(null);setShowSemForm(true);}} onDelete={s=>setDeleteSem(s)} onAddIntegrante={handleAddIntegrante} onRemoveIntegrante={handleRemoveIntegrante} onVincularPub={handleVincularPubSem} onDesvincularPub={handleDesvincularPubSem} isAdmin={isAdmin} currentUser={user}/></div></div>}
+    {/* M3: Confirmar eliminar semillero */}
+    {deleteSem&&<div style={{position:"fixed",inset:0,zIndex:60,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{animation:"slideUp .3s"}}><ConfirmDelete title="Eliminar Semillero" message={`¿Seguro que deseas eliminar el semillero "${deleteSem.nombre}"? Se eliminarán integrantes y vínculos con publicaciones.`} onConfirm={handleDeleteSem} onCancel={()=>setDeleteSem(null)}/></div></div>}
+    {/* M2: Formulario Proyecto */}
+    {showProyForm&&<div style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{maxHeight:"92vh",overflowY:"auto",animation:"slideUp .3s",width:"100%",maxWidth:700}}><ProyectoForm proyecto={editProy?{...editProy,participantes:dataM2.participantes.filter(p=>p.proyectoId===editProy.id),estudiantes:dataM2.estudiantes.filter(e=>e.proyectoId===editProy.id),objetivos:dataM2.objetivos.filter(o=>o.proyectoId===editProy.id)}:null} autores={data.autores} proyPubs={dataM2.proyPubs} pubs={data.publicaciones} onSave={handleSaveProy} onCancel={()=>{setShowProyForm(false);setEditProy(null);}} currentUser={user}/></div></div>}
+    {/* M2: Detalle Proyecto */}
+    {detailProy&&<div style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{maxHeight:"92vh",overflowY:"auto",animation:"slideUp .3s",width:"100%",maxWidth:720}}><ProyectoDetail proyecto={detailProy} autores={data.autores} pubs={data.publicaciones} participantes={dataM2.participantes} estudiantes={dataM2.estudiantes} seguimiento={dataM2.seguimiento} objetivos={dataM2.objetivos} proyPubs={dataM2.proyPubs} onClose={()=>setDetailProy(null)} onEdit={p=>{setEditProy(p);setDetailProy(null);setShowProyForm(true);}} onDelete={p=>setDeleteProy(p)} onAddSeguimiento={handleAddSeguimiento} onVincularPub={handleVincularPub} onDesvincularPub={handleDesvincularPub} isAdmin={isAdmin} currentUser={user}/></div></div>}
+    {/* M2: Confirmar eliminar proyecto */}
+    {deleteProy&&<div style={{position:"fixed",inset:0,zIndex:60,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{animation:"slideUp .3s"}}><ConfirmDelete title="Eliminar Proyecto" message={`¿Seguro que deseas eliminar "${deleteProy.titulo}"? Se eliminarán también participantes, seguimiento y vínculos con publicaciones.`} onConfirm={handleDeleteProy} onCancel={()=>setDeleteProy(null)}/></div></div>}
     {toast&&<div style={{position:"fixed",bottom:20,right:20,zIndex:100,display:"flex",alignItems:"center",gap:8,padding:"9px 16px",borderRadius:12,boxShadow:"0 8px 30px rgba(0,0,0,.15)",animation:"toastIn .3s",background:toast.t==="error"?P.rose:C1,color:"white",fontSize:12,fontWeight:600}}>{toast.t==="error"?<AlertCircle size={14}/>:<CheckCircle2 size={14}/>}{toast.m}</div>}
   </div>);
+}
+
+/* ════════════════════════════════════════════════════════
+   MÓDULO 2 — PROYECTOS DE INVESTIGACIÓN
+   ════════════════════════════════════════════════════════ */
+
+const ESTADOS_PROY = ["Propuesto","Aprobado","En ejecución","Finalizado","Suspendido"];
+const LINEAS_INV   = ["Gestión del conocimiento para una acción docente innovadora, sistémica e interdisciplinaria",
+  "Innovación educativa y uso de TIC","Salud pública y bienestar social","Desarrollo local y comunitario",
+  "Derechos humanos y ciudadanía","Otros"];
+const ROLES_PART   = ["Investigador Principal","Co-investigador","Investigador Adjunto","Asesor externo"];
+const ALCANCES     = ["Local","Regional","Nacional","Internacional"];
+const ODS_OPTS     = ["ODS 1: Fin de la pobreza","ODS 3: Salud y bienestar","ODS 4: Educación de calidad",
+  "ODS 5: Igualdad de género","ODS 8: Trabajo decente","ODS 10: Reducción de desigualdades",
+  "ODS 11: Ciudades sostenibles","ODS 16: Paz, justicia","ODS 17: Alianzas"];
+
+/* ── Badge de estado de proyecto ── */
+const PrEstBdg=({e})=>{
+  const m={"Propuesto":[P.gold,P.goldBg],"Aprobado":[P.sky,P.skyBg],"En ejecución":[P.green,P.greenBg],
+    "Finalizado":[P.slate,"#f1f5f9"],"Suspendido":[P.rose,P.roseBg]};
+  const[c,bg]=m[e]||[P.slate,"#f1f5f9"];
+  return<Bdg c={c} bg={bg}>{e||"Sin estado"}</Bdg>;
+};
+
+/* ── Porcentaje avance visual ── */
+const AvanceBarra=({pct})=>{
+  const p=Math.min(100,Math.max(0,Number(pct)||0));
+  const c=p>=80?P.green:p>=40?P.gold:C1;
+  return<div style={{display:"flex",alignItems:"center",gap:8}}>
+    <div style={{flex:1,height:7,background:"#f1f5f9",borderRadius:4,overflow:"hidden"}}>
+      <div style={{width:`${p}%`,height:"100%",background:c,borderRadius:4,transition:"width .4s"}}/>
+    </div>
+    <span style={{fontSize:11,fontWeight:700,color:c,minWidth:32}}>{p}%</span>
+  </div>;
+};
+
+/* ══════════════════════════════════════════════════════
+   FORM PROYECTO — Creación / Edición
+   ══════════════════════════════════════════════════════ */
+function ProyectoForm({proyecto, autores, proyPubs, pubs, onSave, onCancel, currentUser}){
+  const isEdit = !!proyecto?.id;
+  const[step,setStep]=useState(0);
+  const[saving,setSaving]=useState(false);
+
+  // Datos generales
+  const[titulo,setTitulo]=useState(proyecto?.titulo||"");
+  const[estado,setEstado]=useState(proyecto?.estado||"Propuesto");
+  const[fechaInicio,setFechaInicio]=useState(proyecto?.fechaInicio||"");
+  const[fechaFin,setFechaFin]=useState(proyecto?.fechaFin||"");
+  const[meses,setMeses]=useState(proyecto?.meses||"");
+  const[linea,setLinea]=useState(proyecto?.lineaInvestigacion||"");
+  const[sublinea,setSublinea]=useState(proyecto?.sublinea||"");
+  const[dominio,setDominio]=useState(proyecto?.dominio||"");
+  const[ODS,setODS]=useState(proyecto?.ODS||"");
+  const[alcance,setAlcance]=useState(proyecto?.alcance||"");
+  const[presInt,setPresInt]=useState(proyecto?.presupuestoInterno||"");
+  const[presExt,setPresExt]=useState(proyecto?.presupuestoExterno||"");
+  const[objGeneral,setObjGeneral]=useState(proyecto?.objetivoGeneral||"");
+  const[descripcion,setDescripcion]=useState(proyecto?.descripcion||"");
+  const[metodologia,setMetodologia]=useState(proyecto?.metodologia||"");
+  const[grupo,setGrupo]=useState(proyecto?.grupoInvestigacion||"");
+  const[evidencia,setEvidencia]=useState(proyecto?.evidenciaOneDrive||"");
+
+  // Participantes (docentes)
+  const[participantes,setParticipantes]=useState(()=>{
+    if(proyecto?.participantes) return proyecto.participantes;
+    // Si hay proyecto editable, el inv. principal ya viene; si no, agregar currentUser como principal
+    const p=[];
+    if(!isEdit&&currentUser&&currentUser.rol!=="admin")
+      p.push({autorId:currentUser.id,rol:"Investigador Principal",horasSemana:"",categoriaSenecyt:"",categoriaDocente:""});
+    return p;
+  });
+
+  // Estudiantes
+  const[estudiantes,setEstudiantes]=useState(proyecto?.estudiantes||[]);
+
+  // Objetivos específicos
+  const[objetivos,setObjetivos]=useState(()=>proyecto?.objetivos||[{descripcion:"",actividades:"",productos:"",meses:""}]);
+
+  const steps=[
+    {label:"General",icon:FileText},
+    {label:"Equipo",icon:Users},
+    {label:"Objetivos",icon:ClipboardList},
+    {label:"Revisión",icon:Eye}
+  ];
+
+  const TA=({value,onChange,rows=3,placeholder})=><textarea value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder} rows={rows} style={{width:"100%",padding:"9px 12px",borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:13,color:"#1e293b",background:"white",outline:"none",boxSizing:"border-box",resize:"vertical",fontFamily:"inherit"}}/>;
+
+  const addParticipante=()=>setParticipantes(p=>[...p,{autorId:"",rol:"Investigador Adjunto",horasSemana:"",categoriaSenecyt:"",categoriaDocente:""}]);
+  const removeParticipante=i=>setParticipantes(p=>p.filter((_,j)=>j!==i));
+  const updatePart=(i,k,v)=>setParticipantes(p=>p.map((x,j)=>j===i?{...x,[k]:v}:x));
+
+  const addEst=()=>setEstudiantes(e=>[...e,{nombre:"",cedula:"",carrera:"",nivel:"",horasSemana:"",email:""}]);
+  const removeEst=i=>setEstudiantes(e=>e.filter((_,j)=>j!==i));
+  const updateEst=(i,k,v)=>setEstudiantes(e=>e.map((x,j)=>j===i?{...x,[k]:v}:x));
+
+  const addObj=()=>setObjetivos(o=>[...o,{descripcion:"",actividades:"",productos:"",meses:""}]);
+  const removeObj=i=>setObjetivos(o=>o.filter((_,j)=>j!==i));
+  const updateObj=(i,k,v)=>setObjetivos(o=>o.map((x,j)=>j===i?{...x,[k]:v}:x));
+
+  const handleSave=async()=>{
+    if(!titulo.trim())return alert("El título del proyecto es requerido");
+    if(!objGeneral.trim())return alert("El objetivo general es requerido");
+    setSaving(true);
+    const proy={titulo:titulo.trim(),estado,fechaInicio,fechaFin,meses,lineaInvestigacion:linea,sublinea,
+      dominio,ODS,alcance,presupuestoInterno:presInt,presupuestoExterno:presExt,
+      objetivoGeneral:objGeneral,descripcion,metodologia,grupoInvestigacion:grupo,evidenciaOneDrive:evidencia};
+    if(isEdit) proy.id=proyecto.id;
+    await onSave(proy,participantes.filter(p=>p.autorId),estudiantes,objetivos.filter(o=>o.descripcion));
+    setSaving(false);
+  };
+
+  const S=({label,value})=><div style={{marginBottom:6}}><span style={{fontSize:10,fontWeight:700,color:"#94a3b8",textTransform:"uppercase"}}>{label}</span><p style={{fontSize:12,color:"#1e293b",margin:"2px 0 0"}}>{value||"—"}</p></div>;
+
+  return(
+    <div style={{background:"white",borderRadius:16,overflow:"hidden",maxWidth:680,width:"100%",boxShadow:"0 20px 60px rgba(0,0,0,.18)",maxHeight:"90vh",overflowY:"auto"}}>
+      {/* Header */}
+      <div style={{background:`linear-gradient(135deg,${NAVY},${C1})`,padding:"18px 22px",color:"white",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+        <div><h3 style={{fontSize:15,fontWeight:800,margin:0,fontFamily:"'Playfair Display',serif"}}>{isEdit?"Editar Proyecto":"Nuevo Proyecto de Investigación"}</h3>
+          <p style={{fontSize:10,color:"rgba(255,255,255,.6)",margin:"3px 0 0"}}>Facultad de Ciencias Sociales y Pedagógicas</p></div>
+        <button onClick={onCancel} style={{border:"none",background:"rgba(255,255,255,.15)",cursor:"pointer",color:"white",borderRadius:8,padding:6}}><X size={16}/></button>
+      </div>
+
+      {/* Steps bar */}
+      <div className="steps-bar" style={{display:"flex",borderBottom:"1px solid #f1f5f9",background:"#fafbfc"}}>
+        {steps.map((s,i)=><button key={i} onClick={()=>i<step||step===steps.length-1?setStep(i):null} style={{flex:1,padding:"9px 4px",border:"none",cursor:"pointer",fontSize:11,fontWeight:step===i?700:400,color:step===i?C1:i<step?P.green:"#94a3b8",background:step===i?"white":"transparent",borderBottom:step===i?`3px solid ${C1}`:i<step?`3px solid ${P.green}`:"3px solid transparent",display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
+          {i<step?<CheckCircle2 size={12} style={{color:P.green}}/>:<s.icon size={12}/>}{s.label}
+        </button>)}
+      </div>
+
+      <div style={{padding:22}}>
+
+        {/* ── STEP 0: Datos Generales ── */}
+        {step===0&&<div style={{display:"flex",flexDirection:"column",gap:12}}>
+          <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>TÍTULO DEL PROYECTO *</label>
+            <TA value={titulo} onChange={setTitulo} rows={2} placeholder="Título completo del proyecto de investigación"/></div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,className:"form-grid"}}>
+            <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>ESTADO</label>
+              <Sel value={estado} onChange={setEstado} options={ESTADOS_PROY}/></div>
+            <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>GRUPO DE INVESTIGACIÓN</label>
+              <Inp value={grupo} onChange={setGrupo} placeholder="Ej: Grupo de Investigación y Pedagogía"/></div>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
+            <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>FECHA INICIO</label>
+              <Inp value={fechaInicio} onChange={setFechaInicio} placeholder="dd/mm/aaaa" icon={Calendar}/></div>
+            <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>FECHA FIN ESTIMADA</label>
+              <Inp value={fechaFin} onChange={setFechaFin} placeholder="dd/mm/aaaa" icon={Calendar}/></div>
+            <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>DURACIÓN (meses)</label>
+              <Inp value={meses} onChange={setMeses} placeholder="Ej: 12" type="number"/></div>
+          </div>
+          <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>LÍNEA DE INVESTIGACIÓN</label>
+            <select value={linea} onChange={e=>setLinea(e.target.value)} style={{width:"100%",padding:"9px 12px",borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:13,background:"white",outline:"none",boxSizing:"border-box"}}>
+              <option value="">Seleccionar línea…</option>{LINEAS_INV.map(l=><option key={l} value={l}>{l}</option>)}</select></div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+            <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>SUBLÍNEA</label>
+              <Inp value={sublinea} onChange={setSublinea} placeholder="Sublínea específica"/></div>
+            <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>ODS AL QUE TRIBUTA</label>
+              <select value={ODS} onChange={e=>setODS(e.target.value)} style={{width:"100%",padding:"9px 12px",borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:13,background:"white",outline:"none",boxSizing:"border-box"}}>
+                <option value="">Seleccionar ODS…</option>{ODS_OPTS.map(o=><option key={o} value={o}>{o}</option>)}</select></div>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
+            <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>ALCANCE</label>
+              <Sel value={alcance} onChange={setAlcance} options={ALCANCES} placeholder="Seleccionar…"/></div>
+            <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>PRESUPUESTO INTERNO ($)</label>
+              <Inp value={presInt} onChange={setPresInt} placeholder="0" type="number"/></div>
+            <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>PRESUPUESTO EXTERNO ($)</label>
+              <Inp value={presExt} onChange={setPresExt} placeholder="0" type="number"/></div>
+          </div>
+          <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>DESCRIPCIÓN / RESUMEN</label>
+            <TA value={descripcion} onChange={setDescripcion} rows={3} placeholder="Descripción del contexto y relevancia del proyecto…"/></div>
+          <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>EVIDENCIA / CARPETA ONEDRIVE</label>
+            <Inp value={evidencia} onChange={setEvidencia} placeholder="https://onedrive.live.com/…" icon={ExternalLink}/></div>
+        </div>}
+
+        {/* ── STEP 1: Equipo ── */}
+        {step===1&&<div style={{display:"flex",flexDirection:"column",gap:16}}>
+          {/* Docentes */}
+          <div>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+              <h4 style={{fontSize:12,fontWeight:700,color:P.navy,margin:0}}>Docentes Participantes</h4>
+              <Btn small icon={Plus} onClick={addParticipante}>Agregar Docente</Btn>
+            </div>
+            {participantes.length===0&&<p style={{fontSize:12,color:"#94a3b8",textAlign:"center",padding:"14px 0"}}>Sin docentes agregados</p>}
+            {participantes.map((p,i)=><div key={i} style={{background:"#f8fafc",borderRadius:10,padding:12,marginBottom:8,border:"1px solid #f1f5f9"}}>
+              <div style={{display:"flex",justifyContent:"space-between",marginBottom:8,alignItems:"center"}}>
+                <span style={{fontSize:10,fontWeight:700,color:C1}}>DOCENTE {i+1}</span>
+                <button onClick={()=>removeParticipante(i)} style={{border:"none",background:"none",cursor:"pointer",color:P.rose}}><X size={14}/></button>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:8,marginBottom:8}}>
+                <div><label style={{fontSize:9,fontWeight:600,color:"#475569",display:"block",marginBottom:2}}>DOCENTE *</label>
+                  <select value={p.autorId} onChange={e=>updatePart(i,"autorId",e.target.value)} style={{width:"100%",padding:"8px 10px",borderRadius:8,border:"1.5px solid #e2e8f0",fontSize:12,background:"white",outline:"none"}}>
+                    <option value="">Seleccionar docente…</option>{autores.map(a=><option key={a.id} value={a.id}>{a.apellidos}, {a.nombres}</option>)}</select></div>
+                <div><label style={{fontSize:9,fontWeight:600,color:"#475569",display:"block",marginBottom:2}}>ROL</label>
+                  <select value={p.rol} onChange={e=>updatePart(i,"rol",e.target.value)} style={{width:"100%",padding:"8px 10px",borderRadius:8,border:"1.5px solid #e2e8f0",fontSize:12,background:"white",outline:"none"}}>
+                    {ROLES_PART.map(r=><option key={r} value={r}>{r}</option>)}</select></div>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                <div><label style={{fontSize:9,fontWeight:600,color:"#475569",display:"block",marginBottom:2}}>HORAS/SEMANA</label>
+                  <Inp value={p.horasSemana} onChange={v=>updatePart(i,"horasSemana",v)} placeholder="Ej: 2" type="number"/></div>
+                <div><label style={{fontSize:9,fontWeight:600,color:"#475569",display:"block",marginBottom:2}}>CATEGORÍA DOCENTE</label>
+                  <Inp value={p.categoriaDocente} onChange={v=>updatePart(i,"categoriaDocente",v)} placeholder="Ej: Auxiliar 1"/></div>
+              </div>
+            </div>)}
+          </div>
+
+          {/* Estudiantes */}
+          <div style={{borderTop:"1px solid #f1f5f9",paddingTop:14}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+              <h4 style={{fontSize:12,fontWeight:700,color:P.navy,margin:0}}>Estudiantes Participantes</h4>
+              <Btn small icon={Plus} onClick={addEst}>Agregar Estudiante</Btn>
+            </div>
+            {estudiantes.length===0&&<p style={{fontSize:12,color:"#94a3b8",textAlign:"center",padding:"14px 0"}}>Sin estudiantes registrados</p>}
+            {estudiantes.map((e,i)=><div key={i} style={{background:"#fffbeb",borderRadius:10,padding:12,marginBottom:8,border:"1px solid #fde68a"}}>
+              <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
+                <span style={{fontSize:10,fontWeight:700,color:P.gold}}>ESTUDIANTE {i+1}</span>
+                <button onClick={()=>removeEst(i)} style={{border:"none",background:"none",cursor:"pointer",color:P.rose}}><X size={14}/></button>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:8,marginBottom:8}}>
+                <div><label style={{fontSize:9,fontWeight:600,color:"#475569",display:"block",marginBottom:2}}>NOMBRE COMPLETO</label>
+                  <Inp value={e.nombre} onChange={v=>updateEst(i,"nombre",v)} placeholder="APELLIDO NOMBRE"/></div>
+                <div><label style={{fontSize:9,fontWeight:600,color:"#475569",display:"block",marginBottom:2}}>CÉDULA</label>
+                  <Inp value={e.cedula} onChange={v=>updateEst(i,"cedula",v)} placeholder="0000000000"/></div>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+                <div><label style={{fontSize:9,fontWeight:600,color:"#475569",display:"block",marginBottom:2}}>CARRERA</label>
+                  <Inp value={e.carrera} onChange={v=>updateEst(i,"carrera",v)} placeholder="Educación Básica"/></div>
+                <div><label style={{fontSize:9,fontWeight:600,color:"#475569",display:"block",marginBottom:2}}>NIVEL</label>
+                  <Inp value={e.nivel} onChange={v=>updateEst(i,"nivel",v)} placeholder="Tercero"/></div>
+                <div><label style={{fontSize:9,fontWeight:600,color:"#475569",display:"block",marginBottom:2}}>HORAS/SEMANA</label>
+                  <Inp value={e.horasSemana} onChange={v=>updateEst(i,"horasSemana",v)} placeholder="2" type="number"/></div>
+              </div>
+            </div>)}
+          </div>
+        </div>}
+
+        {/* ── STEP 2: Objetivos Específicos ── */}
+        {step===2&&<div>
+          <div style={{background:C1Bg,borderRadius:10,padding:"10px 14px",marginBottom:14,border:`1px solid ${C1}20`}}>
+            <p style={{fontSize:11,color:C1,margin:0,fontWeight:600}}>Objetivo General:</p>
+            <div style={{marginTop:8}}><TA value={objGeneral} onChange={setObjGeneral} rows={2} placeholder="Definir el objetivo principal del proyecto…"/></div>
+          </div>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+            <h4 style={{fontSize:12,fontWeight:700,color:P.navy,margin:0}}>Objetivos Específicos</h4>
+            <Btn small icon={Plus} onClick={addObj}>Agregar Objetivo</Btn>
+          </div>
+          {objetivos.map((o,i)=><div key={i} style={{background:"#f8fafc",borderRadius:10,padding:12,marginBottom:10,border:"1px solid #f1f5f9"}}>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
+              <span style={{fontSize:10,fontWeight:700,color:P.violet}}>OBJETIVO ESPECÍFICO {i+1}</span>
+              {objetivos.length>1&&<button onClick={()=>removeObj(i)} style={{border:"none",background:"none",cursor:"pointer",color:P.rose}}><X size={14}/></button>}
+            </div>
+            <div style={{display:"flex",flexDirection:"column",gap:8}}>
+              <div><label style={{fontSize:9,fontWeight:600,color:"#475569",display:"block",marginBottom:2}}>DESCRIPCIÓN</label>
+                <TA value={o.descripcion} onChange={v=>updateObj(i,"descripcion",v)} rows={2} placeholder="Descripción del objetivo…"/></div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                <div><label style={{fontSize:9,fontWeight:600,color:"#475569",display:"block",marginBottom:2}}>ACTIVIDADES</label>
+                  <TA value={o.actividades} onChange={v=>updateObj(i,"actividades",v)} rows={2} placeholder="Actividades a realizar…"/></div>
+                <div><label style={{fontSize:9,fontWeight:600,color:"#475569",display:"block",marginBottom:2}}>PRODUCTOS / EVIDENCIAS</label>
+                  <TA value={o.productos} onChange={v=>updateObj(i,"productos",v)} rows={2} placeholder="Productos esperados…"/></div>
+              </div>
+              <div><label style={{fontSize:9,fontWeight:600,color:"#475569",display:"block",marginBottom:2}}>MESES DE EJECUCIÓN</label>
+                <Inp value={o.meses} onChange={v=>updateObj(i,"meses",v)} placeholder="Ej: 1,2,3"/></div>
+            </div>
+          </div>)}
+        </div>}
+
+        {/* ── STEP 3: Revisión ── */}
+        {step===3&&<div style={{display:"flex",flexDirection:"column",gap:14}}>
+          <div style={{background:"#f8fafc",borderRadius:12,padding:16,border:"1px solid #f1f5f9"}}>
+            <h4 style={{fontSize:12,fontWeight:700,color:C1,margin:"0 0 10px"}}>Datos Generales</h4>
+            <S label="Título" value={titulo}/><S label="Estado" value={estado}/>
+            <S label="Período" value={fechaInicio&&fechaFin?`${fechaInicio} → ${fechaFin}`:(fechaInicio||"")}/>
+            <S label="Duración" value={meses?`${meses} meses`:""}/>
+            <S label="Línea" value={linea}/><S label="ODS" value={ODS}/>
+            <S label="Presupuesto" value={`Interno: $${presInt||0} · Externo: $${presExt||0}`}/>
+          </div>
+          <div style={{background:"#f8fafc",borderRadius:12,padding:16,border:"1px solid #f1f5f9"}}>
+            <h4 style={{fontSize:12,fontWeight:700,color:P.navy,margin:"0 0 8px"}}>Equipo ({participantes.filter(p=>p.autorId).length} docentes · {estudiantes.length} estudiantes)</h4>
+            {participantes.filter(p=>p.autorId).map((p,i)=>{const a=autores.find(x=>x.id===p.autorId);return<div key={i} style={{fontSize:11,padding:"3px 0",borderBottom:"1px solid #f1f5f9"}}><strong>{a?`${a.apellidos}, ${a.nombres}`:"Desconocido"}</strong> · <span style={{color:"#64748b"}}>{p.rol}</span>{p.horasSemana&&<span style={{color:P.green,marginLeft:6}}>{p.horasSemana}h/sem</span>}</div>})}
+          </div>
+          <div style={{background:"#f8fafc",borderRadius:12,padding:16,border:"1px solid #f1f5f9"}}>
+            <h4 style={{fontSize:12,fontWeight:700,color:P.violet,margin:"0 0 8px"}}>Objetivos ({objetivos.filter(o=>o.descripcion).length})</h4>
+            {objetivos.filter(o=>o.descripcion).map((o,i)=><div key={i} style={{fontSize:11,padding:"4px 0",borderBottom:"1px solid #f1f5f9"}}><strong>OE{i+1}:</strong> {o.descripcion}</div>)}
+          </div>
+        </div>}
+      </div>
+
+      {/* Footer */}
+      <div style={{display:"flex",gap:8,justifyContent:"space-between",padding:"12px 22px",borderTop:"1px solid #f1f5f9",background:"#fafbfc",position:"sticky",bottom:0}}>
+        <Btn onClick={step===0?onCancel:()=>setStep(s=>s-1)} icon={step===0?X:ChevronLeft}>{step===0?"Cancelar":"Anterior"}</Btn>
+        <div style={{display:"flex",gap:8}}>
+          {step<3&&<Btn primary onClick={()=>setStep(s=>s+1)} icon={ChevronRight}>Siguiente</Btn>}
+          {step===3&&<Btn primary onClick={handleSave} disabled={saving} icon={saving?Loader2:Save}>{saving?"Guardando…":"Guardar Proyecto"}</Btn>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════
+   DETALLE PROYECTO
+   ══════════════════════════════════════════════════════ */
+function ProyectoDetail({proyecto, autores, pubs, participantes, estudiantes, seguimiento, objetivos, proyPubs,
+  onClose, onEdit, onDelete, onAddSeguimiento, onVincularPub, onDesvincularPub, isAdmin, currentUser}){
+
+  const[tabD,setTabD]=useState("info");
+  const[showSeguimientoForm,setShowSeguimientoForm]=useState(false);
+  const[pctNuevo,setPctNuevo]=useState("");
+  const[actNueva,setActNueva]=useState("");
+  const[objCumplidos,setObjCumplidos]=useState("");
+  const[evNueva,setEvNueva]=useState("");
+
+  const misPart = participantes.filter(p=>String(p.proyectoId)===String(proyecto.id));
+  const misEst  = estudiantes.filter(e=>String(e.proyectoId)===String(proyecto.id));
+  const misSeg  = seguimiento.filter(s=>String(s.proyectoId)===String(proyecto.id)).sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+  const misObj  = objetivos.filter(o=>String(o.proyectoId)===String(proyecto.id)).sort((a,b)=>Number(a.numero)-Number(b.numero));
+  const visPubs = proyPubs.filter(r=>String(r.proyectoId)===String(proyecto.id)).map(r=>pubs.find(p=>String(p.id)===String(r.pubId))).filter(Boolean);
+
+  // Último avance
+  const ultimoAvance = misSeg.length>0 ? Number(misSeg[0].porcentajeAvance)||0 : 0;
+  const presTotal    = (Number(proyecto.presupuestoInterno)||0)+(Number(proyecto.presupuestoExterno)||0);
+
+  const canEdit = isAdmin || misPart.some(p=>String(p.autorId)===String(currentUser?.id)&&p.rol==="Investigador Principal");
+
+  const handleAddSeg=async()=>{
+    if(!pctNuevo)return alert("Ingrese el porcentaje de avance");
+    await onAddSeguimiento({proyectoId:proyecto.id,fecha:new Date().toLocaleDateString("es-EC"),
+      porcentajeAvance:pctNuevo,objetivosCumplidos:objCumplidos,actividades:actNueva,evidencia:evNueva});
+    setPctNuevo("");setActNueva("");setObjCumplidos("");setEvNueva("");setShowSeguimientoForm(false);
+  };
+
+  const tabs=[{id:"info",label:"Información",icon:FileText},{id:"equipo",label:"Equipo",icon:Users},
+    {id:"objetivos",label:"Objetivos",icon:ClipboardList},{id:"seguimiento",label:"Seguimiento",icon:TrendingUp},
+    {id:"pubs",label:"Publicaciones",icon:BookOpen}];
+
+  const Row=({label,value,children})=><div style={{display:"flex",gap:6,padding:"5px 0",borderBottom:"1px solid #f8fafc"}}>
+    <span style={{fontSize:11,color:"#94a3b8",minWidth:160,flexShrink:0,fontWeight:600}}>{label}</span>
+    <span style={{fontSize:11,color:"#1e293b"}}>{children||value||"—"}</span>
+  </div>;
+
+  return(
+    <div style={{background:"white",borderRadius:16,overflow:"hidden",maxWidth:700,width:"100%",boxShadow:"0 20px 60px rgba(0,0,0,.18)"}}>
+      {/* Header */}
+      <div style={{background:`linear-gradient(135deg,${NAVY},${C1})`,padding:"18px 22px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
+          <div style={{flex:1,minWidth:0,paddingRight:12}}>
+            <div style={{marginBottom:4}}><PrEstBdg e={proyecto.estado}/></div>
+            <h3 style={{fontSize:14,fontWeight:800,color:"white",margin:"4px 0 0",fontFamily:"'Playfair Display',serif",lineHeight:1.3}}>{proyecto.titulo}</h3>
+          </div>
+          <button onClick={onClose} style={{border:"none",background:"rgba(255,255,255,.15)",cursor:"pointer",color:"white",borderRadius:8,padding:6,flexShrink:0}}><X size={16}/></button>
+        </div>
+        <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
+          <AvanceBarra pct={ultimoAvance}/>
+        </div>
+        <div style={{display:"flex",gap:14,marginTop:10,flexWrap:"wrap"}}>
+          {[{l:"Pubs vinculadas",v:visPubs.length,c:"#fff"},{l:"Docentes",v:misPart.length,c:"rgba(255,255,255,.8)"},{l:"Estudiantes",v:misEst.length,c:"rgba(255,255,255,.8)"},{l:"Duración",v:proyecto.meses?`${proyecto.meses} meses`:"—",c:"rgba(255,255,255,.7)"}].map(k=><div key={k.l}><p style={{fontSize:9,color:"rgba(255,255,255,.5)",margin:0}}>{k.l}</p><p style={{fontSize:14,fontWeight:700,color:k.c,margin:"1px 0 0"}}>{k.v}</p></div>)}
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div style={{display:"flex",borderBottom:"1px solid #f1f5f9",background:"#fafbfc",overflowX:"auto"}}>
+        {tabs.map(t=><button key={t.id} onClick={()=>setTabD(t.id)} style={{flexShrink:0,padding:"8px 14px",border:"none",cursor:"pointer",fontSize:11,fontWeight:tabD===t.id?700:400,color:tabD===t.id?C1:"#94a3b8",background:tabD===t.id?"white":"transparent",borderBottom:tabD===t.id?`3px solid ${C1}`:"3px solid transparent",display:"flex",alignItems:"center",gap:4}}><t.icon size={12}/>{t.label}</button>)}
+      </div>
+
+      <div style={{padding:"16px 20px",maxHeight:"55vh",overflowY:"auto"}}>
+
+        {/* Info */}
+        {tabD==="info"&&<div>
+          <Row label="Línea de investigación" value={proyecto.lineaInvestigacion}/>
+          <Row label="ODS" value={proyecto.ODS}/><Row label="Alcance" value={proyecto.alcance}/>
+          <Row label="Grupo investigación" value={proyecto.grupoInvestigacion}/>
+          <Row label="Fecha inicio" value={proyecto.fechaInicio}/><Row label="Fecha fin estimada" value={proyecto.fechaFin}/>
+          <Row label="Presupuesto interno">{presTotal>0?<span style={{fontWeight:700,color:P.green}}>Total: ${presTotal.toLocaleString()}<span style={{fontWeight:400,color:"#64748b",fontSize:10}}> (Interno: ${Number(proyecto.presupuestoInterno||0).toLocaleString()} · Externo: ${Number(proyecto.presupuestoExterno||0).toLocaleString()})</span></span>:"—"}</Row>
+          {proyecto.descripcion&&<div style={{marginTop:10,padding:"10px 12px",background:C1Bg,borderRadius:8,border:`1px solid ${C1}20`}}><p style={{fontSize:10,fontWeight:700,color:C1,margin:"0 0 4px"}}>DESCRIPCIÓN</p><p style={{fontSize:12,color:"#1e293b",margin:0,lineHeight:1.6}}>{proyecto.descripcion}</p></div>}
+          {proyecto.evidenciaOneDrive&&<div style={{marginTop:10}}><a href={proyecto.evidenciaOneDrive} target="_blank" rel="noreferrer" style={{display:"inline-flex",alignItems:"center",gap:5,padding:"6px 12px",borderRadius:8,background:"#f5f3ff",border:"1px solid #ddd6fe",color:"#7c3aed",fontSize:11,fontWeight:700,textDecoration:"none"}}><ExternalLink size={12}/>Ver carpeta OneDrive</a></div>}
+        </div>}
+
+        {/* Equipo */}
+        {tabD==="equipo"&&<div>
+          <h4 style={{fontSize:12,fontWeight:700,color:P.navy,margin:"0 0 10px"}}>Docentes ({misPart.length})</h4>
+          {misPart.length===0&&<p style={{fontSize:12,color:"#94a3b8"}}>Sin docentes registrados</p>}
+          {misPart.map((p,i)=>{const a=autores.find(x=>String(x.id)===String(p.autorId));const foto=a?.fotoUrl?driveImgUrl(a.fotoUrl):avatarUrl(a?.nombres,a?.apellidos);return<div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:"1px solid #f8fafc"}}>
+            <img src={foto} alt="" style={{width:36,height:36,borderRadius:"50%",objectFit:"cover",border:`2px solid ${C1}20`,flexShrink:0}} onError={e=>{e.target.onerror=null;e.target.src=avatarUrl(a?.nombres,a?.apellidos)}}/>
+            <div style={{flex:1,minWidth:0}}>
+              <p style={{fontSize:12,fontWeight:600,color:P.navy,margin:0}}>{a?`${a.apellidos}, ${a.nombres}`:"Docente desconocido"}</p>
+              <div style={{display:"flex",gap:6,marginTop:2,flexWrap:"wrap"}}><Bdg c={p.rol==="Investigador Principal"?C1:P.slate}>{p.rol}</Bdg>{p.horasSemana&&<Bdg c={P.green} bg={P.greenBg}><Clock size={9} style={{marginRight:2}}/>{p.horasSemana}h/sem</Bdg>}{p.categoriaDocente&&<Bdg c={P.slate}>{p.categoriaDocente}</Bdg>}</div>
+            </div>
+          </div>})}
+          {misEst.length>0&&<><h4 style={{fontSize:12,fontWeight:700,color:P.gold,margin:"14px 0 8px"}}>Estudiantes ({misEst.length})</h4>
+          <table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}>
+            <thead><tr style={{background:"#fafbfc"}}>{["Nombre","Cédula","Carrera","Nivel","H/sem"].map(h=><th key={h} style={{padding:"6px 8px",textAlign:"left",fontSize:9,color:"#94a3b8",fontWeight:700,borderBottom:"1px solid #f1f5f9"}}>{h}</th>)}</tr></thead>
+            <tbody>{misEst.map((e,i)=><tr key={i} style={{borderBottom:"1px solid #f8fafc"}}><td style={{padding:"6px 8px",fontWeight:500}}>{e.nombre}</td><td style={{padding:"6px 8px",color:"#64748b"}}>{e.cedula}</td><td style={{padding:"6px 8px",color:"#64748b"}}>{e.carrera}</td><td style={{padding:"6px 8px",color:"#64748b"}}>{e.nivel}</td><td style={{padding:"6px 8px",textAlign:"center"}}>{e.horasSemana&&<Bdg c={P.gold} bg={P.goldBg}>{e.horasSemana}h</Bdg>}</td></tr>)}</tbody>
+          </table></>}
+        </div>}
+
+        {/* Objetivos */}
+        {tabD==="objetivos"&&<div>
+          {proyecto.objetivoGeneral&&<div style={{background:C1Bg,borderRadius:10,padding:"10px 14px",marginBottom:14,border:`1px solid ${C1}20`}}>
+            <p style={{fontSize:10,fontWeight:700,color:C1,margin:"0 0 4px"}}>OBJETIVO GENERAL</p>
+            <p style={{fontSize:12,color:"#1e293b",margin:0,lineHeight:1.6}}>{proyecto.objetivoGeneral}</p>
+          </div>}
+          {misObj.length===0&&<p style={{fontSize:12,color:"#94a3b8",textAlign:"center",padding:"20px 0"}}>Sin objetivos específicos registrados</p>}
+          {misObj.map((o,i)=><div key={i} style={{background:"#f8fafc",borderRadius:10,padding:12,marginBottom:8,border:"1px solid #f1f5f9"}}>
+            <p style={{fontSize:11,fontWeight:700,color:P.violet,margin:"0 0 6px"}}>OE{o.numero}: {o.descripcion}</p>
+            {o.actividades&&<p style={{fontSize:11,color:"#64748b",margin:"0 0 4px"}}><strong>Actividades:</strong> {o.actividades}</p>}
+            {o.productos&&<p style={{fontSize:11,color:"#64748b",margin:"0 0 4px"}}><strong>Productos:</strong> {o.productos}</p>}
+            {o.meses&&<Bdg c={P.sky} bg={P.skyBg}><Calendar size={9} style={{marginRight:2}}/>Meses: {o.meses}</Bdg>}
+          </div>)}
+        </div>}
+
+        {/* Seguimiento */}
+        {tabD==="seguimiento"&&<div>
+          {(canEdit)&&!showSeguimientoForm&&<div style={{marginBottom:14}}>
+            <Btn primary small icon={Plus} onClick={()=>setShowSeguimientoForm(true)}>Registrar Avance</Btn>
+          </div>}
+          {showSeguimientoForm&&<div style={{background:"#f8fafc",borderRadius:12,padding:14,marginBottom:14,border:"1px solid #f1f5f9"}}>
+            <h4 style={{fontSize:12,fontWeight:700,color:P.navy,margin:"0 0 10px"}}>Nuevo Registro de Avance</h4>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 2fr",gap:10,marginBottom:10}}>
+              <div><label style={{fontSize:9,fontWeight:600,color:"#475569",display:"block",marginBottom:2}}>% AVANCE *</label>
+                <Inp value={pctNuevo} onChange={setPctNuevo} placeholder="0-100" type="number"/></div>
+              <div><label style={{fontSize:9,fontWeight:600,color:"#475569",display:"block",marginBottom:2}}>OBJETIVOS CUMPLIDOS</label>
+                <Inp value={objCumplidos} onChange={setObjCumplidos} placeholder="Ej: OE1, OE2 parcialmente"/></div>
+            </div>
+            <div style={{marginBottom:8}}><label style={{fontSize:9,fontWeight:600,color:"#475569",display:"block",marginBottom:2}}>ACTIVIDADES REALIZADAS</label>
+              <textarea value={actNueva} onChange={e=>setActNueva(e.target.value)} placeholder="Describir actividades del período…" rows={2} style={{width:"100%",padding:"8px 10px",borderRadius:8,border:"1.5px solid #e2e8f0",fontSize:12,background:"white",outline:"none",boxSizing:"border-box",resize:"vertical",fontFamily:"inherit"}}/></div>
+            <div style={{marginBottom:10}}><label style={{fontSize:9,fontWeight:600,color:"#475569",display:"block",marginBottom:2}}>EVIDENCIA (URL OneDrive)</label>
+              <Inp value={evNueva} onChange={setEvNueva} placeholder="https://onedrive.live.com/…" icon={ExternalLink}/></div>
+            <div style={{display:"flex",gap:6}}><Btn small onClick={()=>setShowSeguimientoForm(false)}>Cancelar</Btn><Btn primary small onClick={handleAddSeg} icon={Save}>Guardar Avance</Btn></div>
+          </div>}
+          {misSeg.length===0&&<p style={{fontSize:12,color:"#94a3b8",textAlign:"center",padding:"20px 0"}}>Sin registros de seguimiento</p>}
+          {misSeg.map((s,i)=><div key={i} style={{background:"#f8fafc",borderRadius:10,padding:12,marginBottom:8,border:"1px solid #f1f5f9"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+              <span style={{fontSize:10,fontWeight:700,color:"#64748b"}}>{s.fecha}</span>
+              <AvanceBarra pct={s.porcentajeAvance}/>
+            </div>
+            {s.objetivosCumplidos&&<p style={{fontSize:11,margin:"0 0 4px",color:P.green}}><strong>Objetivos:</strong> {s.objetivosCumplidos}</p>}
+            {s.actividades&&<p style={{fontSize:11,margin:"0 0 4px",color:"#64748b"}}>{s.actividades}</p>}
+            {s.evidencia&&<a href={s.evidencia} target="_blank" rel="noreferrer" style={{display:"inline-flex",alignItems:"center",gap:4,fontSize:10,color:"#7c3aed",textDecoration:"none",fontWeight:600}}><ExternalLink size={10}/>Ver evidencia</a>}
+          </div>)}
+        </div>}
+
+        {/* Publicaciones vinculadas */}
+        {tabD==="pubs"&&<div>
+          {canEdit&&<div style={{marginBottom:12,background:P.skyBg,borderRadius:10,padding:"10px 14px",border:`1px solid ${P.sky}30`}}>
+            <p style={{fontSize:11,color:P.sky,fontWeight:700,margin:"0 0 8px"}}>Vincular publicación existente</p>
+            <div style={{display:"flex",gap:8,alignItems:"center"}}>
+              <select id="pub-vincular-sel" style={{flex:1,padding:"7px 10px",borderRadius:8,border:"1.5px solid #e2e8f0",fontSize:12,background:"white",outline:"none"}}>
+                <option value="">Seleccionar publicación…</option>
+                {pubs.filter(p=>!visPubs.some(vp=>vp.id===p.id)).map(p=><option key={p.id} value={p.id}>{p.titulo?.substring(0,70)}{p.titulo?.length>70?"…":""}</option>)}
+              </select>
+              <Btn small primary onClick={()=>{const sel=document.getElementById("pub-vincular-sel");if(sel?.value)onVincularPub(proyecto.id,sel.value)}} icon={Plus}>Vincular</Btn>
+            </div>
+          </div>}
+          {visPubs.length===0&&<p style={{fontSize:12,color:"#94a3b8",textAlign:"center",padding:"20px 0"}}>Sin publicaciones vinculadas a este proyecto</p>}
+          {visPubs.map(p=><div key={p.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:"1px solid #f8fafc"}}>
+            <div style={{flex:1,minWidth:0}}>
+              <p style={{fontSize:12,fontWeight:600,color:P.navy,margin:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.titulo}</p>
+              <div style={{display:"flex",gap:4,marginTop:2}}><EBdg e={p.estadoPublicacion}/><TipoBdg tipo={p.tipoPublicacion}/>{p.cuartil&&p.cuartil!=="N/A"&&<QBdg q={p.cuartil}/>}</div>
+            </div>
+            {canEdit&&<button onClick={()=>onDesvincularPub(proyecto.id,p.id)} style={{marginLeft:8,padding:"3px 8px",borderRadius:7,border:"1px solid #ffe4e6",background:"#fff5f5",cursor:"pointer",fontSize:10,color:P.rose,fontWeight:600,flexShrink:0,display:"flex",alignItems:"center",gap:3}}><X size={10}/>Desvincular</button>}
+          </div>)}
+        </div>}
+      </div>
+
+      {/* Footer */}
+      <div style={{display:"flex",gap:8,justifyContent:"flex-end",padding:"12px 20px",borderTop:"1px solid #f1f5f9",background:"#fafbfc"}}>
+        <Btn onClick={onClose}>Cerrar</Btn>
+        {(canEdit)&&<><Btn onClick={()=>onDelete(proyecto)} danger icon={Trash2}>Eliminar</Btn><Btn primary onClick={()=>onEdit(proyecto)} icon={Edit3}>Editar</Btn></>}
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════
+   VISTA DASHBOARD PROYECTOS
+   ══════════════════════════════════════════════════════ */
+function ViewProyectos({proyectos, participantes, estudiantes, seguimiento, objetivos, proyPubs,
+  autores, pubs, isAdmin, currentUser, onNuevo, onDetail}){
+
+  const[filtroEst,setFiltroEst]=useState("");
+  const[busqueda,setBusqueda]=useState("");
+
+  // KPIs
+  const total     = proyectos.length;
+  const activos   = proyectos.filter(p=>p.estado==="En ejecución").length;
+  const propuesto = proyectos.filter(p=>p.estado==="Propuesto"||p.estado==="Aprobado").length;
+  const finalizado= proyectos.filter(p=>p.estado==="Finalizado").length;
+  const totalPubs = new Set(proyPubs.map(r=>r.pubId)).size;
+
+  const proyectosFilt=proyectos.filter(p=>{
+    if(filtroEst&&p.estado!==filtroEst)return false;
+    if(busqueda&&!p.titulo?.toLowerCase().includes(busqueda.toLowerCase()))return false;
+    if(!isAdmin){
+      const soyPart=participantes.some(x=>String(x.proyectoId)===String(p.id)&&String(x.autorId)===String(currentUser?.id));
+      if(!soyPart) return false;
+    }
+    return true;
+  });
+
+  const getUltimoAvance=(pid)=>{const seg=seguimiento.filter(s=>String(s.proyectoId)===String(pid)).sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));return seg.length>0?Number(seg[0].porcentajeAvance)||0:0;};
+  const getPartCount=(pid)=>participantes.filter(p=>String(p.proyectoId)===String(pid)).length;
+  const getPubCount=(pid)=>proyPubs.filter(r=>String(r.proyectoId)===String(pid)).length;
+
+  return(
+    <div>
+      {/* KPIs */}
+      <div className="kpi-grid" style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:10,marginBottom:16}}>
+        {[{l:"Proyectos",v:total,c:C1,i:FlaskConical},{l:"En ejecución",v:activos,c:P.green,i:TrendingUp},
+          {l:"En gestión",v:propuesto,c:P.gold,i:Clock},{l:"Finalizados",v:finalizado,c:P.slate,i:CheckCircle2},
+          {l:"Pubs vinculadas",v:totalPubs,c:P.violet,i:BookOpen}
+        ].map((s,i)=><div key={i} style={{background:"white",borderRadius:12,padding:"12px 14px",border:"1px solid #f1f5f9"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div><p style={{fontSize:10,color:"#94a3b8",margin:0}}>{s.l}</p><p style={{fontSize:22,fontWeight:800,color:s.c,margin:"2px 0 0"}}>{s.v}</p></div>
+            <s.i size={16} style={{color:s.c,opacity:.4}}/>
+          </div>
+        </div>)}
+      </div>
+
+      {/* Filtros */}
+      <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap",alignItems:"center"}}>
+        <div style={{flex:1,minWidth:160,position:"relative"}}>
+          <Search size={13} style={{position:"absolute",left:10,top:10,color:"#94a3b8"}}/>
+          <input value={busqueda} onChange={e=>setBusqueda(e.target.value)} placeholder="Buscar proyecto…" style={{width:"100%",padding:"8px 10px 8px 30px",borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:12,background:"white",outline:"none",boxSizing:"border-box"}}/>
+        </div>
+        {["","Propuesto","Aprobado","En ejecución","Finalizado","Suspendido"].map(e=><button key={e} onClick={()=>setFiltroEst(e)} style={{padding:"4px 12px",borderRadius:20,border:filtroEst===e?`2px solid ${C1}`:"1.5px solid #e2e8f0",fontSize:11,fontWeight:filtroEst===e?700:400,background:filtroEst===e?C1Bg:"white",color:filtroEst===e?C1:"#475569",cursor:"pointer"}}>{e||"Todos"}</button>)}
+        {isAdmin&&<Btn primary small icon={Plus} onClick={onNuevo}>Nuevo Proyecto</Btn>}
+      </div>
+
+      {proyectosFilt.length===0&&<div style={{textAlign:"center",padding:"40px 20px",background:"white",borderRadius:12,border:"1px solid #f1f5f9"}}>
+        <FlaskConical size={32} style={{color:"#cbd5e1",marginBottom:8}}/>
+        <p style={{fontSize:13,color:"#94a3b8",margin:0}}>{proyectos.length===0?"No hay proyectos registrados. El administrador puede crear el primero.":"Sin proyectos con los filtros seleccionados"}</p>
+      </div>}
+
+      <div style={{display:"grid",gap:12}}>
+        {proyectosFilt.map(p=>{
+          const avance=getUltimoAvance(p.id);
+          const nPart=getPartCount(p.id);
+          const nPubs=getPubCount(p.id);
+          const principal=participantes.find(x=>String(x.proyectoId)===String(p.id)&&x.rol==="Investigador Principal");
+          const autorPrincipal=principal?autores.find(a=>String(a.id)===String(principal.autorId)):null;
+          return(
+            <div key={p.id} onClick={()=>onDetail(p)} style={{background:"white",borderRadius:12,padding:16,border:"1px solid #f1f5f9",cursor:"pointer",transition:"box-shadow .15s",boxShadow:"0 1px 3px rgba(0,0,0,.03)"}} onMouseEnter={e=>e.currentTarget.style.boxShadow="0 4px 16px rgba(0,0,0,.08)"} onMouseLeave={e=>e.currentTarget.style.boxShadow="0 1px 3px rgba(0,0,0,.03)"}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8,gap:8}}>
+                <div style={{flex:1,minWidth:0}}>
+                  <p style={{fontSize:13,fontWeight:700,color:P.navy,margin:0,lineHeight:1.4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.titulo}</p>
+                  {autorPrincipal&&<p style={{fontSize:11,color:"#64748b",margin:"2px 0 0"}}><strong>IP:</strong> {autorPrincipal.apellidos}, {autorPrincipal.nombres}{autorPrincipal.departamento?` · ${autorPrincipal.departamento}`:""}</p>}
+                </div>
+                <PrEstBdg e={p.estado}/>
+              </div>
+              <AvanceBarra pct={avance}/>
+              <div style={{display:"flex",gap:10,marginTop:8,flexWrap:"wrap"}}>
+                {p.lineaInvestigacion&&<span style={{fontSize:10,color:"#64748b",background:"#f8fafc",padding:"2px 8px",borderRadius:10,border:"1px solid #f1f5f9",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:200}}>{p.lineaInvestigacion.substring(0,50)}{p.lineaInvestigacion.length>50?"…":""}</span>}
+                {nPart>0&&<Bdg c={P.slate}><Users size={9} style={{marginRight:3}}/>{nPart} docente{nPart!==1?"s":""}</Bdg>}
+                {nPubs>0&&<Bdg c={P.violet} bg={P.violetBg}><BookOpen size={9} style={{marginRight:3}}/>{nPubs} pub{nPubs!==1?"s":""}</Bdg>}
+                {(Number(p.presupuestoInterno)||0)+(Number(p.presupuestoExterno)||0)>0&&<Bdg c={P.green} bg={P.greenBg}>${((Number(p.presupuestoInterno)||0)+(Number(p.presupuestoExterno)||0)).toLocaleString()}</Bdg>}
+                {p.meses&&<Bdg c={P.sky} bg={P.skyBg}><Calendar size={9} style={{marginRight:3}}/>{p.meses} meses</Bdg>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════════════════
+   MÓDULO 3 — SEMILLEROS DE INVESTIGACIÓN
+   ════════════════════════════════════════════════════════ */
+
+const ESTADOS_SEM   = ["Activo","Inactivo","En formación","Suspendido"];
+const ROLES_SEM_INT = ["Estudiante","Coordinador estudiantil","Auxiliar de investigación"];
+const AREAS_CON     = ["Educación","Derecho","Administración","Psicología","Comunicación",
+  "Ciencias Sociales","Tecnología","Salud","Otra"];
+
+/* ── Badge valoración ── */
+const ValBdg=({v})=>{if(!v&&v!==0)return null;const n=parseFloat(v);if(isNaN(n))return null;const col=n>=0.75?P.green:n>=0.5?P.gold:C1;return<span style={{display:"inline-flex",alignItems:"center",gap:4,background:col+"18",color:col,fontSize:11,fontWeight:700,padding:"2px 10px",borderRadius:20,border:`1px solid ${col}30`}}><Activity size={9}/>  {n.toFixed(2)}</span>;};
+
+/* ══════════════════════════════════════════════════════
+   FORMULARIO SEMILLERO
+   ══════════════════════════════════════════════════════ */
+function SemilleroForm({semillero, autores, onSave, onCancel}){
+  const isEdit = !!semillero?.id;
+  const[saving,setSaving]=useState(false);
+  const[step,setStep]=useState(0);
+
+  const[nombre,setNombre]=useState(semillero?.nombre||"");
+  const[acronimo,setAcronimo]=useState(semillero?.acronimo||"");
+  const[descripcion,setDescripcion]=useState(semillero?.descripcion||"");
+  const[linea,setLinea]=useState(semillero?.lineaInvestigacion||"");
+  const[tutor,setTutor]=useState(semillero?.docenteTutor||"");
+  const[fechaCreacion,setFechaCreacion]=useState(semillero?.fechaCreacion||"");
+  const[estado,setEstado]=useState(semillero?.estado||"Activo");
+  const[area,setArea]=useState(semillero?.areaConocimiento||"");
+  const[objetivos,setObjetivos]=useState(semillero?.objetivos||"");
+  const[evidencia,setEvidencia]=useState(semillero?.evidenciaOneDrive||"");
+
+  const[integrantes,setIntegrantes]=useState(()=>{
+    if(semillero?.integrantes) return semillero.integrantes;
+    return [];
+  });
+
+  const addInt=()=>setIntegrantes(p=>[...p,{nombre:"",cedula:"",email:"",carrera:"",nivel:"",rol:"Estudiante",fechaIngreso:"",activo:true}]);
+  const removeInt=i=>setIntegrantes(p=>p.filter((_,j)=>j!==i));
+  const updateInt=(i,k,v)=>setIntegrantes(p=>p.map((x,j)=>j===i?{...x,[k]:v}:x));
+
+  const TA=({value,onChange,rows=2,placeholder})=><textarea value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder} rows={rows} style={{width:"100%",padding:"9px 12px",borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:13,color:"#1e293b",background:"white",outline:"none",boxSizing:"border-box",resize:"vertical",fontFamily:"inherit"}}/>;
+
+  const handleSave=async()=>{
+    if(!nombre.trim())return alert("El nombre del semillero es requerido");
+    setSaving(true);
+    const sem={nombre:nombre.trim(),acronimo:acronimo.trim(),descripcion,lineaInvestigacion:linea,
+      docenteTutor:tutor,fechaCreacion,estado,areaConocimiento:area,objetivos,evidenciaOneDrive:evidencia};
+    if(isEdit)sem.id=semillero.id;
+    await onSave(sem,integrantes.filter(i=>i.nombre||i.cedula));
+    setSaving(false);
+  };
+
+  const steps=[{label:"Datos",icon:FileText},{label:"Integrantes",icon:Users},{label:"Revisión",icon:Eye}];
+  const S=({label,value})=><div style={{marginBottom:5}}><span style={{fontSize:10,fontWeight:700,color:"#94a3b8",textTransform:"uppercase"}}>{label}</span><p style={{fontSize:12,color:"#1e293b",margin:"2px 0 0"}}>{value||"—"}</p></div>;
+
+  return(
+    <div style={{background:"white",borderRadius:16,overflow:"hidden",maxWidth:620,width:"100%",boxShadow:"0 20px 60px rgba(0,0,0,.18)",maxHeight:"90vh",overflowY:"auto"}}>
+      <div style={{background:`linear-gradient(135deg,${NAVY},${C1})`,padding:"18px 22px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+        <div>
+          <div style={{display:"inline-flex",alignItems:"center",gap:6,marginBottom:4}}>
+            <Sprout size={16} style={{color:"#bbf7d0"}}/><span style={{fontSize:10,fontWeight:700,color:"#86efac",letterSpacing:1}}>SEMILLERO DE INVESTIGACIÓN</span>
+          </div>
+          <h3 style={{fontSize:15,fontWeight:800,color:"white",margin:0,fontFamily:"'Playfair Display',serif"}}>{isEdit?"Editar Semillero":"Nuevo Semillero"}</h3>
+        </div>
+        <button onClick={onCancel} style={{border:"none",background:"rgba(255,255,255,.15)",cursor:"pointer",color:"white",borderRadius:8,padding:6}}><X size={16}/></button>
+      </div>
+
+      <div className="steps-bar" style={{display:"flex",borderBottom:"1px solid #f1f5f9",background:"#fafbfc"}}>
+        {steps.map((s,i)=><button key={i} onClick={()=>i<step||step===steps.length-1?setStep(i):null} style={{flex:1,padding:"9px 4px",border:"none",cursor:"pointer",fontSize:11,fontWeight:step===i?700:400,color:step===i?C1:i<step?P.green:"#94a3b8",background:step===i?"white":"transparent",borderBottom:step===i?`3px solid ${C1}`:i<step?`3px solid ${P.green}`:"3px solid transparent",display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
+          {i<step?<CheckCircle2 size={12} style={{color:P.green}}/>:<s.icon size={12}/>}{s.label}
+        </button>)}
+      </div>
+
+      <div style={{padding:22}}>
+        {/* Step 0: Datos generales */}
+        {step===0&&<div style={{display:"flex",flexDirection:"column",gap:12}}>
+          <div style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:12}}>
+            <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>NOMBRE DEL SEMILLERO *</label><Inp value={nombre} onChange={setNombre} placeholder="Nombre completo del semillero"/></div>
+            <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>ACRÓNIMO</label><Inp value={acronimo} onChange={setAcronimo} placeholder="Ej: SEDIN"/></div>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+            <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>ESTADO</label><Sel value={estado} onChange={setEstado} options={ESTADOS_SEM}/></div>
+            <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>ÁREA DE CONOCIMIENTO</label><Sel value={area} onChange={setArea} options={AREAS_CON} placeholder="Seleccionar…"/></div>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+            <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>DOCENTE TUTOR</label>
+              <select value={tutor} onChange={e=>setTutor(e.target.value)} style={{width:"100%",padding:"9px 12px",borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:13,background:"white",outline:"none",boxSizing:"border-box"}}>
+                <option value="">Seleccionar tutor…</option>{autores.map(a=><option key={a.id} value={a.id}>{a.apellidos}, {a.nombres}</option>)}</select></div>
+            <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>FECHA DE CREACIÓN</label><Inp value={fechaCreacion} onChange={setFechaCreacion} placeholder="DD/MM/AAAA" icon={Calendar}/></div>
+          </div>
+          <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>LÍNEA DE INVESTIGACIÓN</label>
+            <select value={linea} onChange={e=>setLinea(e.target.value)} style={{width:"100%",padding:"9px 12px",borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:13,background:"white",outline:"none",boxSizing:"border-box"}}>
+              <option value="">Seleccionar línea…</option>{LINEAS_INV.map(l=><option key={l} value={l}>{l}</option>)}</select></div>
+          <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>DESCRIPCIÓN / MISIÓN</label><TA value={descripcion} onChange={setDescripcion} rows={3} placeholder="Describe el propósito y enfoque del semillero…"/></div>
+          <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>OBJETIVOS</label><TA value={objetivos} onChange={setObjetivos} rows={2} placeholder="Objetivos del semillero…"/></div>
+          <div><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>EVIDENCIA / CARPETA ONEDRIVE</label><Inp value={evidencia} onChange={setEvidencia} placeholder="https://onedrive.live.com/…" icon={ExternalLink}/></div>
+        </div>}
+
+        {/* Step 1: Integrantes */}
+        {step===1&&<div>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+            <p style={{fontSize:12,color:"#64748b",margin:0}}>{integrantes.length} integrante{integrantes.length!==1?"s":""} registrado{integrantes.length!==1?"s":""}</p>
+            <Btn small icon={Plus} onClick={addInt}>Agregar Integrante</Btn>
+          </div>
+          {integrantes.length===0&&<div style={{textAlign:"center",padding:"24px 0",color:"#94a3b8"}}>
+            <Sprout size={28} style={{marginBottom:8,opacity:.4}}/><p style={{fontSize:12,margin:0}}>Sin integrantes. Agrégalos ahora o después desde el detalle.</p></div>}
+          {integrantes.map((ing,i)=><div key={i} style={{background:"#f0fdf4",borderRadius:10,padding:12,marginBottom:8,border:"1px solid #bbf7d0"}}>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
+              <span style={{fontSize:10,fontWeight:700,color:P.green}}>INTEGRANTE {i+1}</span>
+              <button onClick={()=>removeInt(i)} style={{border:"none",background:"none",cursor:"pointer",color:P.rose}}><X size={14}/></button>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:8,marginBottom:8}}>
+              <div><label style={{fontSize:9,fontWeight:600,color:"#475569",display:"block",marginBottom:2}}>NOMBRE COMPLETO *</label><Inp value={ing.nombre} onChange={v=>updateInt(i,"nombre",v)} placeholder="APELLIDO NOMBRE"/></div>
+              <div><label style={{fontSize:9,fontWeight:600,color:"#475569",display:"block",marginBottom:2}}>CÉDULA</label><Inp value={ing.cedula} onChange={v=>updateInt(i,"cedula",v)} placeholder="0000000000"/></div>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:8}}>
+              <div><label style={{fontSize:9,fontWeight:600,color:"#475569",display:"block",marginBottom:2}}>CARRERA</label><Inp value={ing.carrera} onChange={v=>updateInt(i,"carrera",v)} placeholder="Educación Básica"/></div>
+              <div><label style={{fontSize:9,fontWeight:600,color:"#475569",display:"block",marginBottom:2}}>NIVEL</label><Inp value={ing.nivel} onChange={v=>updateInt(i,"nivel",v)} placeholder="Tercero"/></div>
+              <div><label style={{fontSize:9,fontWeight:600,color:"#475569",display:"block",marginBottom:2}}>ROL</label>
+                <select value={ing.rol} onChange={e=>updateInt(i,"rol",e.target.value)} style={{width:"100%",padding:"8px 8px",borderRadius:8,border:"1.5px solid #e2e8f0",fontSize:11,background:"white",outline:"none"}}>
+                  {ROLES_SEM_INT.map(r=><option key={r} value={r}>{r}</option>)}</select></div>
+            </div>
+            <div><label style={{fontSize:9,fontWeight:600,color:"#475569",display:"block",marginBottom:2}}>EMAIL</label><Inp value={ing.email} onChange={v=>updateInt(i,"email",v)} placeholder="est@uotavalo.edu.ec" type="email" icon={Mail}/></div>
+          </div>)}
+        </div>}
+
+        {/* Step 2: Revisión */}
+        {step===2&&<div style={{display:"flex",flexDirection:"column",gap:12}}>
+          <div style={{background:"#f0fdf4",borderRadius:12,padding:16,border:"1px solid #bbf7d0"}}>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+              <Sprout size={16} style={{color:P.green}}/><h4 style={{fontSize:13,fontWeight:700,color:P.green,margin:0}}>{nombre||"Sin nombre"}{acronimo&&<span style={{fontSize:10,fontWeight:400,color:"#64748b",marginLeft:6}}>({acronimo})</span>}</h4>
+            </div>
+            <S label="Área" value={area}/><S label="Línea" value={linea}/><S label="Estado" value={estado}/>
+            <S label="Docente tutor" value={tutor?autores.find(a=>a.id===tutor)?.apellidos+" "+autores.find(a=>a.id===tutor)?.nombres:""}/><S label="Fecha creación" value={fechaCreacion}/>
+          </div>
+          <div style={{background:"#f8fafc",borderRadius:12,padding:16,border:"1px solid #f1f5f9"}}>
+            <h4 style={{fontSize:12,fontWeight:700,color:P.navy,margin:"0 0 8px"}}>Integrantes ({integrantes.filter(i=>i.nombre).length})</h4>
+            {integrantes.filter(i=>i.nombre).map((ing,i)=><div key={i} style={{fontSize:11,padding:"3px 0",borderBottom:"1px solid #f1f5f9"}}><strong>{ing.nombre}</strong>{ing.carrera&&<span style={{color:"#64748b"}}> · {ing.carrera}</span>}<span style={{color:P.green,marginLeft:6}}>{ing.rol}</span></div>)}
+            {integrantes.filter(i=>i.nombre).length===0&&<p style={{fontSize:11,color:"#94a3b8",margin:0}}>Sin integrantes (se pueden agregar después)</p>}
+          </div>
+        </div>}
+      </div>
+
+      <div style={{display:"flex",gap:8,justifyContent:"space-between",padding:"12px 22px",borderTop:"1px solid #f1f5f9",background:"#fafbfc",position:"sticky",bottom:0}}>
+        <Btn onClick={step===0?onCancel:()=>setStep(s=>s-1)} icon={step===0?X:ChevronLeft}>{step===0?"Cancelar":"Anterior"}</Btn>
+        <div style={{display:"flex",gap:8}}>
+          {step<2&&<Btn primary onClick={()=>setStep(s=>s+1)} icon={ChevronRight}>Siguiente</Btn>}
+          {step===2&&<Btn primary onClick={handleSave} disabled={saving} icon={saving?Loader2:Save}>{saving?"Guardando…":"Guardar Semillero"}</Btn>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════
+   DETALLE SEMILLERO
+   ══════════════════════════════════════════════════════ */
+function SemilleroDetail({semillero, autores, pubs, integrantes, semPubs,
+  onClose, onEdit, onDelete, onAddIntegrante, onRemoveIntegrante, onVincularPub, onDesvincularPub, isAdmin, currentUser}){
+
+  const[tabD,setTabD]=useState("info");
+  const[showAddInt,setShowAddInt]=useState(false);
+  const[newInt,setNewInt]=useState({nombre:"",cedula:"",email:"",carrera:"",nivel:"",rol:"Estudiante"});
+  const[saving,setSaving]=useState(false);
+
+  const misInt  = integrantes.filter(i=>String(i.semilleroId)===String(semillero.id));
+  const visPubs = semPubs.filter(r=>String(r.semilleroId)===String(semillero.id))
+    .map(r=>pubs.find(p=>String(p.id)===String(r.pubId))).filter(Boolean);
+
+  const tutorAutor = autores.find(a=>String(a.id)===String(semillero.docenteTutor));
+  const canEdit = isAdmin || String(semillero.docenteTutor)===String(currentUser?.id);
+
+  const handleAddInt=async()=>{
+    if(!newInt.nombre.trim())return alert("Ingrese el nombre del integrante");
+    setSaving(true);
+    await onAddIntegrante(semillero.id,{...newInt,fechaIngreso:new Date().toLocaleDateString("es-EC"),activo:true});
+    setNewInt({nombre:"",cedula:"",email:"",carrera:"",nivel:"",rol:"Estudiante"});
+    setShowAddInt(false);setSaving(false);
+  };
+
+  const tabs=[{id:"info",label:"Información",icon:FileText},{id:"integrantes",label:"Integrantes",icon:Users},{id:"pubs",label:"Publicaciones",icon:BookOpen}];
+  const Row=({label,value,children})=><div style={{display:"flex",gap:6,padding:"5px 0",borderBottom:"1px solid #f8fafc"}}>
+    <span style={{fontSize:11,color:"#94a3b8",minWidth:160,flexShrink:0,fontWeight:600}}>{label}</span>
+    <span style={{fontSize:11,color:"#1e293b"}}>{children||value||"—"}</span>
+  </div>;
+
+  return(
+    <div style={{background:"white",borderRadius:16,overflow:"hidden",maxWidth:660,width:"100%",boxShadow:"0 20px 60px rgba(0,0,0,.18)"}}>
+      {/* Header */}
+      <div style={{background:`linear-gradient(135deg,${NAVY},#064e3b)`,padding:"18px 22px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
+          <div style={{flex:1,minWidth:0,paddingRight:12}}>
+            <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
+              <Sprout size={14} style={{color:"#6ee7b7"}}/><span style={{fontSize:9,fontWeight:700,color:"#6ee7b7",letterSpacing:1}}>SEMILLERO · {semillero.acronimo||""}</span>
+            </div>
+            <h3 style={{fontSize:14,fontWeight:800,color:"white",margin:"0 0 4px",fontFamily:"'Playfair Display',serif",lineHeight:1.3}}>{semillero.nombre}</h3>
+            {tutorAutor&&<p style={{fontSize:11,color:"rgba(255,255,255,.65)",margin:0}}>Tutor: {tutorAutor.apellidos}, {tutorAutor.nombres}</p>}
+          </div>
+          <button onClick={onClose} style={{border:"none",background:"rgba(255,255,255,.15)",cursor:"pointer",color:"white",borderRadius:8,padding:6,flexShrink:0}}><X size={16}/></button>
+        </div>
+        <div style={{display:"flex",gap:14,flexWrap:"wrap"}}>
+          {[{l:"Integrantes",v:misInt.length},{l:"Publicaciones",v:visPubs.length},{l:"Estado",v:semillero.estado}].map(k=><div key={k.l}><p style={{fontSize:9,color:"rgba(255,255,255,.5)",margin:0}}>{k.l}</p><p style={{fontSize:13,fontWeight:700,color:"white",margin:"1px 0 0"}}>{k.v}</p></div>)}
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div style={{display:"flex",borderBottom:"1px solid #f1f5f9",background:"#fafbfc"}}>
+        {tabs.map(t=><button key={t.id} onClick={()=>setTabD(t.id)} style={{flex:1,padding:"8px 12px",border:"none",cursor:"pointer",fontSize:11,fontWeight:tabD===t.id?700:400,color:tabD===t.id?P.green:"#94a3b8",background:tabD===t.id?"white":"transparent",borderBottom:tabD===t.id?`3px solid ${P.green}`:"3px solid transparent",display:"flex",alignItems:"center",justifyContent:"center",gap:4}}><t.icon size={12}/>{t.label}</button>)}
+      </div>
+
+      <div style={{padding:"16px 20px",maxHeight:"55vh",overflowY:"auto"}}>
+        {/* Info */}
+        {tabD==="info"&&<div>
+          <Row label="Área de conocimiento" value={semillero.areaConocimiento}/>
+          <Row label="Línea de investigación" value={semillero.lineaInvestigacion}/>
+          <Row label="Fecha de creación" value={semillero.fechaCreacion}/>
+          <Row label="Estado"><span style={{color:semillero.estado==="Activo"?P.green:P.slate,fontWeight:600}}>{semillero.estado}</span></Row>
+          {semillero.descripcion&&<div style={{marginTop:10,padding:"10px 12px",background:"#f0fdf4",borderRadius:8,border:"1px solid #bbf7d0"}}>
+            <p style={{fontSize:10,fontWeight:700,color:P.green,margin:"0 0 4px"}}>DESCRIPCIÓN</p>
+            <p style={{fontSize:12,color:"#1e293b",margin:0,lineHeight:1.6}}>{semillero.descripcion}</p>
+          </div>}
+          {semillero.objetivos&&<div style={{marginTop:8,padding:"10px 12px",background:"#f8fafc",borderRadius:8,border:"1px solid #f1f5f9"}}>
+            <p style={{fontSize:10,fontWeight:700,color:"#94a3b8",margin:"0 0 4px"}}>OBJETIVOS</p>
+            <p style={{fontSize:12,color:"#1e293b",margin:0,lineHeight:1.6}}>{semillero.objetivos}</p>
+          </div>}
+          {semillero.evidenciaOneDrive&&<div style={{marginTop:8}}><a href={semillero.evidenciaOneDrive} target="_blank" rel="noreferrer" style={{display:"inline-flex",alignItems:"center",gap:5,padding:"6px 12px",borderRadius:8,background:"#f0fdf4",border:"1px solid #bbf7d0",color:P.green,fontSize:11,fontWeight:700,textDecoration:"none"}}><ExternalLink size={12}/>Ver carpeta OneDrive</a></div>}
+        </div>}
+
+        {/* Integrantes */}
+        {tabD==="integrantes"&&<div>
+          {canEdit&&!showAddInt&&<div style={{marginBottom:12}}><Btn primary small icon={Plus} onClick={()=>setShowAddInt(true)}>Agregar Integrante</Btn></div>}
+          {showAddInt&&<div style={{background:"#f0fdf4",borderRadius:10,padding:14,marginBottom:12,border:"1px solid #bbf7d0"}}>
+            <h4 style={{fontSize:11,fontWeight:700,color:P.green,margin:"0 0 10px"}}>Nuevo Integrante</h4>
+            <div style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:8,marginBottom:8}}>
+              <div><label style={{fontSize:9,fontWeight:600,color:"#475569",display:"block",marginBottom:2}}>NOMBRE *</label><Inp value={newInt.nombre} onChange={v=>setNewInt(p=>({...p,nombre:v}))} placeholder="APELLIDO NOMBRE"/></div>
+              <div><label style={{fontSize:9,fontWeight:600,color:"#475569",display:"block",marginBottom:2}}>CÉDULA</label><Inp value={newInt.cedula} onChange={v=>setNewInt(p=>({...p,cedula:v}))} placeholder="0000000000"/></div>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:8}}>
+              <div><label style={{fontSize:9,fontWeight:600,color:"#475569",display:"block",marginBottom:2}}>CARRERA</label><Inp value={newInt.carrera} onChange={v=>setNewInt(p=>({...p,carrera:v}))} placeholder="Educación"/></div>
+              <div><label style={{fontSize:9,fontWeight:600,color:"#475569",display:"block",marginBottom:2}}>NIVEL</label><Inp value={newInt.nivel} onChange={v=>setNewInt(p=>({...p,nivel:v}))} placeholder="Tercero"/></div>
+              <div><label style={{fontSize:9,fontWeight:600,color:"#475569",display:"block",marginBottom:2}}>ROL</label>
+                <select value={newInt.rol} onChange={e=>setNewInt(p=>({...p,rol:e.target.value}))} style={{width:"100%",padding:"8px 8px",borderRadius:8,border:"1.5px solid #e2e8f0",fontSize:11,background:"white",outline:"none"}}>
+                  {ROLES_SEM_INT.map(r=><option key={r} value={r}>{r}</option>)}</select></div>
+            </div>
+            <div style={{marginBottom:10}}><label style={{fontSize:9,fontWeight:600,color:"#475569",display:"block",marginBottom:2}}>EMAIL</label><Inp value={newInt.email} onChange={v=>setNewInt(p=>({...p,email:v}))} placeholder="est@uotavalo.edu.ec" icon={Mail}/></div>
+            <div style={{display:"flex",gap:6}}><Btn small onClick={()=>setShowAddInt(false)}>Cancelar</Btn><Btn primary small onClick={handleAddInt} disabled={saving} icon={saving?Loader2:Save}>Guardar</Btn></div>
+          </div>}
+          {misInt.length===0&&!showAddInt&&<p style={{fontSize:12,color:"#94a3b8",textAlign:"center",padding:"20px 0"}}>Sin integrantes registrados</p>}
+          {misInt.map((ing,i)=><div key={i} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid #f8fafc"}}>
+            <div style={{flex:1,minWidth:0}}>
+              <p style={{fontSize:12,fontWeight:600,color:P.navy,margin:0}}>{ing.nombre}</p>
+              <div style={{display:"flex",gap:5,marginTop:2,flexWrap:"wrap"}}>
+                {ing.carrera&&<Bdg c={P.slate}>{ing.carrera}</Bdg>}
+                {ing.nivel&&<Bdg c={P.sky} bg={P.skyBg}>{ing.nivel}</Bdg>}
+                <Bdg c={P.green} bg={P.greenBg}>{ing.rol}</Bdg>
+                {ing.cedula&&<span style={{fontSize:10,color:"#94a3b8"}}>CI: {ing.cedula}</span>}
+              </div>
+            </div>
+            {canEdit&&<button onClick={()=>onRemoveIntegrante(semillero.id,ing.cedula)} style={{marginLeft:8,padding:"3px 8px",borderRadius:7,border:"1px solid #ffe4e6",background:"#fff5f5",cursor:"pointer",fontSize:10,color:P.rose,fontWeight:600,display:"flex",alignItems:"center",gap:3,flexShrink:0}}><X size={10}/>Quitar</button>}
+          </div>)}
+        </div>}
+
+        {/* Publicaciones */}
+        {tabD==="pubs"&&<div>
+          {canEdit&&<div style={{marginBottom:12,background:"#f0fdf4",borderRadius:10,padding:"10px 14px",border:"1px solid #bbf7d0"}}>
+            <p style={{fontSize:11,color:P.green,fontWeight:700,margin:"0 0 8px"}}>Vincular publicación</p>
+            <div style={{display:"flex",gap:8,alignItems:"center"}}>
+              <select id="sem-pub-sel" style={{flex:1,padding:"7px 10px",borderRadius:8,border:"1.5px solid #e2e8f0",fontSize:12,background:"white",outline:"none"}}>
+                <option value="">Seleccionar publicación…</option>
+                {pubs.filter(p=>!visPubs.some(vp=>vp.id===p.id)).map(p=><option key={p.id} value={p.id}>{p.titulo?.substring(0,70)}{p.titulo?.length>70?"…":""}</option>)}
+              </select>
+              <Btn small primary onClick={()=>{const sel=document.getElementById("sem-pub-sel");if(sel?.value)onVincularPub(semillero.id,sel.value)}} icon={Plus}>Vincular</Btn>
+            </div>
+          </div>}
+          {visPubs.length===0&&<p style={{fontSize:12,color:"#94a3b8",textAlign:"center",padding:"20px 0"}}>Sin publicaciones vinculadas</p>}
+          {visPubs.map(p=><div key={p.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:"1px solid #f8fafc"}}>
+            <div style={{flex:1,minWidth:0}}>
+              <p style={{fontSize:12,fontWeight:600,color:P.navy,margin:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.titulo}</p>
+              <div style={{display:"flex",gap:4,marginTop:2,flexWrap:"wrap"}}><EBdg e={p.estadoPublicacion}/><TipoBdg tipo={p.tipoPublicacion}/>{p.cuartil&&p.cuartil!=="N/A"&&<QBdg q={p.cuartil}/>}<ValBdg v={p.valoracion}/></div>
+            </div>
+            {canEdit&&<button onClick={()=>onDesvincularPub(semillero.id,p.id)} style={{marginLeft:8,padding:"3px 8px",borderRadius:7,border:"1px solid #ffe4e6",background:"#fff5f5",cursor:"pointer",fontSize:10,color:P.rose,fontWeight:600,flexShrink:0,display:"flex",alignItems:"center",gap:3}}><X size={10}/>Quitar</button>}
+          </div>)}
+        </div>}
+      </div>
+
+      <div style={{display:"flex",gap:8,justifyContent:"flex-end",padding:"12px 20px",borderTop:"1px solid #f1f5f9",background:"#fafbfc"}}>
+        <Btn onClick={onClose}>Cerrar</Btn>
+        {canEdit&&<><Btn danger onClick={()=>onDelete(semillero)} icon={Trash2}>Eliminar</Btn><Btn primary onClick={()=>onEdit(semillero)} icon={Edit3}>Editar</Btn></>}
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════
+   VISTA DASHBOARD SEMILLEROS
+   ══════════════════════════════════════════════════════ */
+function ViewSemilleros({semilleros, semIntegrantes, semPubs, autores, pubs,
+  isAdmin, currentUser, onNuevo, onDetail}){
+
+  const[busqueda,setBusqueda]=useState("");
+  const[filtroEst,setFiltroEst]=useState("");
+
+  const total     = semilleros.length;
+  const activos   = semilleros.filter(s=>s.estado==="Activo").length;
+  const totalInt  = semIntegrantes.length;
+  const totalPubs = new Set(semPubs.map(r=>r.pubId)).size;
+
+  const semFilt = semilleros.filter(s=>{
+    if(filtroEst&&s.estado!==filtroEst)return false;
+    if(busqueda&&!s.nombre?.toLowerCase().includes(busqueda.toLowerCase())&&!s.acronimo?.toLowerCase().includes(busqueda.toLowerCase()))return false;
+    if(!isAdmin){
+      const soyTutor=String(s.docenteTutor)===String(currentUser?.id);
+      const soyInt=semIntegrantes.some(i=>i.semilleroId===s.id&&i.email===currentUser?.email);
+      if(!soyTutor&&!soyInt)return false;
+    }
+    return true;
+  });
+
+  const getIntCount=(sid)=>semIntegrantes.filter(i=>String(i.semilleroId)===String(sid)).length;
+  const getPubCount=(sid)=>semPubs.filter(r=>String(r.semilleroId)===String(sid)).length;
+  const getPromedioVal=(sid)=>{
+    const spubs=semPubs.filter(r=>String(r.semilleroId)===String(sid)).map(r=>pubs.find(p=>String(p.id)===String(r.pubId))).filter(Boolean);
+    const vals=spubs.map(p=>parseFloat(p.valoracion)).filter(v=>!isNaN(v)&&v>0);
+    return vals.length>0?(vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(2):null;
+  };
+
+  return(
+    <div>
+      {/* KPIs */}
+      <div className="kpi-grid" style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:16}}>
+        {[{l:"Semilleros",v:total,c:P.green,i:Sprout},{l:"Activos",v:activos,c:P.sky,i:Activity},
+          {l:"Integrantes",v:totalInt,c:P.violet,i:Users},{l:"Pubs vinculadas",v:totalPubs,c:C1,i:BookOpen}
+        ].map((s,i)=><div key={i} style={{background:"white",borderRadius:12,padding:"12px 14px",border:"1px solid #f1f5f9"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div><p style={{fontSize:10,color:"#94a3b8",margin:0}}>{s.l}</p><p style={{fontSize:22,fontWeight:800,color:s.c,margin:"2px 0 0"}}>{s.v}</p></div>
+            <s.i size={16} style={{color:s.c,opacity:.4}}/>
+          </div>
+        </div>)}
+      </div>
+
+      {/* Filtros */}
+      <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap",alignItems:"center"}}>
+        <div style={{flex:1,minWidth:140,position:"relative"}}>
+          <Search size={13} style={{position:"absolute",left:10,top:10,color:"#94a3b8"}}/>
+          <input value={busqueda} onChange={e=>setBusqueda(e.target.value)} placeholder="Buscar semillero…" style={{width:"100%",padding:"8px 10px 8px 30px",borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:12,background:"white",outline:"none",boxSizing:"border-box"}}/>
+        </div>
+        {["","Activo","Inactivo","En formación","Suspendido"].map(e=><button key={e} onClick={()=>setFiltroEst(e)} style={{padding:"4px 12px",borderRadius:20,border:filtroEst===e?`2px solid ${P.green}`:"1.5px solid #e2e8f0",fontSize:11,fontWeight:filtroEst===e?700:400,background:filtroEst===e?"#f0fdf4":"white",color:filtroEst===e?P.green:"#475569",cursor:"pointer"}}>{e||"Todos"}</button>)}
+        {isAdmin&&<Btn primary small icon={Plus} onClick={onNuevo}>Nuevo Semillero</Btn>}
+      </div>
+
+      {semFilt.length===0&&<div style={{textAlign:"center",padding:"40px 20px",background:"white",borderRadius:12,border:"1px solid #f1f5f9"}}>
+        <Sprout size={32} style={{color:"#a7f3d0",marginBottom:8}}/>
+        <p style={{fontSize:13,color:"#94a3b8",margin:0}}>{semilleros.length===0?"No hay semilleros registrados. El administrador puede crear el primero.":"Sin semilleros con los filtros seleccionados"}</p>
+      </div>}
+
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:12}}>
+        {semFilt.map(s=>{
+          const nInt=getIntCount(s.id);
+          const nPubs=getPubCount(s.id);
+          const promVal=getPromedioVal(s.id);
+          const tutor=autores.find(a=>String(a.id)===String(s.docenteTutor));
+          const stateColor=s.estado==="Activo"?P.green:s.estado==="En formación"?P.gold:P.slate;
+          return(
+            <div key={s.id} onClick={()=>onDetail(s)} style={{background:"white",borderRadius:12,padding:16,border:`1px solid ${P.green}20`,cursor:"pointer",transition:"all .15s",boxShadow:"0 1px 3px rgba(0,0,0,.03)"}} onMouseEnter={e=>{e.currentTarget.style.boxShadow=`0 4px 16px ${P.green}20`;e.currentTarget.style.borderColor=`${P.green}40`;}} onMouseLeave={e=>{e.currentTarget.style.boxShadow="0 1px 3px rgba(0,0,0,.03)";e.currentTarget.style.borderColor=`${P.green}20`;}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:3}}>
+                    <Sprout size={12} style={{color:stateColor,flexShrink:0}}/>
+                    {s.acronimo&&<span style={{fontSize:9,fontWeight:700,color:stateColor,letterSpacing:1}}>{s.acronimo}</span>}
+                  </div>
+                  <p style={{fontSize:13,fontWeight:700,color:P.navy,margin:0,lineHeight:1.3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.nombre}</p>
+                  {tutor&&<p style={{fontSize:10,color:"#64748b",margin:"2px 0 0"}}>Tutor: {tutor.apellidos}</p>}
+                </div>
+                <span style={{fontSize:10,fontWeight:600,color:stateColor,background:stateColor+"18",padding:"2px 8px",borderRadius:20,marginLeft:6,flexShrink:0}}>{s.estado}</span>
+              </div>
+              {s.areaConocimiento&&<span style={{fontSize:10,color:"#64748b",background:"#f8fafc",padding:"2px 8px",borderRadius:10,border:"1px solid #f1f5f9",display:"inline-block",marginBottom:8}}>{s.areaConocimiento}</span>}
+              <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                {nInt>0&&<Bdg c={P.green} bg={P.greenBg}><Users size={9} style={{marginRight:3}}/>{nInt} integrante{nInt!==1?"s":""}</Bdg>}
+                {nPubs>0&&<Bdg c={C1} bg={C1Bg}><BookOpen size={9} style={{marginRight:3}}/>{nPubs} pub{nPubs!==1?"s":""}</Bdg>}
+                {promVal&&<Bdg c={parseFloat(promVal)>=0.75?P.green:parseFloat(promVal)>=0.5?P.gold:C1}><Activity size={9} style={{marginRight:3}}/>Val. media: {promVal}</Bdg>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
