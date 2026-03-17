@@ -11,7 +11,7 @@ import {
   Layers, Clock, Star, Eye, Edit3, LogIn, Trash2,
   FileSpreadsheet, FileDown, RefreshCw, Shield, User, Mail, Lock, UserCheck,
   Settings, KeyRound, Link2, Phone, GraduationCap, Camera, ExternalLink,
-  AtSign, Linkedin, BookUser, FlaskConical, Menu, FolderOpen, Sprout, Hash, Activity
+  AtSign, Linkedin, BookUser, FlaskConical, Menu, FolderOpen, Sprout, Hash, Activity, Building2
 } from "lucide-react";
 
 /* ═══════════════════════════════════════════════════════════════
@@ -88,6 +88,8 @@ const TipoBdg=({tipo})=>tipo?<span style={{background:C1+"18",color:C1,fontSize:
 const Inp=({value,onChange,placeholder,type="text",icon:Ic})=><div style={{position:"relative"}}>{Ic&&<Ic size={15} style={{position:"absolute",left:11,top:11,color:"#94a3b8"}}/>}<input type={type} value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder} style={{width:"100%",padding:Ic?"9px 12px 9px 34px":"9px 12px",borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:13,color:"#1e293b",background:"white",outline:"none",boxSizing:"border-box"}} onFocus={e=>e.target.style.borderColor=C1} onBlur={e=>e.target.style.borderColor="#e2e8f0"}/></div>;
 const Sel=({value,onChange,options,placeholder,style:st})=><select value={value} onChange={e=>onChange(e.target.value)} style={{width:"100%",padding:"9px 12px",borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:13,color:value?"#1e293b":"#94a3b8",background:"white",outline:"none",boxSizing:"border-box",...st}}><option value="">{placeholder||"Seleccionar…"}</option>{options.map(o=><option key={o} value={o}>{o}</option>)}</select>;
 const Btn=({children,onClick,primary,danger,small,disabled,icon:Ic})=><button onClick={onClick} disabled={disabled} style={{display:"inline-flex",alignItems:"center",gap:6,padding:small?"5px 10px":"9px 18px",borderRadius:10,border:primary||danger?"none":"1.5px solid #e2e8f0",fontSize:small?11:13,fontWeight:primary?700:500,cursor:disabled?"not-allowed":"pointer",background:primary?`linear-gradient(135deg,${C1},${C1L})`:danger?P.rose:"white",color:primary||danger?"white":"#475569",opacity:disabled?.5:1,transition:"all .15s",boxShadow:primary?`0 3px 10px ${C1}40`:"none"}}>{Ic&&<Ic size={small?12:15}/>}{children}</button>;
+/* ── TextArea global — definido aquí para evitar re-mount en cada render ── */
+const TA=({value,onChange,rows=3,placeholder,onFocus,onBlur})=><textarea value={value} onChange={e=>onChange(e.target.value)} onFocus={onFocus} onBlur={onBlur} placeholder={placeholder} rows={rows} style={{width:"100%",padding:"9px 12px",borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:13,color:"#1e293b",background:"white",outline:"none",boxSizing:"border-box",resize:"vertical",fontFamily:"inherit"}}/>;
 
 function parseYear(fecha){if(!fecha)return null;const parts=fecha.split("/");if(parts.length===3)return parseInt(parts[2]);const y=parseInt(fecha);return isNaN(y)?null:y;}
 
@@ -337,7 +339,7 @@ function exportWordConsolidado(pubs, autores, links, filtros={}){
 }
 
 
-function ProfileModal({user, autores, onSave, onClose, isAdmin, allAutores, onPhotoUploaded}){
+function ProfileModal({user, autores, onSave, onClose, isAdmin, allAutores, onPhotoUploaded, adminMode=false}){
   const autor = autores.find(a=>a.id===user.id) || user;
   const[tab,setTab]=useState("info");
   const[nombres,setNombres]=useState(autor.nombres||"");
@@ -363,7 +365,9 @@ function ProfileModal({user, autores, onSave, onClose, isAdmin, allAutores, onPh
   const[uploadingPhoto,setUploadingPhoto]=useState(false);
 
   const modoDemo = !API_URL;
-  const tabs=[{id:"info",label:"Información",icon:User},{id:"redes",label:"Perfiles Académicos",icon:Link2},{id:"seguridad",label:"Seguridad",icon:Lock}];
+  const tabs=adminMode
+    ?[{id:"info",label:"Información",icon:User},{id:"redes",label:"Perfiles Académicos",icon:Link2}]
+    :[{id:"info",label:"Información",icon:User},{id:"redes",label:"Perfiles Académicos",icon:Link2},{id:"seguridad",label:"Seguridad",icon:Lock}];
 
   /* ── Subir foto a Google Drive via Apps Script ── */
   const handleFotoUpload=async(e)=>{
@@ -435,6 +439,7 @@ function ProfileModal({user, autores, onSave, onClose, isAdmin, allAutores, onPh
         {tabs.map(t=><button key={t.id} onClick={()=>setTab(t.id)} style={{flex:1,padding:"10px 6px",border:"none",cursor:"pointer",fontSize:11,fontWeight:tab===t.id?700:500,color:tab===t.id?C1:"#94a3b8",background:tab===t.id?"white":"transparent",borderBottom:tab===t.id?`3px solid ${C1}`:"3px solid transparent",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}><t.icon size={13}/>{t.label}</button>)}
       </div>
 
+      {adminMode&&<div style={{background:P.goldBg,color:P.gold,padding:"8px 16px",fontSize:11,fontWeight:600,display:"flex",alignItems:"center",gap:6,borderBottom:"1px solid #fde68a"}}><Shield size={13}/>Editando perfil como administrador — el docente no recibirá notificación</div>}
       {localToast&&<div style={{background:P.greenBg,color:P.green,padding:"8px 16px",fontSize:12,fontWeight:600,display:"flex",alignItems:"center",gap:6,borderBottom:"1px solid #d1fae5"}}><CheckCircle2 size={13}/>{localToast}</div>}
 
       <div style={{padding:22,minHeight:260,maxHeight:"55vh",overflowY:"auto"}}>
@@ -547,7 +552,7 @@ function ProfileModal({user, autores, onSave, onClose, isAdmin, allAutores, onPh
 }
 
 
-function ReporteModal({autores,pubs,links,onClose,isAdmin}){
+function ReporteModal({autores,pubs,links,onClose,isAdmin,dataM2={proyectos:[],participantes:[],proyPubs:[]},dataM3={semilleros:[],semIntegrantes:[],semPubs:[]}}){
   const[fAnio,setFAnio]=useState("");const[fTipo,setFTipo]=useState("");const[fAutorId,setFAutorId]=useState("");const[fDepto,setFDepto]=useState("");
   const years=useMemo(()=>{const ys=new Set();pubs.forEach(p=>{const y=parseYear(p.fechaPublicacion);if(y)ys.add(y)});return Array.from(ys).sort((a,b)=>b-a)},[pubs]);
   const deptos=useMemo(()=>{const ds=new Set();autores.forEach(a=>{if(a.departamento)ds.add(a.departamento)});return Array.from(ds).sort()},[autores]);
@@ -580,6 +585,11 @@ function ReporteModal({autores,pubs,links,onClose,isAdmin}){
       <p style={{fontSize:11,color:P.gold,fontWeight:700,margin:"0 0 6px",display:"flex",alignItems:"center",gap:5}}><Shield size={13}/>Opción administrador</p>
       <p style={{fontSize:10,color:"#92400e",margin:"0 0 8px"}}>Reporte con resumen ejecutivo {fDepto?`de ${fDepto}`:"de la facultad"} + secciones por investigador</p>
       <button onClick={handleConsolidado} disabled={preview.length===0} style={{width:"100%",padding:"8px 14px",borderRadius:10,border:"none",background:`linear-gradient(135deg,${NAVY},${C1})`,color:"white",fontSize:12,fontWeight:700,cursor:preview.length===0?"not-allowed":"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6,opacity:preview.length===0?.5:1}}><FileDown size={14}/>Reporte Consolidado {fDepto?`· ${fDepto}`:"FCSyP"}</button>
+    </div>}
+    {fAutorId&&isAdmin&&<div style={{background:"#f0fdf4",borderRadius:10,padding:"10px 14px",marginBottom:12,border:"1px solid #bbf7d0"}}>
+      <p style={{fontSize:11,color:P.green,fontWeight:700,margin:"0 0 6px",display:"flex",alignItems:"center",gap:5}}><Sprout size={13}/>Informe Integrado del Docente</p>
+      <p style={{fontSize:10,color:"#064e3b",margin:"0 0 8px"}}>Incluye publicaciones + proyectos + semilleros en un solo documento</p>
+      <button onClick={()=>{const autor=autores.find(a=>a.id===fAutorId);if(autor)exportWordDocenteCompleto(autor,pubs,links,[...dataM2.proyectos,...(window._proyExt||[])],dataM2.participantes,dataM2.proyPubs,dataM3.semilleros,dataM3.semIntegrantes,dataM3.semPubs,{anio:fAnio,tipo:fTipo});onClose();}} disabled={preview.length===0} style={{width:"100%",padding:"8px 14px",borderRadius:10,border:"none",background:"linear-gradient(135deg,#064e3b,#047857)",color:"white",fontSize:12,fontWeight:700,cursor:preview.length===0?"not-allowed":"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6,opacity:preview.length===0?.5:1}}><FileDown size={14}/>Descargar Informe Integrado</button>
     </div>}
     <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}><Btn onClick={onClose}>Cancelar</Btn><Btn onClick={handleExcel} icon={FileSpreadsheet}>Excel</Btn><Btn primary onClick={handleWord} icon={FileDown}>{fAutorId?"Word Individual":"Word por Autor"}</Btn></div>
   </div>);
@@ -775,6 +785,21 @@ function DocenteForm({onSave,onClose}){
 /* ════════════════════════════════════════════════════════
    APP PRINCIPAL
    ════════════════════════════════════════════════════════ */
+const ESTADOS_PROY = ["Propuesto","Aprobado","En ejecución","Finalizado","Suspendido"];
+const LINEAS_INV   = ["Gestión del conocimiento para una acción docente innovadora, sistémica e interdisciplinaria",
+  "Innovación educativa y uso de TIC","Salud pública y bienestar social","Desarrollo local y comunitario",
+  "Derechos humanos y ciudadanía","Otros"];
+const ROLES_PART   = ["Investigador Principal","Co-investigador","Investigador Adjunto","Asesor externo"];
+const ALCANCES     = ["Local","Regional","Nacional","Internacional"];
+const ROLES_EXT = ["Investigador Principal externo","Co-investigador","Asesor externo","Colaborador","Par evaluador"];
+const ODS_OPTS     = ["ODS 1: Fin de la pobreza","ODS 3: Salud y bienestar","ODS 4: Educación de calidad",
+  "ODS 5: Igualdad de género","ODS 8: Trabajo decente","ODS 10: Reducción de desigualdades",
+  "ODS 11: Ciudades sostenibles","ODS 16: Paz, justicia","ODS 17: Alianzas"];
+const ESTADOS_SEM   = ["Activo","Inactivo","En formación","Suspendido"];
+const ROLES_SEM_INT = ["Estudiante","Coordinador estudiantil","Auxiliar de investigación"];
+const AREAS_CON     = ["Educación","Derecho","Administración","Psicología","Comunicación",
+  "Ciencias Sociales","Tecnología","Salud","Otra"];
+
 export default function App(){
   const[user,setUser]=useState(null);
   const[data,setData]=useState(DEMO);
@@ -788,6 +813,7 @@ export default function App(){
   const[showProfile,setShowProfile]=useState(false);
   const[deletePub,setDeletePub]=useState(null);
   const[deleteAutor,setDeleteAutor]=useState(null);
+  const[editDocente,setEditDocente]=useState(null);
   const[sideOpen,setSideOpen]=useState(true);
   const[mobileMenuOpen,setMobileMenuOpen]=useState(false);
   const[isMobile,setIsMobile]=useState(()=>typeof window!=="undefined"&&window.innerWidth<768);
@@ -800,12 +826,13 @@ export default function App(){
   const[fAutor,setFAutor]=useState("");
   const[fAnio,setFAnio]=useState("");
   // ── Módulo 2: Proyectos ──
-  const[dataM2,setDataM2]=useState({proyectos:[],participantes:[],estudiantes:[],seguimiento:[],objetivos:[],proyPubs:[]});
+  const[dataM2,setDataM2]=useState({proyectos:[],participantes:[],estudiantes:[],seguimiento:[],objetivos:[],proyPubs:[],participantesExt:[]});
   const[loadingM2,setLoadingM2]=useState(false);
   const[showProyForm,setShowProyForm]=useState(false);
   const[editProy,setEditProy]=useState(null);
   const[detailProy,setDetailProy]=useState(null);
   const[deleteProy,setDeleteProy]=useState(null);
+  const[statusProy,setStatusProy]=useState(null);
   // ── Módulo 3: Semilleros ──
   const[dataM3,setDataM3]=useState({semilleros:[],semIntegrantes:[],semPubs:[]});
   const[loadingM3,setLoadingM3]=useState(false);
@@ -813,6 +840,13 @@ export default function App(){
   const[editSem,setEditSem]=useState(null);
   const[detailSem,setDetailSem]=useState(null);
   const[deleteSem,setDeleteSem]=useState(null);
+  // ── Proyectos Externos ──
+  const[proyectosExt,setProyectosExt]=useState([]);
+  const[showProyExtForm,setShowProyExtForm]=useState(false);
+  const[editProyExt2,setEditProyExt2]=useState(null);
+  const[detailProyExt2,setDetailProyExt2]=useState(null);
+  const[deleteProyExt2,setDeleteProyExt2]=useState(null);
+  const[statusProyExt,setStatusProyExt]=useState(null);
 
   const showToast=(m,t="success")=>{setToast({m,t});setTimeout(()=>setToast(null),3500)};
   const isAdmin=user?.rol==="admin";
@@ -841,12 +875,14 @@ export default function App(){
     setLoading(false);
   },[]);
   useEffect(()=>{if(user)loadData()},[user,loadData]);
+  useEffect(()=>{window._proyExt=proyectosExt;},[proyectosExt]);
+  useEffect(()=>{if(user){try{const k="pubtracker_proyext_v1";const saved=JSON.parse(sessionStorage.getItem(k)||"[]");if(saved.length>0)setProyectosExt(saved);}catch(e){}}},[user]);
   const loadM2=useCallback(async(background=false)=>{
     if(!API_URL)return;
     if(!background)setLoadingM2(true);
     const r=await apiGet("getProyectos");
     if(r&&!r.error){setDataM2({proyectos:r.proyectos||[],participantes:r.participantes||[],
-      estudiantes:r.estudiantes||[],seguimiento:r.seguimiento||[],objetivos:r.objetivos||[],proyPubs:r.proyPubs||[]});}
+      estudiantes:r.estudiantes||[],seguimiento:r.seguimiento||[],objetivos:r.objetivos||[],proyPubs:r.proyPubs||[],participantesExt:r.participantesExt||[]});}
     setLoadingM2(false);
   },[]);
   useEffect(()=>{if(user&&view==="proyectos")loadM2()},[user,view,loadM2]);
@@ -881,6 +917,13 @@ export default function App(){
   const handleDeleteAutor=async(autorId)=>{const pubIds=data.pubAutores.filter(l=>l.autorId===autorId).map(l=>l.pubId);setData(prev=>({...prev,autores:prev.autores.filter(a=>a.id!==autorId),publicaciones:prev.publicaciones.filter(p=>!pubIds.includes(p.id)),pubAutores:prev.pubAutores.filter(l=>l.autorId!==autorId&&!pubIds.includes(l.pubId))}));setDeleteAutor(null);if(API_URL){const r=await apiPost({action:"deleteAutor",id:autorId});if(r?.ok){showToast("Docente eliminado ✓");loadData(true)}else showToast("Error","error")}else showToast("Docente eliminado")};
   const handleAddDocente=async(doc)=>{const id="A"+Date.now().toString(36);setData(prev=>({...prev,autores:[...prev.autores,{id,nombres:doc.nombres,apellidos:doc.apellidos,email:doc.email,rol:"autor",activo:true}]}));setShowDocForm(false);if(API_URL){const r=await apiPost({action:"addAutor",...doc});if(r?.ok){showToast("Docente registrado ✓");loadData(true)}else showToast("Error: "+(r?.error||""),"error")}else showToast("Docente agregado")};
 
+  const handleSaveDocente=async(updated)=>{
+    setData(prev=>({...prev,autores:prev.autores.map(a=>a.id===updated.id?updated:a)}));
+    setEditDocente(null);
+    try{sessionStorage.removeItem("pubtracker_data_v1")}catch(e){}
+    if(API_URL){const r=await apiPost({action:"updatePerfil",autor:updated});if(r?.ok)showToast("Perfil actualizado ✓");else showToast("Error al guardar","error")}
+    else showToast("Perfil actualizado ✓");
+  };
   const handleSaveProfile=async(updated)=>{
     setData(prev=>({...prev,autores:prev.autores.map(a=>a.id===updated.id?updated:a)}));
     setUser(prev=>prev&&prev.id===updated.id?{...prev,...updated}:prev);
@@ -940,6 +983,16 @@ export default function App(){
       if(r?.ok){showToast(isEd?"Proyecto actualizado ✓":"Proyecto registrado ✓");loadM2(true);}
       else showToast("Error: "+(r?.error||""),"error");
     }else showToast(isEd?"Proyecto actualizado":"Proyecto registrado");
+  };
+  const handleStatusProy=(nuevoEstado)=>{
+    if(!statusProy)return;
+    const id=statusProy.id;
+    setDataM2(prev=>({...prev,proyectos:prev.proyectos.map(p=>p.id===id?{...p,estado:nuevoEstado}:p)}));
+    setDetailProy(prev=>prev&&prev.id===id?{...prev,estado:nuevoEstado}:prev);
+    setStatusProy(null);
+    showToast("Estado actualizado ✓");
+    if(API_URL){apiPost({action:"updateProyecto",id,proyecto:{...statusProy,estado:nuevoEstado},
+      participantes:[],estudiantes:[],objetivos:[]});}
   };
   const handleDeleteProy=async()=>{
     if(!deleteProy)return;
@@ -1021,10 +1074,57 @@ export default function App(){
 
   if(!user)return<AuthScreen onLogin={setUser}/>;
 
+  // ── Handlers Proyectos Externos ──────────────────────────
+  const handleSaveProyExt=async(proy)=>{
+    const isEd=!!editProyExt2;
+    const id=proy.id||("PE"+Date.now().toString(36));
+    const full={...proy,id};
+    setProyectosExt(prev=>{
+      const np=[...prev];
+      const ex=np.findIndex(x=>x.id===full.id);
+      if(ex>=0)np[ex]=full;else np.push(full);
+      return np;
+    });
+    setShowProyExtForm(false);setEditProyExt2(null);
+    showToast(isEd?"Proyecto externo actualizado ✓":"Proyecto externo registrado ✓");
+    try{
+      const k="pubtracker_proyext_v1";
+      const all=JSON.parse(sessionStorage.getItem(k)||"[]");
+      const idx=all.findIndex(x=>x.id===full.id);
+      if(idx>=0)all[idx]=full;else all.push(full);
+      sessionStorage.setItem(k,JSON.stringify(all));
+    }catch(e){}
+  };
+
+  const handleDeleteProyExt=async()=>{
+    if(!deleteProyExt2)return;
+    const pid=deleteProyExt2.id;
+    setProyectosExt(prev=>prev.filter(p=>p.id!==pid));
+    setDeleteProyExt2(null);setDetailProyExt2(null);
+    showToast("Proyecto externo eliminado ✓");
+    try{
+      const k="pubtracker_proyext_v1";
+      const all=JSON.parse(sessionStorage.getItem(k)||"[]").filter(x=>x.id!==pid);
+      sessionStorage.setItem(k,JSON.stringify(all));
+    }catch(e){}
+  };
+
+  const handleStatusProyExt=(id,nuevoEstado)=>{
+    setProyectosExt(prev=>prev.map(p=>p.id===id?{...p,estado:nuevoEstado}:p));
+    setDetailProyExt2(prev=>prev&&prev.id===id?{...prev,estado:nuevoEstado}:prev);
+    setStatusProyExt(null);
+    showToast("Estado actualizado ✓");
+    try{
+      const k="pubtracker_proyext_v1";
+      const all=JSON.parse(sessionStorage.getItem(k)||"[]").map(p=>p.id===id?{...p,estado:nuevoEstado}:p);
+      sessionStorage.setItem(k,JSON.stringify(all));
+    }catch(e){}
+  };
+
   const menu=[
     {title:"GESTIÓN",items:[{id:"pubs",label:"Mis Publicaciones",icon:Library},{id:"nueva",label:"Nueva Publicación",icon:Plus,action:true}]},
     {title:"ANÁLISIS",items:[{id:"dashboard",label:"Dashboard",icon:LayoutDashboard},{id:"autores",label:"Por Autor",icon:Users},{id:"indexacion",label:"Indexación",icon:Globe},{id:"registro",label:"Estado Registro",icon:ClipboardList}]},
-    {title:"PROYECTOS",items:[{id:"proyectos",label:"Proyectos I+D",icon:FlaskConical},{id:"semilleros",label:"Semilleros",icon:Sprout}]},
+    {title:"PROYECTOS",items:[{id:"proyectos",label:"Proyectos I+D",icon:FlaskConical},{id:"proyexterno",label:"Proyectos Externos",icon:Building2},{id:"semilleros",label:"Semilleros",icon:Sprout}]},
     {title:"CUENTA",items:[{id:"perfil",label:"Mi Perfil",icon:User,fn:()=>setShowProfile(true)}]},
   ];
   if(isAdmin)menu.push({title:"ADMINISTRADOR",items:[{id:"docentes",label:"Gestionar Docentes",icon:UserPlus}]});
@@ -1083,7 +1183,7 @@ export default function App(){
           {isMobile&&<button onClick={()=>setMobileMenuOpen(o=>!o)} style={{padding:6,borderRadius:8,border:"none",background:C1Bg,cursor:"pointer",color:C1,flexShrink:0,display:"flex",alignItems:"center"}}><Menu size={18}/></button>}
           <style>{`@media(max-width:767px){.hamburger-btn{display:flex!important}.header-title{font-size:13px!important}.header-sub{display:none!important}}`}</style>
           <div style={{minWidth:0}}>
-            <h2 className="header-title" style={{fontSize:15,fontWeight:700,color:P.navy,margin:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{view==="pubs"?(isAdmin?"Todas las Publicaciones":"Mis Publicaciones"):view==="dashboard"?"Dashboard":view==="autores"?"Por Autor":view==="indexacion"?"Indexación":view==="registro"?"Registro":view==="docentes"?"Docentes":view==="proyectos"?"Proyectos de Investigación":view==="semilleros"?"Semilleros de Investigación":"Panel"}</h2>
+            <h2 className="header-title" style={{fontSize:15,fontWeight:700,color:P.navy,margin:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{view==="pubs"?(isAdmin?"Todas las Publicaciones":"Mis Publicaciones"):view==="dashboard"?"Dashboard":view==="autores"?"Por Autor":view==="indexacion"?"Indexación":view==="registro"?"Registro":view==="docentes"?"Docentes":view==="proyectos"?"Proyectos de Investigación":view==="proyexterno"?"Proyectos Externos":view==="semilleros"?"Semilleros de Investigación":"Panel"}</h2>
             <p className="header-sub" style={{fontSize:11,color:"#94a3b8",margin:0}}>{isAdmin?"Vista Administrador":`${user.nombres} · ${stats.total} publicaciones`}</p>
           </div>
         </div>
@@ -1324,6 +1424,18 @@ export default function App(){
           </div>
         </div>}
 
+        {/* PROYECTOS EXTERNOS */}
+        {view==="proyexterno"&&<ViewProyectoExterno
+          proyectosExt={proyectosExt}
+          autores={data.autores}
+          isAdmin={isAdmin}
+          currentUser={user}
+          onNuevo={()=>{setEditProyExt2(null);setShowProyExtForm(true);}}
+          onDetail={p=>setDetailProyExt2(p)}
+          onEdit={p=>{setEditProyExt2(p);setDetailProyExt2(null);setShowProyExtForm(true);}}
+          onDelete={p=>setDeleteProyExt2(p)}
+        />}
+
         {/* MÓDULO 3: SEMILLEROS */}
         {view==="semilleros"&&<ViewSemilleros
           semilleros={dataM3.semilleros}
@@ -1362,7 +1474,7 @@ export default function App(){
           <div style={{background:"white",borderRadius:12,border:"1px solid #f1f5f9",overflow:"hidden"}}>
             <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
               <thead><tr style={{borderBottom:"2px solid #f1f5f9",background:"#fafbfc"}}>
-                {["FOTO","NOMBRES","APELLIDOS","EMAIL","PUBS","SCOPUS","HRS INV","ACCIONES"].map(h=><th key={h} style={{textAlign:h==="PUBS"||h==="SCOPUS"||h==="HRS INV"||h==="FOTO"?"center":"left",padding:"10px 12px",color:"#94a3b8",fontSize:10,fontWeight:700}}>{h}</th>)}
+                {["FOTO","NOMBRES","APELLIDOS","EMAIL","PUBS","SCOPUS","PROYECTOS","EXT","HRS INV","ACCIONES"].map(h=><th key={h} style={{textAlign:h==="PUBS"||h==="SCOPUS"||h==="HRS INV"||h==="FOTO"?"center":"left",padding:"10px 12px",color:"#94a3b8",fontSize:10,fontWeight:700}}>{h}</th>)}
               </tr></thead>
               <tbody>{stats.autorRank.map(a=>{const photoSrc=a.fotoUrl?driveImgUrl(a.fotoUrl):avatarUrl(a.nombres,a.apellidos);return<tr key={a.id} style={{borderBottom:"1px solid #f8fafc"}}>
                 <td style={{padding:"8px 12px",textAlign:"center"}}><img src={photoSrc} alt="" style={{width:32,height:32,borderRadius:"50%",objectFit:"cover",border:`2px solid ${C1}20`}} onError={e=>{e.target.onerror=null;e.target.src=avatarUrl(a.nombres,a.apellidos)}}/></td>
@@ -1371,8 +1483,11 @@ export default function App(){
                 <td style={{padding:"10px 12px",color:"#94a3b8"}}>{a.email||"—"}</td>
                 <td style={{padding:"10px 12px",textAlign:"center",fontWeight:700,color:a.count>0?C1:"#94a3b8"}}>{a.count}</td>
                 <td style={{padding:"10px 12px",textAlign:"center"}}>{a.scopus>0?<Bdg c={P.gold} bg={P.goldBg}>{a.scopus}</Bdg>:"—"}</td>
+                <td style={{padding:"10px 12px",textAlign:"center"}}>{(()=>{const np=dataM2.participantes.filter(p=>String(p.autorId)===String(a.id)).length;return np>0?<Bdg c={C1} bg={C1Bg}>{np}</Bdg>:<span style={{color:"#94a3b8"}}>—</span>;})()}</td>
+                <td style={{padding:"10px 12px",textAlign:"center"}}>{(()=>{const ne=proyectosExt.filter(p=>(p.participantes||[]).some(x=>String(x.autorId)===String(a.id))).length;return ne>0?<Bdg c={P.sky} bg={P.skyBg}>{ne}</Bdg>:<span style={{color:"#94a3b8"}}>—</span>;})()}</td>
                 <td style={{padding:"10px 12px",textAlign:"center"}}>{(()=>{const h=String(a.horasInvestigacion||"").trim();return h&&h!=="0"?<Bdg c={P.green} bg={P.greenBg}><Clock size={9} style={{marginRight:2}}/>{h}h</Bdg>:<span style={{color:"#94a3b8"}}>—</span>})()}</td>
                 <td style={{padding:"10px 12px"}}><div style={{display:"flex",gap:4}}>
+                  <button onClick={()=>setEditDocente(a)} style={{padding:"4px 8px",borderRadius:8,border:`1px solid ${C1}30`,background:C1Bg,cursor:"pointer",fontSize:11,color:C1,display:"inline-flex",alignItems:"center",gap:4,fontWeight:600}}><Edit3 size={11}/>Editar</button>
                   <Btn small icon={FileDown} onClick={()=>exportWord(a,data.publicaciones,data.pubAutores)}>Word</Btn>
                   <button onClick={()=>setDeleteAutor(a)} style={{padding:"4px 8px",borderRadius:8,border:"1px solid #ffe4e6",background:"#fff5f5",cursor:"pointer",fontSize:11,color:P.rose,display:"inline-flex",alignItems:"center",gap:4,fontWeight:600}}><Trash2 size={11}/>Eliminar</button>
                 </div></td>
@@ -1386,23 +1501,58 @@ export default function App(){
 
     {/* MODALES */}
     {detailPub&&<div style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{maxHeight:"92vh",overflowY:"auto",animation:"slideUp .3s",width:"100%",maxWidth:600}}><DetailModal pub={detailPub} autores={data.autores} links={data.pubAutores} onClose={()=>setDetailPub(null)} onEdit={p=>{setEditPub(p);setShowForm(true);}} onStatus={p=>setStatusPub(p)}/></div></div>}
+    {editDocente&&<div className="modal-wrap" style={{position:"fixed",inset:0,zIndex:55,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div className="modal-inner" style={{maxHeight:"92vh",overflowY:"auto",animation:"slideUp .3s",width:"100%",maxWidth:580}}><ProfileModal user={editDocente} autores={data.autores} onSave={handleSaveDocente} onClose={()=>setEditDocente(null)} isAdmin={isAdmin} allAutores={data.autores} onPhotoUploaded={(uid,url)=>{setData(prev=>({...prev,autores:prev.autores.map(a=>a.id===uid?{...a,fotoUrl:url}:a)}));try{sessionStorage.removeItem("pubtracker_data_v1")}catch(e){}}} adminMode={true}/></div></div>}
     {showProfile&&<div className="modal-wrap" style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div className="modal-inner" style={{maxHeight:"92vh",overflowY:"auto",animation:"slideUp .3s",width:"100%",maxWidth:580}}><ProfileModal user={user} autores={data.autores} onSave={handleSaveProfile} onClose={()=>setShowProfile(false)} isAdmin={isAdmin} allAutores={data.autores} onPhotoUploaded={handlePhotoUploaded}/></div></div>}
     {showForm&&<div style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{maxHeight:"92vh",overflowY:"auto",animation:"slideUp .3s"}}><PubForm pub={editPub} autores={data.autores} pubAutores={data.pubAutores} onSave={handleSavePub} onCancel={()=>{setShowForm(false);setEditPub(null)}} currentUser={user}/></div></div>}
     {statusPub&&<div style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{animation:"slideUp .3s"}}><StatusModal pub={statusPub} onSave={handleStatus} onClose={()=>setStatusPub(null)}/></div></div>}
     {showDocForm&&<div style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{animation:"slideUp .3s"}}><DocenteForm onSave={handleAddDocente} onClose={()=>setShowDocForm(false)}/></div></div>}
-    {showReporteModal&&<div style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{animation:"slideUp .3s"}}><ReporteModal autores={isAdmin?data.autores:visibleAutores} pubs={visiblePubs} links={data.pubAutores} onClose={()=>setShowReporteModal(false)} isAdmin={isAdmin}/></div></div>}
+    {showReporteModal&&<div style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{animation:"slideUp .3s"}}><ReporteModal autores={isAdmin?data.autores:visibleAutores} pubs={visiblePubs} links={data.pubAutores} onClose={()=>setShowReporteModal(false)} isAdmin={isAdmin} dataM2={dataM2} dataM3={dataM3}/></div></div>}
     {deletePub&&<div style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{animation:"slideUp .3s"}}><ConfirmDelete title="Eliminar Publicación" message={`¿Seguro que deseas eliminar "${deletePub.titulo}"? Esta acción no se puede deshacer.`} onConfirm={()=>handleDeletePub(deletePub.id)} onCancel={()=>setDeletePub(null)}/></div></div>}
     {deleteAutor&&<div style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{animation:"slideUp .3s"}}><ConfirmDelete title="Eliminar Docente" message={`¿Seguro que deseas eliminar a ${deleteAutor.nombres} ${deleteAutor.apellidos} y TODAS sus publicaciones? Esta acción no se puede deshacer.`} onConfirm={()=>handleDeleteAutor(deleteAutor.id)} onCancel={()=>setDeleteAutor(null)}/></div></div>}
+    {/* PROYECTOS EXTERNOS: Formulario */}
+    {showProyExtForm&&<div style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{maxHeight:"92vh",overflowY:"auto",animation:"slideUp .3s",width:"100%",maxWidth:640}}><ProyectoExternoForm proyecto={editProyExt2} autores={data.autores} onSave={handleSaveProyExt} onCancel={()=>{setShowProyExtForm(false);setEditProyExt2(null);}}/></div></div>}
+    {/* PROYECTOS EXTERNOS: Detalle */}
+    {detailProyExt2&&<div style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{maxHeight:"92vh",overflowY:"auto",animation:"slideUp .3s",width:"100%",maxWidth:620}}><ProyectoExternoDetail proyecto={detailProyExt2} autores={data.autores} onClose={()=>setDetailProyExt2(null)} onEdit={p=>{setEditProyExt2(p);setDetailProyExt2(null);setShowProyExtForm(true);}} onDelete={p=>setDeleteProyExt2(p)} onChangeStatus={p=>setStatusProyExt(p)} isAdmin={isAdmin} currentUser={user}/></div></div>}
+    {/* PROYECTOS EXTERNOS: Confirmar eliminar */}
+    {deleteProyExt2&&<div style={{position:"fixed",inset:0,zIndex:60,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{animation:"slideUp .3s"}}><ConfirmDelete title="Eliminar Proyecto Externo" message={`¿Eliminar el proyecto "${deleteProyExt2.titulo}"?`} onConfirm={handleDeleteProyExt} onCancel={()=>setDeleteProyExt2(null)}/></div></div>}
+    {/* PROYECTOS EXTERNOS: Cambiar Estado */}
+    {statusProyExt&&<div style={{position:"fixed",inset:0,zIndex:60,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{animation:"slideUp .3s",background:"white",borderRadius:16,padding:24,maxWidth:420,width:"100%",boxShadow:"0 20px 60px rgba(0,0,0,.18)"}}>
+      <div style={{display:"flex",justifyContent:"space-between",marginBottom:14}}><h3 style={{fontSize:15,fontWeight:700,color:P.navy,margin:0}}>Cambiar Estado</h3><button onClick={()=>setStatusProyExt(null)} style={{border:"none",background:"none",cursor:"pointer",color:"#94a3b8"}}><X size={18}/></button></div>
+      <p style={{fontSize:12,color:"#64748b",marginBottom:14,lineHeight:1.5}}>{statusProyExt.titulo}</p>
+      <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:20}}>
+        {["En ejecución","Propuesto","Finalizado","Suspendido"].map(e=>{
+          const cur=statusProyExt.estado===e;
+          const col=e==="En ejecución"?P.green:e==="Propuesto"?P.gold:e==="Finalizado"?P.slate:P.rose;
+          return<button key={e} onClick={()=>setStatusProyExt(p=>({...p,estado:e}))} style={{padding:"6px 14px",borderRadius:20,border:cur?`2px solid ${col}`:"1.5px solid #e2e8f0",fontSize:12,fontWeight:cur?700:400,background:cur?col+"18":"white",color:cur?col:"#475569",cursor:"pointer"}}>{e}</button>;
+        })}
+      </div>
+      <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
+        <Btn onClick={()=>setStatusProyExt(null)}>Cancelar</Btn>
+        <Btn primary onClick={()=>handleStatusProyExt(statusProyExt.id,statusProyExt.estado)} icon={Check}>Guardar Estado</Btn>
+      </div>
+    </div></div>}
     {/* M3: Formulario Semillero */}
     {showSemForm&&<div style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{maxHeight:"92vh",overflowY:"auto",animation:"slideUp .3s",width:"100%",maxWidth:640}}><SemilleroForm semillero={editSem?{...editSem,integrantes:dataM3.semIntegrantes.filter(i=>i.semilleroId===editSem.id)}:null} autores={data.autores} onSave={handleSaveSem} onCancel={()=>{setShowSemForm(false);setEditSem(null);}}/></div></div>}
     {/* M3: Detalle Semillero */}
     {detailSem&&<div style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{maxHeight:"92vh",overflowY:"auto",animation:"slideUp .3s",width:"100%",maxWidth:680}}><SemilleroDetail semillero={detailSem} autores={data.autores} pubs={data.publicaciones} integrantes={dataM3.semIntegrantes} semPubs={dataM3.semPubs} onClose={()=>setDetailSem(null)} onEdit={s=>{setEditSem(s);setDetailSem(null);setShowSemForm(true);}} onDelete={s=>setDeleteSem(s)} onAddIntegrante={handleAddIntegrante} onRemoveIntegrante={handleRemoveIntegrante} onVincularPub={handleVincularPubSem} onDesvincularPub={handleDesvincularPubSem} isAdmin={isAdmin} currentUser={user}/></div></div>}
     {/* M3: Confirmar eliminar semillero */}
     {deleteSem&&<div style={{position:"fixed",inset:0,zIndex:60,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{animation:"slideUp .3s"}}><ConfirmDelete title="Eliminar Semillero" message={`¿Seguro que deseas eliminar el semillero "${deleteSem.nombre}"? Se eliminarán integrantes y vínculos con publicaciones.`} onConfirm={handleDeleteSem} onCancel={()=>setDeleteSem(null)}/></div></div>}
+    {/* M2: Cambiar Estado Proyecto */}
+    {statusProy&&<div style={{position:"fixed",inset:0,zIndex:60,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{animation:"slideUp .3s",background:"white",borderRadius:16,padding:24,maxWidth:440,width:"100%",boxShadow:"0 20px 60px rgba(0,0,0,.18)"}}>
+      <div style={{display:"flex",justifyContent:"space-between",marginBottom:14}}><h3 style={{fontSize:15,fontWeight:700,color:P.navy,margin:0}}>Cambiar Estado del Proyecto</h3><button onClick={()=>setStatusProy(null)} style={{border:"none",background:"none",cursor:"pointer",color:"#94a3b8"}}><X size={18}/></button></div>
+      <p style={{fontSize:12,color:"#64748b",marginBottom:14,lineHeight:1.5,fontStyle:"italic"}}>{statusProy.titulo}</p>
+      <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:20}}>
+        {ESTADOS_PROY.map(e=>{const cur=statusProy.estado===e;const col=e==="En ejecución"?P.green:e==="Aprobado"?P.sky:e==="Propuesto"?P.gold:e==="Finalizado"?P.slate:P.rose;return<button key={e} onClick={()=>setStatusProy(p=>({...p,estado:e}))} style={{padding:"7px 16px",borderRadius:20,border:cur?`2px solid ${col}`:"1.5px solid #e2e8f0",fontSize:12,fontWeight:cur?700:400,background:cur?col+"18":"white",color:cur?col:"#475569",cursor:"pointer"}}>{e}</button>;})}
+      </div>
+      <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
+        <Btn onClick={()=>setStatusProy(null)}>Cancelar</Btn>
+        <Btn primary onClick={()=>handleStatusProy(statusProy.estado)} icon={Check}>Guardar Estado</Btn>
+      </div>
+    </div></div>}
     {/* M2: Formulario Proyecto */}
     {showProyForm&&<div style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{maxHeight:"92vh",overflowY:"auto",animation:"slideUp .3s",width:"100%",maxWidth:700}}><ProyectoForm proyecto={editProy?{...editProy,participantes:dataM2.participantes.filter(p=>p.proyectoId===editProy.id),estudiantes:dataM2.estudiantes.filter(e=>e.proyectoId===editProy.id),objetivos:dataM2.objetivos.filter(o=>o.proyectoId===editProy.id)}:null} autores={data.autores} proyPubs={dataM2.proyPubs} pubs={data.publicaciones} onSave={handleSaveProy} onCancel={()=>{setShowProyForm(false);setEditProy(null);}} currentUser={user}/></div></div>}
     {/* M2: Detalle Proyecto */}
-    {detailProy&&<div style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{maxHeight:"92vh",overflowY:"auto",animation:"slideUp .3s",width:"100%",maxWidth:720}}><ProyectoDetail proyecto={detailProy} autores={data.autores} pubs={data.publicaciones} participantes={dataM2.participantes} estudiantes={dataM2.estudiantes} seguimiento={dataM2.seguimiento} objetivos={dataM2.objetivos} proyPubs={dataM2.proyPubs} onClose={()=>setDetailProy(null)} onEdit={p=>{setEditProy(p);setDetailProy(null);setShowProyForm(true);}} onDelete={p=>setDeleteProy(p)} onAddSeguimiento={handleAddSeguimiento} onVincularPub={handleVincularPub} onDesvincularPub={handleDesvincularPub} isAdmin={isAdmin} currentUser={user}/></div></div>}
+    {detailProy&&<div style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{maxHeight:"92vh",overflowY:"auto",animation:"slideUp .3s",width:"100%",maxWidth:720}}><ProyectoDetail proyecto={detailProy} autores={data.autores} pubs={data.publicaciones} participantes={dataM2.participantes} estudiantes={dataM2.estudiantes} seguimiento={dataM2.seguimiento} objetivos={dataM2.objetivos} proyPubs={dataM2.proyPubs} onClose={()=>setDetailProy(null)} onEdit={p=>{setEditProy(p);setDetailProy(null);setShowProyForm(true);}} onDelete={p=>setDeleteProy(p)} onChangeStatus={p=>setStatusProy(p)} onAddSeguimiento={handleAddSeguimiento} onVincularPub={handleVincularPub} onDesvincularPub={handleDesvincularPub} isAdmin={isAdmin} currentUser={user}/></div></div>}
     {/* M2: Confirmar eliminar proyecto */}
     {deleteProy&&<div style={{position:"fixed",inset:0,zIndex:60,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{animation:"slideUp .3s"}}><ConfirmDelete title="Eliminar Proyecto" message={`¿Seguro que deseas eliminar "${deleteProy.titulo}"? Se eliminarán también participantes, seguimiento y vínculos con publicaciones.`} onConfirm={handleDeleteProy} onCancel={()=>setDeleteProy(null)}/></div></div>}
     {toast&&<div style={{position:"fixed",bottom:20,right:20,zIndex:100,display:"flex",alignItems:"center",gap:8,padding:"9px 16px",borderRadius:12,boxShadow:"0 8px 30px rgba(0,0,0,.15)",animation:"toastIn .3s",background:toast.t==="error"?P.rose:C1,color:"white",fontSize:12,fontWeight:600}}>{toast.t==="error"?<AlertCircle size={14}/>:<CheckCircle2 size={14}/>}{toast.m}</div>}
@@ -1413,15 +1563,7 @@ export default function App(){
    MÓDULO 2 — PROYECTOS DE INVESTIGACIÓN
    ════════════════════════════════════════════════════════ */
 
-const ESTADOS_PROY = ["Propuesto","Aprobado","En ejecución","Finalizado","Suspendido"];
-const LINEAS_INV   = ["Gestión del conocimiento para una acción docente innovadora, sistémica e interdisciplinaria",
-  "Innovación educativa y uso de TIC","Salud pública y bienestar social","Desarrollo local y comunitario",
-  "Derechos humanos y ciudadanía","Otros"];
-const ROLES_PART   = ["Investigador Principal","Co-investigador","Investigador Adjunto","Asesor externo"];
-const ALCANCES     = ["Local","Regional","Nacional","Internacional"];
-const ODS_OPTS     = ["ODS 1: Fin de la pobreza","ODS 3: Salud y bienestar","ODS 4: Educación de calidad",
-  "ODS 5: Igualdad de género","ODS 8: Trabajo decente","ODS 10: Reducción de desigualdades",
-  "ODS 11: Ciudades sostenibles","ODS 16: Paz, justicia","ODS 17: Alianzas"];
+
 
 /* ── Badge de estado de proyecto ── */
 const PrEstBdg=({e})=>{
@@ -1446,7 +1588,7 @@ const AvanceBarra=({pct})=>{
 /* ══════════════════════════════════════════════════════
    FORM PROYECTO — Creación / Edición
    ══════════════════════════════════════════════════════ */
-function ProyectoForm({proyecto, autores, proyPubs, pubs, onSave, onCancel, currentUser}){
+function ProyectoForm({proyecto, autores, proyPubs, pubs, onSave, onCancel, currentUser, participantesExtIniciales=[]}){
   const isEdit = !!proyecto?.id;
   const[step,setStep]=useState(0);
   const[saving,setSaving]=useState(false);
@@ -1480,6 +1622,12 @@ function ProyectoForm({proyecto, autores, proyPubs, pubs, onSave, onCancel, curr
     return p;
   });
 
+  // Investigadores externos (no son autores del sistema)
+  const[partExternos,setPartExternos]=useState(()=>proyecto?.participantesExternos||[]);
+  const addPartExterno=()=>setPartExternos(p=>[...p,{nombre:"",institucion:"",email:"",rol:"Co-investigador externo",horasSemana:""}]);
+  const removePartExterno=i=>setPartExternos(p=>p.filter((_,j)=>j!==i));
+  const updatePartExt=(i,k,v)=>setPartExternos(p=>p.map((x,j)=>j===i?{...x,[k]:v}:x));
+
   // Estudiantes
   const[estudiantes,setEstudiantes]=useState(proyecto?.estudiantes||[]);
 
@@ -1493,7 +1641,6 @@ function ProyectoForm({proyecto, autores, proyPubs, pubs, onSave, onCancel, curr
     {label:"Revisión",icon:Eye}
   ];
 
-  const TA=({value,onChange,rows=3,placeholder})=><textarea value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder} rows={rows} style={{width:"100%",padding:"9px 12px",borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:13,color:"#1e293b",background:"white",outline:"none",boxSizing:"border-box",resize:"vertical",fontFamily:"inherit"}}/>;
 
   const addParticipante=()=>setParticipantes(p=>[...p,{autorId:"",rol:"Investigador Adjunto",horasSemana:"",categoriaSenecyt:"",categoriaDocente:""}]);
   const removeParticipante=i=>setParticipantes(p=>p.filter((_,j)=>j!==i));
@@ -1513,9 +1660,10 @@ function ProyectoForm({proyecto, autores, proyPubs, pubs, onSave, onCancel, curr
     setSaving(true);
     const proy={titulo:titulo.trim(),estado,fechaInicio,fechaFin,meses,lineaInvestigacion:linea,sublinea,
       dominio,ODS,alcance,presupuestoInterno:presInt,presupuestoExterno:presExt,
-      objetivoGeneral:objGeneral,descripcion,metodologia,grupoInvestigacion:grupo,evidenciaOneDrive:evidencia};
+      objetivoGeneral:objGeneral,descripcion,metodologia,grupoInvestigacion:grupo,evidenciaOneDrive:evidencia,
+      participantesExternos:partExternos.filter(p=>p.nombre)};
     if(isEdit) proy.id=proyecto.id;
-    await onSave(proy,participantes.filter(p=>p.autorId),estudiantes,objetivos.filter(o=>o.descripcion));
+    await onSave(proy,participantes.filter(p=>p.autorId),estudiantes,objetivos.filter(o=>o.descripcion),partExternos.filter(p=>p.nombre));
     setSaving(false);
   };
 
@@ -1608,6 +1756,36 @@ function ProyectoForm({proyecto, autores, proyPubs, pubs, onSave, onCancel, curr
                   <Inp value={p.horasSemana} onChange={v=>updatePart(i,"horasSemana",v)} placeholder="Ej: 2" type="number"/></div>
                 <div><label style={{fontSize:9,fontWeight:600,color:"#475569",display:"block",marginBottom:2}}>CATEGORÍA DOCENTE</label>
                   <Inp value={p.categoriaDocente} onChange={v=>updatePart(i,"categoriaDocente",v)} placeholder="Ej: Auxiliar 1"/></div>
+              </div>
+            </div>)}
+          </div>
+
+          {/* Investigadores Externos */}
+          <div style={{borderTop:"1px solid #f1f5f9",paddingTop:14}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+              <div><h4 style={{fontSize:12,fontWeight:700,color:"#0369a1",margin:0}}>Investigadores Externos</h4><p style={{fontSize:10,color:"#94a3b8",margin:"2px 0 0"}}>Docentes de otras instituciones que participan en el proyecto</p></div>
+              <Btn small icon={Plus} onClick={addPartExterno}>Agregar Externo</Btn>
+            </div>
+            {partExternos.length===0&&<p style={{fontSize:12,color:"#94a3b8",textAlign:"center",padding:"10px 0"}}>Sin investigadores externos</p>}
+            {partExternos.map((p,i)=><div key={i} style={{background:"#f0f9ff",borderRadius:10,padding:12,marginBottom:8,border:"1px solid #bae6fd"}}>
+              <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
+                <span style={{fontSize:10,fontWeight:700,color:"#0369a1"}}>EXTERNO {i+1}</span>
+                <button onClick={()=>removePartExterno(i)} style={{border:"none",background:"none",cursor:"pointer",color:P.rose}}><X size={14}/></button>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"2fr 2fr",gap:8,marginBottom:8}}>
+                <div><label style={{fontSize:9,fontWeight:600,color:"#475569",display:"block",marginBottom:2}}>NOMBRE COMPLETO *</label>
+                  <Inp value={p.nombre} onChange={v=>updatePartExt(i,"nombre",v)} placeholder="APELLIDO NOMBRE"/></div>
+                <div><label style={{fontSize:9,fontWeight:600,color:"#475569",display:"block",marginBottom:2}}>INSTITUCIÓN</label>
+                  <Inp value={p.institucion} onChange={v=>updatePartExt(i,"institucion",v)} placeholder="Ej: PUCE, UCE, Yachay Tech" icon={Building2}/></div>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr",gap:8}}>
+                <div><label style={{fontSize:9,fontWeight:600,color:"#475569",display:"block",marginBottom:2}}>EMAIL</label>
+                  <Inp value={p.email} onChange={v=>updatePartExt(i,"email",v)} placeholder="investigador@otra.edu.ec" type="email" icon={Mail}/></div>
+                <div><label style={{fontSize:9,fontWeight:600,color:"#475569",display:"block",marginBottom:2}}>ROL</label>
+                  <select value={p.rol} onChange={e=>updatePartExt(i,"rol",e.target.value)} style={{width:"100%",padding:"8px 8px",borderRadius:8,border:"1.5px solid #e2e8f0",fontSize:11,background:"white",outline:"none"}}>
+                    {["Co-investigador externo","Asesor externo","Colaborador"].map(r=><option key={r} value={r}>{r}</option>)}</select></div>
+                <div><label style={{fontSize:9,fontWeight:600,color:"#475569",display:"block",marginBottom:2}}>H/SEM</label>
+                  <Inp value={p.horasSemana} onChange={v=>updatePartExt(i,"horasSemana",v)} placeholder="2" type="number"/></div>
               </div>
             </div>)}
           </div>
@@ -1709,7 +1887,7 @@ function ProyectoForm({proyecto, autores, proyPubs, pubs, onSave, onCancel, curr
    DETALLE PROYECTO
    ══════════════════════════════════════════════════════ */
 function ProyectoDetail({proyecto, autores, pubs, participantes, estudiantes, seguimiento, objetivos, proyPubs,
-  onClose, onEdit, onDelete, onAddSeguimiento, onVincularPub, onDesvincularPub, isAdmin, currentUser}){
+  onClose, onEdit, onDelete, onChangeStatus, onAddSeguimiento, onVincularPub, onDesvincularPub, isAdmin, currentUser}){
 
   const[tabD,setTabD]=useState("info");
   const[showSeguimientoForm,setShowSeguimientoForm]=useState(false);
@@ -1794,6 +1972,12 @@ function ProyectoDetail({proyecto, autores, pubs, participantes, estudiantes, se
               <div style={{display:"flex",gap:6,marginTop:2,flexWrap:"wrap"}}><Bdg c={p.rol==="Investigador Principal"?C1:P.slate}>{p.rol}</Bdg>{p.horasSemana&&<Bdg c={P.green} bg={P.greenBg}><Clock size={9} style={{marginRight:2}}/>{p.horasSemana}h/sem</Bdg>}{p.categoriaDocente&&<Bdg c={P.slate}>{p.categoriaDocente}</Bdg>}</div>
             </div>
           </div>})}
+          {/* Investigadores externos del proyecto */}
+          {(()=>{const misExt=(proyecto.participantesExternos||[]).filter(e=>e.nombre);return misExt.length>0?<><h4 style={{fontSize:12,fontWeight:700,color:"#0369a1",margin:"14px 0 8px"}}>Investigadores Externos ({misExt.length})</h4>
+          <table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}>
+            <thead><tr style={{background:"#f0f9ff"}}>{["Nombre","Institución","Rol","H/sem","Email"].map(h=><th key={h} style={{padding:"6px 8px",textAlign:"left",fontSize:9,color:"#0369a1",fontWeight:700,borderBottom:"1px solid #bae6fd"}}>{h}</th>)}</tr></thead>
+            <tbody>{misExt.map((e,i)=><tr key={i} style={{borderBottom:"1px solid #f0f9ff"}}><td style={{padding:"6px 8px",fontWeight:600}}>{e.nombre}</td><td style={{padding:"6px 8px",color:"#0369a1"}}>{e.institucion||"—"}</td><td style={{padding:"6px 8px",color:"#64748b"}}>{e.rol||"—"}</td><td style={{padding:"6px 8px",textAlign:"center"}}>{e.horasSemana?<Bdg c={P.sky} bg={P.skyBg}>{e.horasSemana}h</Bdg>:"—"}</td><td style={{padding:"6px 8px",color:"#94a3b8",fontSize:10}}>{e.email||"—"}</td></tr>)}</tbody>
+          </table></>:null;})()}
           {misEst.length>0&&<><h4 style={{fontSize:12,fontWeight:700,color:P.gold,margin:"14px 0 8px"}}>Estudiantes ({misEst.length})</h4>
           <table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}>
             <thead><tr style={{background:"#fafbfc"}}>{["Nombre","Cédula","Carrera","Nivel","H/sem"].map(h=><th key={h} style={{padding:"6px 8px",textAlign:"left",fontSize:9,color:"#94a3b8",fontWeight:700,borderBottom:"1px solid #f1f5f9"}}>{h}</th>)}</tr></thead>
@@ -1849,21 +2033,32 @@ function ProyectoDetail({proyecto, autores, pubs, participantes, estudiantes, se
 
         {/* Publicaciones vinculadas */}
         {tabD==="pubs"&&<div>
+          {/* Resumen por tipo */}
+          {visPubs.length>0&&(()=>{const tr={};visPubs.forEach(p=>{const t=p.tipoPublicacion||"Otro";tr[t]=(tr[t]||0)+1;});return<div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:10,padding:"8px 12px",background:"#f8fafc",borderRadius:8,border:"1px solid #f1f5f9"}}>
+            <span style={{fontSize:10,fontWeight:700,color:"#94a3b8",marginRight:4}}>Productos:</span>
+            {Object.entries(tr).map(([t,n])=><Bdg key={t} c={t.includes("Artículo")?C1:t.includes("Libro")?P.gold:t.includes("Tesis")?P.violet:P.sky} bg={t.includes("Artículo")?C1Bg:t.includes("Libro")?P.goldBg:t.includes("Tesis")?P.violetBg:P.skyBg}>{t}: {n}</Bdg>)}
+            <span style={{fontSize:10,color:"#94a3b8",marginLeft:"auto"}}>Total: {visPubs.length}</span>
+          </div>;})()}
           {canEdit&&<div style={{marginBottom:12,background:P.skyBg,borderRadius:10,padding:"10px 14px",border:`1px solid ${P.sky}30`}}>
-            <p style={{fontSize:11,color:P.sky,fontWeight:700,margin:"0 0 8px"}}>Vincular publicación existente</p>
+            <p style={{fontSize:11,color:P.sky,fontWeight:700,margin:"0 0 8px"}}>Vincular publicación como producto del proyecto</p>
             <div style={{display:"flex",gap:8,alignItems:"center"}}>
               <select id="pub-vincular-sel" style={{flex:1,padding:"7px 10px",borderRadius:8,border:"1.5px solid #e2e8f0",fontSize:12,background:"white",outline:"none"}}>
                 <option value="">Seleccionar publicación…</option>
-                {pubs.filter(p=>!visPubs.some(vp=>vp.id===p.id)).map(p=><option key={p.id} value={p.id}>{p.titulo?.substring(0,70)}{p.titulo?.length>70?"…":""}</option>)}
+                <optgroup label="── Artículos Científicos">{pubs.filter(p=>p.tipoPublicacion==="Artículo Científico"&&!visPubs.some(vp=>vp.id===p.id)).map(p=><option key={p.id} value={p.id}>{p.titulo?.substring(0,65)}{p.titulo?.length>65?"…":""}</option>)}</optgroup>
+                <optgroup label="── Artículos Regionales">{pubs.filter(p=>p.tipoPublicacion==="Artículo Regional"&&!visPubs.some(vp=>vp.id===p.id)).map(p=><option key={p.id} value={p.id}>{p.titulo?.substring(0,65)}{p.titulo?.length>65?"…":""}</option>)}</optgroup>
+                <optgroup label="── Libros">{pubs.filter(p=>p.tipoPublicacion==="Libro"&&!visPubs.some(vp=>vp.id===p.id)).map(p=><option key={p.id} value={p.id}>{p.titulo?.substring(0,65)}{p.titulo?.length>65?"…":""}</option>)}</optgroup>
+                <optgroup label="── Capítulos de Libro">{pubs.filter(p=>p.tipoPublicacion==="Capítulo de Libro"&&!visPubs.some(vp=>vp.id===p.id)).map(p=><option key={p.id} value={p.id}>{p.titulo?.substring(0,65)}{p.titulo?.length>65?"…":""}</option>)}</optgroup>
+                <optgroup label="── Ponencias">{pubs.filter(p=>p.tipoPublicacion==="Ponencia"&&!visPubs.some(vp=>vp.id===p.id)).map(p=><option key={p.id} value={p.id}>{p.titulo?.substring(0,65)}{p.titulo?.length>65?"…":""}</option>)}</optgroup>
+                <optgroup label="── Otros">{pubs.filter(p=>!["Artículo Científico","Artículo Regional","Libro","Capítulo de Libro","Ponencia"].includes(p.tipoPublicacion)&&!visPubs.some(vp=>vp.id===p.id)).map(p=><option key={p.id} value={p.id}>{p.titulo?.substring(0,65)}{p.titulo?.length>65?"…":""}</option>)}</optgroup>
               </select>
               <Btn small primary onClick={()=>{const sel=document.getElementById("pub-vincular-sel");if(sel?.value)onVincularPub(proyecto.id,sel.value)}} icon={Plus}>Vincular</Btn>
             </div>
           </div>}
-          {visPubs.length===0&&<p style={{fontSize:12,color:"#94a3b8",textAlign:"center",padding:"20px 0"}}>Sin publicaciones vinculadas a este proyecto</p>}
+          {visPubs.length===0&&<p style={{fontSize:12,color:"#94a3b8",textAlign:"center",padding:"20px 0"}}>Sin publicaciones vinculadas. Usa el selector para agregar artículos, libros, ponencias, etc.</p>}
           {visPubs.map(p=><div key={p.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:"1px solid #f8fafc"}}>
             <div style={{flex:1,minWidth:0}}>
               <p style={{fontSize:12,fontWeight:600,color:P.navy,margin:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.titulo}</p>
-              <div style={{display:"flex",gap:4,marginTop:2}}><EBdg e={p.estadoPublicacion}/><TipoBdg tipo={p.tipoPublicacion}/>{p.cuartil&&p.cuartil!=="N/A"&&<QBdg q={p.cuartil}/>}</div>
+              <div style={{display:"flex",gap:4,marginTop:2,flexWrap:"wrap"}}><EBdg e={p.estadoPublicacion}/><TipoBdg tipo={p.tipoPublicacion}/>{p.cuartil&&p.cuartil!=="N/A"&&<QBdg q={p.cuartil}/>}<ValBdg v={p.valoracion}/></div>
             </div>
             {canEdit&&<button onClick={()=>onDesvincularPub(proyecto.id,p.id)} style={{marginLeft:8,padding:"3px 8px",borderRadius:7,border:"1px solid #ffe4e6",background:"#fff5f5",cursor:"pointer",fontSize:10,color:P.rose,fontWeight:600,flexShrink:0,display:"flex",alignItems:"center",gap:3}}><X size={10}/>Desvincular</button>}
           </div>)}
@@ -1871,9 +2066,13 @@ function ProyectoDetail({proyecto, autores, pubs, participantes, estudiantes, se
       </div>
 
       {/* Footer */}
-      <div style={{display:"flex",gap:8,justifyContent:"flex-end",padding:"12px 20px",borderTop:"1px solid #f1f5f9",background:"#fafbfc"}}>
-        <Btn onClick={onClose}>Cerrar</Btn>
-        {(canEdit)&&<><Btn onClick={()=>onDelete(proyecto)} danger icon={Trash2}>Eliminar</Btn><Btn primary onClick={()=>onEdit(proyecto)} icon={Edit3}>Editar</Btn></>}
+      <div style={{display:"flex",gap:8,justifyContent:"space-between",padding:"12px 20px",borderTop:"1px solid #f1f5f9",background:"#fafbfc"}}>
+        <Btn onClick={()=>exportWordProyecto(proyecto,participantes,estudiantes,seguimiento,objetivos,proyPubs,autores,pubs)} icon={FileDown}>Exportar Word</Btn>
+        <div style={{display:"flex",gap:8}}>
+          <Btn onClick={onClose}>Cerrar</Btn>
+          {canEdit&&<Btn onClick={()=>onChangeStatus&&onChangeStatus(proyecto)} icon={CheckCircle2}>Cambiar Estado</Btn>}
+          {(canEdit)&&<><Btn onClick={()=>onDelete(proyecto)} danger icon={Trash2}>Eliminar</Btn><Btn primary onClick={()=>onEdit(proyecto)} icon={Edit3}>Editar</Btn></>}
+        </div>
       </div>
     </div>
   );
@@ -1932,6 +2131,7 @@ function ViewProyectos({proyectos, participantes, estudiantes, seguimiento, obje
         </div>
         {["","Propuesto","Aprobado","En ejecución","Finalizado","Suspendido"].map(e=><button key={e} onClick={()=>setFiltroEst(e)} style={{padding:"4px 12px",borderRadius:20,border:filtroEst===e?`2px solid ${C1}`:"1.5px solid #e2e8f0",fontSize:11,fontWeight:filtroEst===e?700:400,background:filtroEst===e?C1Bg:"white",color:filtroEst===e?C1:"#475569",cursor:"pointer"}}>{e||"Todos"}</button>)}
         {isAdmin&&<Btn primary small icon={Plus} onClick={onNuevo}>Nuevo Proyecto</Btn>}
+        {isAdmin&&proyectos.length>0&&<Btn small icon={FileDown} onClick={()=>exportWordConsolidadoProyectos(proyectos,participantes,estudiantes,seguimiento,objetivos,proyPubs,autores,pubs)}>Reporte Word</Btn>}
       </div>
 
       {proyectosFilt.length===0&&<div style={{textAlign:"center",padding:"40px 20px",background:"white",borderRadius:12,border:"1px solid #f1f5f9"}}>
@@ -1975,10 +2175,7 @@ function ViewProyectos({proyectos, participantes, estudiantes, seguimiento, obje
    MÓDULO 3 — SEMILLEROS DE INVESTIGACIÓN
    ════════════════════════════════════════════════════════ */
 
-const ESTADOS_SEM   = ["Activo","Inactivo","En formación","Suspendido"];
-const ROLES_SEM_INT = ["Estudiante","Coordinador estudiantil","Auxiliar de investigación"];
-const AREAS_CON     = ["Educación","Derecho","Administración","Psicología","Comunicación",
-  "Ciencias Sociales","Tecnología","Salud","Otra"];
+
 
 /* ── Badge valoración ── */
 const ValBdg=({v})=>{if(!v&&v!==0)return null;const n=parseFloat(v);if(isNaN(n))return null;const col=n>=0.75?P.green:n>=0.5?P.gold:C1;return<span style={{display:"inline-flex",alignItems:"center",gap:4,background:col+"18",color:col,fontSize:11,fontWeight:700,padding:"2px 10px",borderRadius:20,border:`1px solid ${col}30`}}><Activity size={9}/>  {n.toFixed(2)}</span>;};
@@ -2011,7 +2208,6 @@ function SemilleroForm({semillero, autores, onSave, onCancel}){
   const removeInt=i=>setIntegrantes(p=>p.filter((_,j)=>j!==i));
   const updateInt=(i,k,v)=>setIntegrantes(p=>p.map((x,j)=>j===i?{...x,[k]:v}:x));
 
-  const TA=({value,onChange,rows=2,placeholder})=><textarea value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder} rows={rows} style={{width:"100%",padding:"9px 12px",borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:13,color:"#1e293b",background:"white",outline:"none",boxSizing:"border-box",resize:"vertical",fontFamily:"inherit"}}/>;
 
   const handleSave=async()=>{
     if(!nombre.trim())return alert("El nombre del semillero es requerido");
@@ -2235,17 +2431,27 @@ function SemilleroDetail({semillero, autores, pubs, integrantes, semPubs,
 
         {/* Publicaciones */}
         {tabD==="pubs"&&<div>
+          {/* Resumen por tipo */}
+          {visPubs.length>0&&(()=>{const tr={};visPubs.forEach(p=>{const t=p.tipoPublicacion||"Otro";tr[t]=(tr[t]||0)+1;});return<div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:10,padding:"8px 12px",background:"#f0fdf4",borderRadius:8,border:"1px solid #bbf7d0"}}>
+            <span style={{fontSize:10,fontWeight:700,color:P.green,marginRight:4}}>Productos:</span>
+            {Object.entries(tr).map(([t,n])=><Bdg key={t} c={P.green} bg={P.greenBg}>{t}: {n}</Bdg>)}
+            <span style={{fontSize:10,color:"#94a3b8",marginLeft:"auto"}}>Total: {visPubs.length}</span>
+          </div>;})()}
           {canEdit&&<div style={{marginBottom:12,background:"#f0fdf4",borderRadius:10,padding:"10px 14px",border:"1px solid #bbf7d0"}}>
-            <p style={{fontSize:11,color:P.green,fontWeight:700,margin:"0 0 8px"}}>Vincular publicación</p>
+            <p style={{fontSize:11,color:P.green,fontWeight:700,margin:"0 0 8px"}}>Vincular publicación al semillero</p>
             <div style={{display:"flex",gap:8,alignItems:"center"}}>
               <select id="sem-pub-sel" style={{flex:1,padding:"7px 10px",borderRadius:8,border:"1.5px solid #e2e8f0",fontSize:12,background:"white",outline:"none"}}>
                 <option value="">Seleccionar publicación…</option>
-                {pubs.filter(p=>!visPubs.some(vp=>vp.id===p.id)).map(p=><option key={p.id} value={p.id}>{p.titulo?.substring(0,70)}{p.titulo?.length>70?"…":""}</option>)}
+                <optgroup label="── Artículos Científicos">{pubs.filter(p=>p.tipoPublicacion==="Artículo Científico"&&!visPubs.some(vp=>vp.id===p.id)).map(p=><option key={p.id} value={p.id}>{p.titulo?.substring(0,65)}{p.titulo?.length>65?"…":""}</option>)}</optgroup>
+                <optgroup label="── Artículos Regionales">{pubs.filter(p=>p.tipoPublicacion==="Artículo Regional"&&!visPubs.some(vp=>vp.id===p.id)).map(p=><option key={p.id} value={p.id}>{p.titulo?.substring(0,65)}{p.titulo?.length>65?"…":""}</option>)}</optgroup>
+                <optgroup label="── Libros">{pubs.filter(p=>p.tipoPublicacion==="Libro"&&!visPubs.some(vp=>vp.id===p.id)).map(p=><option key={p.id} value={p.id}>{p.titulo?.substring(0,65)}{p.titulo?.length>65?"…":""}</option>)}</optgroup>
+                <optgroup label="── Ponencias">{pubs.filter(p=>p.tipoPublicacion==="Ponencia"&&!visPubs.some(vp=>vp.id===p.id)).map(p=><option key={p.id} value={p.id}>{p.titulo?.substring(0,65)}{p.titulo?.length>65?"…":""}</option>)}</optgroup>
+                <optgroup label="── Otros">{pubs.filter(p=>!["Artículo Científico","Artículo Regional","Libro","Ponencia"].includes(p.tipoPublicacion)&&!visPubs.some(vp=>vp.id===p.id)).map(p=><option key={p.id} value={p.id}>{p.titulo?.substring(0,65)}{p.titulo?.length>65?"…":""}</option>)}</optgroup>
               </select>
               <Btn small primary onClick={()=>{const sel=document.getElementById("sem-pub-sel");if(sel?.value)onVincularPub(semillero.id,sel.value)}} icon={Plus}>Vincular</Btn>
             </div>
           </div>}
-          {visPubs.length===0&&<p style={{fontSize:12,color:"#94a3b8",textAlign:"center",padding:"20px 0"}}>Sin publicaciones vinculadas</p>}
+          {visPubs.length===0&&<p style={{fontSize:12,color:"#94a3b8",textAlign:"center",padding:"20px 0"}}>Sin publicaciones vinculadas al semillero</p>}
           {visPubs.map(p=><div key={p.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:"1px solid #f8fafc"}}>
             <div style={{flex:1,minWidth:0}}>
               <p style={{fontSize:12,fontWeight:600,color:P.navy,margin:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.titulo}</p>
@@ -2355,6 +2561,563 @@ function ViewSemilleros({semilleros, semIntegrantes, semPubs, autores, pubs,
             </div>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════
+   EXPORT WORD PROYECTO — Individual y Consolidado
+   ════════════════════════════════════════════════════════════════ */
+
+function exportWordProyecto(proyecto, participantes, estudiantes, seguimiento, objetivos, proyPubs, autores, pubs){
+  const today    = new Date();
+  const fechaStr = today.toLocaleDateString("es-EC",{year:"numeric",month:"long",day:"numeric"});
+  const misPart  = participantes.filter(p=>String(p.proyectoId)===String(proyecto.id));
+  const misEst   = estudiantes.filter(e=>String(e.proyectoId)===String(proyecto.id));
+  const misSeg   = seguimiento.filter(s=>String(s.proyectoId)===String(proyecto.id)).sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+  const misObj   = objetivos.filter(o=>String(o.proyectoId)===String(proyecto.id)).sort((a,b)=>Number(a.numero)-Number(b.numero));
+  const visPubs  = proyPubs.filter(r=>String(r.proyectoId)===String(proyecto.id)).map(r=>pubs.find(p=>String(p.id)===String(r.pubId))).filter(Boolean);
+  const presTotal= (Number(proyecto.presupuestoInterno)||0)+(Number(proyecto.presupuestoExterno)||0);
+  const ultimoAv = misSeg.length>0?Number(misSeg[0].porcentajeAvance)||0:0;
+
+  const partRows = misPart.map(p=>{
+    const a=autores.find(x=>String(x.id)===String(p.autorId));
+    return`<tr><td style="padding:5px 8px;border:1px solid #e2e8f0;font-size:10px;">${a?`${a.apellidos}, ${a.nombres}`:"—"}</td><td style="padding:5px 8px;border:1px solid #e2e8f0;font-size:10px;">${p.rol||"—"}</td><td style="padding:5px 8px;border:1px solid #e2e8f0;font-size:10px;text-align:center;">${p.horasSemana||"—"}</td><td style="padding:5px 8px;border:1px solid #e2e8f0;font-size:10px;">${a?.departamento||"—"}</td></tr>`;
+  }).join("");
+
+  const estRows = misEst.map(e=>`<tr><td style="padding:5px 8px;border:1px solid #e2e8f0;font-size:10px;">${e.nombre||"—"}</td><td style="padding:5px 8px;border:1px solid #e2e8f0;font-size:10px;">${e.cedula||"—"}</td><td style="padding:5px 8px;border:1px solid #e2e8f0;font-size:10px;">${e.carrera||"—"}</td><td style="padding:5px 8px;border:1px solid #e2e8f0;font-size:10px;text-align:center;">${e.horasSemana||"—"}</td></tr>`).join("");
+
+  const objRows = misObj.map(o=>`<tr><td style="padding:5px 8px;border:1px solid #e2e8f0;font-size:10px;font-weight:700;color:#6d28d9;width:5%;text-align:center;">OE${o.numero}</td><td style="padding:5px 8px;border:1px solid #e2e8f0;font-size:10px;">${o.descripcion||"—"}</td><td style="padding:5px 8px;border:1px solid #e2e8f0;font-size:10px;">${o.actividades||"—"}</td><td style="padding:5px 8px;border:1px solid #e2e8f0;font-size:10px;">${o.productos||"—"}</td><td style="padding:5px 8px;border:1px solid #e2e8f0;font-size:10px;text-align:center;">${o.meses||"—"}</td></tr>`).join("");
+
+  const pubRows = visPubs.map((p,i)=>{
+    const idx=[p.indexacion1,p.indexacion2,p.indexacion3].filter(Boolean).join(", ")||"—";
+    const ec=p.estadoPublicacion==="Publicado"?"#047857":p.estadoPublicacion==="Aceptado"?"#0369a1":"#a16207";
+    const val=p.valoracion&&parseFloat(p.valoracion)>0?`<br/><span style="font-size:8px;color:#047857;font-weight:700;">Val: ${parseFloat(p.valoracion).toFixed(2)}</span>`:"";
+    const links=(p.doi?`<a href="https://doi.org/${p.doi}" style="color:#c2410c;font-size:9px;display:block;">DOI ↗</a>`:"")+
+      (p.url?`<a href="${p.url}" style="color:#1d4ed8;font-size:9px;display:block;">URL ↗</a>`:"")+
+      (p.evidencia?`<a href="${p.evidencia}" style="color:#6d28d9;font-size:9px;display:block;">OneDrive ↗</a>`:"");
+    return`<tr><td style="padding:4px 6px;border:1px solid #e2e8f0;text-align:center;color:${C1};font-size:10px;font-weight:700;">${i+1}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;"><strong>${p.titulo}</strong>${val}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;">${p.tipoPublicacion||"—"}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;color:${ec};font-weight:600;">${p.estadoPublicacion||"—"}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;text-align:center;font-weight:bold;">${p.cuartil&&p.cuartil!=="N/A"?p.cuartil:"—"}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;">${idx}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;">${links||"—"}</td></tr>`;
+  }).join("");
+
+  // Resumen por tipo de producto
+  const tipoRes={};visPubs.forEach(p=>{const t=p.tipoPublicacion||"Otro";tipoRes[t]=(tipoRes[t]||0)+1;});
+  const tipoRows=Object.entries(tipoRes).map(([t,c])=>`<tr><td style="padding:5px 8px;border:1px solid #d1d5db;font-size:10px;">${t}</td><td style="padding:5px 8px;border:1px solid #d1d5db;font-size:10px;text-align:center;font-weight:700;">${c}</td></tr>`).join("");
+
+  const segRows=misSeg.slice(0,5).map(s=>`<tr><td style="padding:5px 8px;border:1px solid #e2e8f0;font-size:10px;">${s.fecha||"—"}</td><td style="padding:5px 8px;border:1px solid #e2e8f0;font-size:10px;text-align:center;font-weight:700;color:#047857;">${s.porcentajeAvance||0}%</td><td style="padding:5px 8px;border:1px solid #e2e8f0;font-size:10px;">${s.actividades||"—"}</td><td style="padding:5px 8px;border:1px solid #e2e8f0;font-size:10px;">${s.objetivosCumplidos||"—"}</td></tr>`).join("");
+
+  const html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><style>@page Section1{size:842pt 595pt;mso-page-orientation:landscape;margin:1.5cm 2cm}body{font-family:Arial,sans-serif;margin:0;padding:0;color:#1e293b;font-size:11px}.hb{border-bottom:3px solid ${C1};padding-bottom:10px;margin-bottom:18px}.lt{font-size:14px;font-weight:bold;color:${C1}}.ls{font-size:10px;color:#64748b}h2{font-size:12px;color:${NAVY};border-bottom:2px solid ${C1};padding-bottom:3px;margin:16px 0 8px;text-transform:uppercase;letter-spacing:.5px}table{width:100%;border-collapse:collapse;margin:6px 0}th{background:${C1};color:white;text-align:left;padding:6px 8px;border:1px solid ${C1};font-size:10px}.ft{margin-top:24px;text-align:center;color:#94a3b8;font-size:9px;border-top:1px solid #e2e8f0;padding-top:8px}.ib{background:${C1Bg};border-left:4px solid ${C1};padding:8px 12px;margin-bottom:12px;border-radius:0 6px 6px 0}.ir{display:flex;gap:6px;margin-bottom:3px;font-size:10px}.il{font-weight:700;color:#475569;min-width:160px}.iv{color:#1e293b}</style></head><body style="mso-section-properties:url('#Section1')">
+
+<div class="hb" style="display:table;width:100%;"><div style="display:table-row;"><div style="display:table-cell;vertical-align:top;"><div class="lt">UNIVERSIDAD DE OTAVALO</div><div class="ls">Facultad de Ciencias Sociales y Pedagógicas · Coordinación de Investigación</div></div><div style="display:table-cell;text-align:right;vertical-align:top;"><div style="font-size:10px;color:#94a3b8;">PubTracker v5.0 · Perfil de Proyecto</div><div style="font-size:10px;color:#94a3b8;">${fechaStr}</div></div></div></div>
+
+<div style="background:linear-gradient(135deg,${NAVY},${C1});color:white;padding:16px 18px;border-radius:8px;margin-bottom:16px;">
+  <div style="font-size:8px;font-weight:700;letter-spacing:2px;color:rgba(255,255,255,.6);margin-bottom:6px;">PROYECTO DE INVESTIGACIÓN</div>
+  <div style="font-size:16px;font-weight:900;line-height:1.3;margin-bottom:8px;">${proyecto.titulo}</div>
+  <div style="display:table;width:100%;"><div style="display:table-row;">
+    <div style="display:table-cell;font-size:10px;color:rgba(255,255,255,.8);">Estado: <strong style="color:white;">${proyecto.estado||"—"}</strong></div>
+    <div style="display:table-cell;font-size:10px;color:rgba(255,255,255,.8);">Avance: <strong style="color:white;">${ultimoAv}%</strong></div>
+    <div style="display:table-cell;font-size:10px;color:rgba(255,255,255,.8);">Duración: <strong style="color:white;">${proyecto.meses?proyecto.meses+" meses":"—"}</strong></div>
+    <div style="display:table-cell;font-size:10px;color:rgba(255,255,255,.8);">Presupuesto: <strong style="color:white;">${presTotal>0?"$"+presTotal.toLocaleString():"—"}</strong></div>
+  </div></div>
+</div>
+
+<div class="ib">
+  <div class="ir"><span class="il">Línea de investigación:</span><span class="iv">${proyecto.lineaInvestigacion||"—"}</span></div>
+  <div class="ir"><span class="il">ODS:</span><span class="iv">${proyecto.ODS||"—"}</span></div>
+  <div class="ir"><span class="il">Alcance:</span><span class="iv">${proyecto.alcance||"—"}</span></div>
+  <div class="ir"><span class="il">Grupo investigación:</span><span class="iv">${proyecto.grupoInvestigacion||"—"}</span></div>
+  <div class="ir"><span class="il">Período:</span><span class="iv">${proyecto.fechaInicio||"—"} → ${proyecto.fechaFin||"—"}</span></div>
+  <div class="ir"><span class="il">Presupuesto interno:</span><span class="iv">$${Number(proyecto.presupuestoInterno||0).toLocaleString()}</span></div>
+  <div class="ir"><span class="il">Presupuesto externo:</span><span class="iv">$${Number(proyecto.presupuestoExterno||0).toLocaleString()}</span></div>
+</div>
+
+${proyecto.objetivoGeneral?`<h2>1. Objetivo General</h2><div style="padding:10px 14px;background:#f8fafc;border-radius:6px;border:1px solid #f1f5f9;font-size:11px;line-height:1.7;">${proyecto.objetivoGeneral}</div>`:""}
+
+${proyecto.descripcion?`<h2>2. Descripción</h2><div style="padding:10px 14px;background:#f8fafc;border-radius:6px;border:1px solid #f1f5f9;font-size:11px;line-height:1.7;">${proyecto.descripcion}</div>`:""}
+
+${misObj.length>0?`<h2>3. Objetivos Específicos</h2><table><tr><th style="width:5%;text-align:center;">#</th><th style="width:25%;">Descripción</th><th style="width:30%;">Actividades</th><th style="width:25%;">Productos</th><th style="width:15%;text-align:center;">Meses</th></tr>${objRows}</table>`:""}
+
+<h2>4. Equipo de Investigación</h2>
+${misPart.length>0?`<p style="font-size:10px;font-weight:700;color:#475569;margin:0 0 4px;">Docentes (${misPart.length})</p><table><tr><th style="width:30%;">Docente</th><th style="width:25%;">Rol</th><th style="width:15%;text-align:center;">Horas/sem</th><th style="width:30%;">Departamento</th></tr>${partRows}</table>`:"<p style='font-size:11px;color:#94a3b8;'>Sin docentes registrados</p>"}
+${misEst.length>0?`<p style="font-size:10px;font-weight:700;color:#a16207;margin:10px 0 4px;">Estudiantes (${misEst.length})</p><table><tr><th style="width:30%;">Nombre</th><th style="width:20%;">Cédula</th><th style="width:30%;">Carrera</th><th style="width:20%;text-align:center;">Horas/sem</th></tr>${estRows}</table>`:""}
+
+${visPubs.length>0?`<h2>5. Producción Científica Vinculada (${visPubs.length})</h2>
+${tipoRows.length>0?`<p style="font-size:10px;font-weight:700;color:#475569;margin:0 0 4px;">Resumen por tipo de producto</p><table style="margin-bottom:12px;"><tr><th style="width:75%;">Tipo</th><th style="width:25%;text-align:center;">Cantidad</th></tr>${tipoRows}<tr style="background:${C1Bg};font-weight:bold;"><td style="padding:5px 8px;border:1px solid #d1d5db;font-size:10px;color:${C1};">TOTAL</td><td style="padding:5px 8px;border:1px solid #d1d5db;font-size:10px;text-align:center;color:${C1};">${visPubs.length}</td></tr></table>`:""}
+<table style="table-layout:fixed;"><tr>
+  <th style="width:3%;text-align:center;">#</th><th style="width:28%;">Título / Valoración</th><th style="width:10%;">Tipo</th>
+  <th style="width:9%;">Estado</th><th style="width:4%;text-align:center;">Q</th><th style="width:20%;">Indexación</th><th style="width:10%;">Evidencia</th>
+</tr>${pubRows}</table>`:""}
+
+${misSeg.length>0?`<h2>6. Seguimiento y Avance</h2><table><tr><th style="width:15%;">Fecha</th><th style="width:12%;text-align:center;">% Avance</th><th style="width:40%;">Actividades</th><th style="width:33%;">Objetivos Cumplidos</th></tr>${segRows}</table>`:""}
+
+<div class="ft"><p>PubTracker v5.0 · Coordinación de Investigación · Facultad de Ciencias Sociales y Pedagógicas · Universidad de Otavalo</p><p>Perfil de proyecto generado el ${fechaStr}</p></div>
+</body></html>`;
+
+  const blob=new Blob(["\ufeff",html],{type:"application/msword"});
+  const u=URL.createObjectURL(blob);const a=document.createElement("a");
+  a.href=u;a.download=`Proyecto_${proyecto.titulo.substring(0,40).replace(/[^a-zA-Z0-9]/g,"_")}.doc`;
+  a.click();URL.revokeObjectURL(u);
+}
+
+/* ── Reporte Consolidado de Proyectos (admin) ── */
+function exportWordConsolidadoProyectos(proyectos, participantes, estudiantes, seguimiento, objetivos, proyPubs, autores, pubs){
+  const today    = new Date();
+  const fechaStr = today.toLocaleDateString("es-EC",{year:"numeric",month:"long",day:"numeric"});
+
+  const proySecs = proyectos.map((proy,idx)=>{
+    const misPart = participantes.filter(p=>String(p.proyectoId)===String(proy.id));
+    const misObj  = objetivos.filter(o=>String(o.proyectoId)===String(proy.id)).sort((a,b)=>Number(a.numero)-Number(b.numero));
+    const visPubs = proyPubs.filter(r=>String(r.proyectoId)===String(proy.id)).map(r=>pubs.find(p=>String(p.id)===String(r.pubId))).filter(Boolean);
+    const misSeg  = seguimiento.filter(s=>String(s.proyectoId)===String(proy.id)).sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+    const avance  = misSeg.length>0?Number(misSeg[0].porcentajeAvance)||0:0;
+    const presT   = (Number(proy.presupuestoInterno)||0)+(Number(proy.presupuestoExterno)||0);
+    const principal = misPart.find(p=>p.rol==="Investigador Principal");
+    const autorIP   = principal?autores.find(a=>String(a.id)===String(principal.autorId)):null;
+
+    const partList  = misPart.map(p=>{const a=autores.find(x=>String(x.id)===String(p.autorId));return a?`${a.apellidos}, ${a.nombres} (${p.rol})`:p.rol;}).join(" · ")||"—";
+    const pubList   = visPubs.map((p,i)=>`<tr><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:9px;text-align:center;color:${C1};font-weight:700;">${i+1}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:9px;">${p.titulo}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:9px;">${p.tipoPublicacion||"—"}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:9px;">${p.estadoPublicacion||"—"}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:9px;text-align:center;">${p.cuartil&&p.cuartil!=="N/A"?p.cuartil:"—"}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:9px;text-align:center;font-weight:700;color:#047857;">${p.valoracion&&parseFloat(p.valoracion)>0?parseFloat(p.valoracion).toFixed(2):"—"}</td></tr>`).join("");
+    const tipoRes={};visPubs.forEach(p=>{const t=p.tipoPublicacion||"Otro";tipoRes[t]=(tipoRes[t]||0)+1;});
+    const tipoStr=Object.entries(tipoRes).map(([t,c])=>`${t}: ${c}`).join(" · ")||"—";
+
+    return`<div style="margin-bottom:24px;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;page-break-inside:avoid;">
+  <div style="background:${C1};color:white;padding:10px 14px;display:table;width:100%;">
+    <div style="display:table-cell;width:70%;"><div style="font-size:12px;font-weight:700;line-height:1.3;">${idx+1}. ${proy.titulo}</div>
+    ${autorIP?`<div style="font-size:9px;color:rgba(255,255,255,.7);margin-top:2px;">IP: ${autorIP.apellidos}, ${autorIP.nombres}</div>`:""}
+    </div>
+    <div style="display:table-cell;text-align:right;vertical-align:top;">
+      <div style="font-size:10px;font-weight:700;background:rgba(255,255,255,.2);display:inline-block;padding:3px 8px;border-radius:12px;">${proy.estado||"—"}</div>
+      <div style="font-size:11px;font-weight:700;color:#fcd34d;margin-top:3px;">${avance}% avance</div>
+    </div>
+  </div>
+  <div style="padding:10px 14px;background:#fafbfc;border-bottom:1px solid #f1f5f9;">
+    <table style="margin:0;font-size:9px;border-collapse:collapse;"><tr>
+      <td style="padding:2px 12px 2px 0;"><strong>Línea:</strong> ${proy.lineaInvestigacion||"—"}</td>
+      <td style="padding:2px 12px 2px 0;"><strong>ODS:</strong> ${proy.ODS||"—"}</td>
+      <td style="padding:2px 12px 2px 0;"><strong>Período:</strong> ${proy.fechaInicio||"—"} → ${proy.fechaFin||"—"}</td>
+      <td style="padding:2px 0;"><strong>Presupuesto:</strong> ${presT>0?"$"+presT.toLocaleString():"—"}</td>
+    </tr></table>
+    <div style="font-size:9px;margin-top:4px;"><strong>Equipo:</strong> ${partList}</div>
+    ${proy.objetivoGeneral?`<div style="font-size:9px;margin-top:4px;color:#475569;"><strong>Objetivo:</strong> ${proy.objetivoGeneral.substring(0,200)}${proy.objetivoGeneral.length>200?"…":""}</div>`:""}
+  </div>
+  ${visPubs.length>0?`<div style="padding:10px 14px;">
+    <div style="font-size:9px;font-weight:700;color:${C1};margin-bottom:4px;">Producción Científica (${visPubs.length}) · ${tipoStr}</div>
+    <table style="font-size:9px;"><tr><th style="width:3%;text-align:center;font-size:8px;">#</th><th style="width:40%;font-size:8px;">Título</th><th style="width:12%;font-size:8px;">Tipo</th><th style="width:11%;font-size:8px;">Estado</th><th style="width:6%;text-align:center;font-size:8px;">Q</th><th style="width:8%;text-align:center;font-size:8px;">Val.</th></tr>${pubList}</table>
+  </div>`:`<div style="padding:8px 14px;font-size:9px;color:#94a3b8;font-style:italic;">Sin publicaciones vinculadas</div>`}
+</div>`;
+  }).join("");
+
+  // KPIs globales
+  const totalPubs = new Set(proyPubs.map(r=>r.pubId)).size;
+  const enEjecucion = proyectos.filter(p=>p.estado==="En ejecución").length;
+  const avgAvance   = proyectos.length>0?Math.round(proyectos.map(p=>{const s=seguimiento.filter(x=>String(x.proyectoId)===String(p.id)).sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));return s.length>0?Number(s[0].porcentajeAvance)||0:0;}).reduce((a,b)=>a+b,0)/proyectos.length):0;
+
+  const html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><style>@page Section1{size:842pt 595pt;mso-page-orientation:landscape;margin:1.5cm 2cm}body{font-family:Arial,sans-serif;margin:0;padding:0;color:#1e293b;font-size:11px}h2{font-size:13px;color:${NAVY};border-bottom:2px solid ${C1};padding-bottom:3px;margin:20px 0 10px;text-transform:uppercase;letter-spacing:.5px}table{width:100%;border-collapse:collapse;margin:6px 0}th{background:${C1};color:white;text-align:left;padding:6px 8px;border:1px solid ${C1};font-size:10px}.ft{margin-top:24px;text-align:center;color:#94a3b8;font-size:9px;border-top:1px solid #e2e8f0;padding-top:8px}</style></head><body style="mso-section-properties:url('#Section1')">
+
+<div style="border-bottom:3px solid ${C1};padding-bottom:12px;margin-bottom:20px;display:table;width:100%;"><div style="display:table-row;"><div style="display:table-cell;vertical-align:top;"><div style="font-size:16px;font-weight:900;color:${C1};">UNIVERSIDAD DE OTAVALO</div><div style="font-size:11px;color:#64748b;">Facultad de Ciencias Sociales y Pedagógicas · Coordinación de Investigación</div><div style="font-size:14px;font-weight:700;color:${NAVY};margin-top:4px;">Reporte Consolidado — Proyectos de Investigación</div></div><div style="display:table-cell;text-align:right;vertical-align:top;"><div style="font-size:10px;color:#94a3b8;">PubTracker v5.0</div><div style="font-size:10px;color:#94a3b8;">${fechaStr}</div></div></div></div>
+
+<div style="display:table;width:100%;margin-bottom:20px;">
+  <div style="display:table-row;">
+    ${[{l:"Total Proyectos",v:proyectos.length,c:C1},{l:"En ejecución",v:enEjecucion,c:"#047857"},{l:"Pubs vinculadas",v:totalPubs,c:"#6d28d9"},{l:"Avance promedio",v:avgAvance+"%",c:"#0369a1"}].map(k=>`<div style="display:table-cell;padding:12px 10px;background:white;border:1px solid #f1f5f9;border-radius:8px;margin:0 4px;text-align:center;"><div style="font-size:22px;font-weight:900;color:${k.c};">${k.v}</div><div style="font-size:10px;color:#64748b;">${k.l}</div></div>`).join("")}
+  </div>
+</div>
+
+<h2>Detalle por Proyecto</h2>
+${proySecs}
+
+<div class="ft"><p>PubTracker v5.0 · Coordinación de Investigación · Facultad de Ciencias Sociales y Pedagógicas · Universidad de Otavalo</p><p>Reporte consolidado de proyectos generado el ${fechaStr}</p></div>
+</body></html>`;
+
+  const blob=new Blob(["\ufeff",html],{type:"application/msword"});
+  const u=URL.createObjectURL(blob);const a=document.createElement("a");
+  a.href=u;a.download=`Reporte_Consolidado_Proyectos_${today.getFullYear()}.doc`;
+  a.click();URL.revokeObjectURL(u);
+}
+
+/* ── Reporte Word docente: proyectos y semilleros a los que pertenece ── */
+function exportWordDocenteCompleto(autor, pubs, pubLinks, proyectos, participantes, proyPubs, semilleros, semIntegrantes, semPubs, filtros={}){
+  const today    = new Date();
+  const fechaStr = today.toLocaleDateString("es-EC",{year:"numeric",month:"long",day:"numeric"});
+  const periodo  = filtros.anio?`Año ${filtros.anio}`:`Enero – Diciembre ${today.getFullYear()}`;
+
+  // Publicaciones del autor
+  let aP = pubs.filter(p=>pubLinks.some(l=>l.autorId===autor.id&&l.pubId===p.id));
+  if(filtros.anio) aP=aP.filter(p=>parseYear(p.fechaPublicacion)===parseInt(filtros.anio));
+
+  // Proyectos del autor
+  const misProyIds = participantes.filter(p=>String(p.autorId)===String(autor.id)).map(p=>p.proyectoId);
+  const misProyectos = proyectos.filter(p=>misProyIds.includes(String(p.id)));
+
+  // Semilleros del autor (como tutor)
+  const misSemilleros = semilleros.filter(s=>String(s.docenteTutor)===String(autor.id));
+
+  const fotoSrc = autor.fotoUrl?driveImgUrl(autor.fotoUrl):"";
+  const fotoCell = fotoSrc
+    ?`<td style="width:90px;vertical-align:middle;padding:0 16px 0 0;"><img src="${fotoSrc}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid ${C1};display:block;" alt="Foto"/></td>`
+    :`<td style="width:80px;vertical-align:middle;padding:0 16px 0 0;"><div style="width:80px;height:80px;border-radius:50%;background:${C1};color:white;font-size:28px;font-weight:900;text-align:center;line-height:80px;">${(autor.nombres||"U").charAt(0)}${(autor.apellidos||"").charAt(0)}</div></td>`;
+
+  // Filas publicaciones
+  const pubRows=aP.map((p,i)=>{
+    const idx=[p.indexacion1,p.indexacion2,p.indexacion3].filter(Boolean).join(", ")||"—";
+    const ec=p.estadoPublicacion==="Publicado"?"#047857":p.estadoPublicacion==="Aceptado"?"#0369a1":"#a16207";
+    const val=p.valoracion&&parseFloat(p.valoracion)>0?` <span style="font-size:8px;color:#047857;font-weight:700;">[${parseFloat(p.valoracion).toFixed(2)}]</span>`:"";
+    const links=(p.doi?`<a href="https://doi.org/${p.doi}" style="color:#c2410c;font-size:9px;display:block;">DOI ↗</a>`:"")+
+      (p.url?`<a href="${p.url}" style="color:#1d4ed8;font-size:9px;display:block;">URL ↗</a>`:"")+
+      (p.evidencia?`<a href="${p.evidencia}" style="color:#6d28d9;font-size:9px;display:block;">OneDrive ↗</a>`:"");
+    return`<tr><td style="padding:4px 6px;border:1px solid #e2e8f0;text-align:center;color:${C1};font-size:10px;font-weight:700;">${i+1}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;"><strong>${p.titulo}</strong>${val}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;">${p.tipoPublicacion||"—"}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;color:${ec};font-weight:600;">${p.estadoPublicacion||"—"}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;text-align:center;font-weight:bold;">${p.cuartil&&p.cuartil!=="N/A"?p.cuartil:"—"}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;">${idx}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;">${links||"—"}</td></tr>`;
+  }).join("");
+
+  // Filas proyectos
+  const proyRows=misProyectos.map((p,i)=>{
+    const partInfo=participantes.find(x=>String(x.proyectoId)===String(p.id)&&String(x.autorId)===String(autor.id));
+    const nPubs=proyPubs.filter(r=>String(r.proyectoId)===String(p.id)).length;
+    const seg=[];// no calculamos avance aquí por simplicidad
+    return`<tr><td style="padding:5px 8px;border:1px solid #e2e8f0;font-size:10px;font-weight:600;">${p.titulo}</td><td style="padding:5px 8px;border:1px solid #e2e8f0;font-size:10px;">${partInfo?.rol||"—"}</td><td style="padding:5px 8px;border:1px solid #e2e8f0;font-size:10px;">${p.estado||"—"}</td><td style="padding:5px 8px;border:1px solid #e2e8f0;font-size:10px;text-align:center;">${partInfo?.horasSemana||"—"}</td><td style="padding:5px 8px;border:1px solid #e2e8f0;font-size:10px;text-align:center;font-weight:700;color:#6d28d9;">${nPubs}</td></tr>`;
+  }).join("");
+
+  // Filas semilleros
+  const semRows=misSemilleros.map(s=>{
+    const nInt=semIntegrantes.filter(i=>String(i.semilleroId)===String(s.id)).length;
+    const nPubs=semPubs.filter(r=>String(r.semilleroId)===String(s.id)).length;
+    return`<tr><td style="padding:5px 8px;border:1px solid #e2e8f0;font-size:10px;font-weight:600;">${s.nombre}</td><td style="padding:5px 8px;border:1px solid #e2e8f0;font-size:10px;">${s.acronimo||"—"}</td><td style="padding:5px 8px;border:1px solid #e2e8f0;font-size:10px;">${s.estado||"—"}</td><td style="padding:5px 8px;border:1px solid #e2e8f0;font-size:10px;text-align:center;font-weight:700;color:#047857;">${nInt}</td><td style="padding:5px 8px;border:1px solid #e2e8f0;font-size:10px;text-align:center;font-weight:700;color:#6d28d9;">${nPubs}</td></tr>`;
+  }).join("");
+
+  const tipoRes={};aP.forEach(p=>{const t=p.tipoPublicacion||"Otro";tipoRes[t]=(tipoRes[t]||0)+1;});
+  const tipoRows=Object.entries(tipoRes).map(([t,c])=>`<tr><td style="padding:5px 8px;border:1px solid #d1d5db;font-size:10px;">${t}</td><td style="padding:5px 8px;border:1px solid #d1d5db;font-size:10px;text-align:center;font-weight:700;">${c}</td></tr>`).join("");
+
+  const html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><style>@page Section1{size:842pt 595pt;mso-page-orientation:landscape;margin:1.5cm 2cm}body{font-family:Arial,sans-serif;margin:0;padding:0;color:#1e293b;font-size:11px}h2{font-size:12px;color:${NAVY};border-bottom:2px solid ${C1};padding-bottom:3px;margin:16px 0 8px;text-transform:uppercase;letter-spacing:.5px}table{width:100%;border-collapse:collapse;margin:6px 0}th{background:${C1};color:white;text-align:left;padding:6px 8px;border:1px solid ${C1};font-size:10px}.ft{margin-top:24px;text-align:center;color:#94a3b8;font-size:9px;border-top:1px solid #e2e8f0;padding-top:8px}.ib{background:${C1Bg};border-left:4px solid ${C1};padding:8px 12px;margin-bottom:12px;border-radius:0 6px 6px 0}.ir{display:flex;gap:6px;margin-bottom:3px;font-size:10px}.il{font-weight:700;color:#475569;min-width:160px}.iv{color:#1e293b}</style></head><body style="mso-section-properties:url('#Section1')">
+
+<div style="border-bottom:3px solid ${C1};padding-bottom:10px;margin-bottom:18px;display:table;width:100%;"><div style="display:table-row;"><div style="display:table-cell;vertical-align:top;"><div style="font-size:14px;font-weight:bold;color:${C1};">UNIVERSIDAD DE OTAVALO</div><div style="font-size:10px;color:#64748b;">Facultad de Ciencias Sociales y Pedagógicas · Coordinación de Investigación</div></div><div style="display:table-cell;text-align:right;vertical-align:top;"><div style="font-size:10px;color:#94a3b8;">PubTracker v5.0 · Informe Integrado</div><div style="font-size:10px;color:#94a3b8;">${fechaStr}</div></div></div></div>
+
+<table style="width:100%;border-collapse:collapse;margin-bottom:14px;border:none;"><tr>${fotoCell}<td style="vertical-align:middle;padding:0;">
+  <div style="font-size:20px;font-weight:900;color:${C1};">${autor.nombres} ${autor.apellidos}</div>
+  ${autor.tituloAcademico?`<div style="font-size:12px;color:#64748b;margin:2px 0;">${autor.tituloAcademico}</div>`:""}
+  <div style="font-size:11px;color:#64748b;">${autor.email||""}</div>
+  ${autor.departamento?`<div style="font-size:11px;color:#64748b;">${autor.departamento}</div>`:""}
+</td></tr></table>
+
+<div class="ib">
+  <div class="ir"><span class="il">Período:</span><span class="iv">${periodo}</span></div>
+  <div class="ir"><span class="il">Publicaciones:</span><span class="iv">${aP.length}</span></div>
+  <div class="ir"><span class="il">Proyectos:</span><span class="iv">${misProyectos.length}</span></div>
+  <div class="ir"><span class="il">Semilleros (tutor):</span><span class="iv">${misSemilleros.length}</span></div>
+  ${autor.horasInvestigacion?`<div class="ir"><span class="il">Horas investigación:</span><span class="iv" style="font-weight:700;color:#047857;">${autor.horasInvestigacion} h/sem</span></div>`:""}
+</div>
+
+${aP.length>0?`<h2>1. Producción Científica (${aP.length})</h2>
+<p style="font-size:10px;color:#64748b;margin:0 0 6px;">Distribución: ${Object.entries(tipoRes).map(([t,c])=>`${t}: ${c}`).join(" · ")}</p>
+<table style="table-layout:fixed;"><tr><th style="width:3%;text-align:center;">#</th><th style="width:30%;">Título</th><th style="width:10%;">Tipo</th><th style="width:9%;">Estado</th><th style="width:4%;text-align:center;">Q</th><th style="width:22%;">Indexación</th><th style="width:10%;">Evidencia</th></tr>${pubRows}</table>`:""}
+
+${misProyectos.length>0?`<h2>2. Proyectos de Investigación (${misProyectos.length})</h2>
+<table><tr><th style="width:40%;">Proyecto</th><th style="width:22%;">Rol</th><th style="width:15%;">Estado</th><th style="width:13%;text-align:center;">H/sem</th><th style="width:10%;text-align:center;">Pubs</th></tr>${proyRows}</table>`:""}
+
+${misSemilleros.length>0?`<h2>3. Semilleros (Docente Tutor)</h2>
+<table><tr><th style="width:35%;">Semillero</th><th style="width:12%;">Acrónimo</th><th style="width:15%;">Estado</th><th style="width:19%;text-align:center;">Integrantes</th><th style="width:19%;text-align:center;">Pubs vinculadas</th></tr>${semRows}</table>`:""}
+
+<div class="ft"><p>PubTracker v5.0 · Coordinación de Investigación · Facultad de Ciencias Sociales y Pedagógicas · Universidad de Otavalo</p><p>Informe integrado generado el ${fechaStr}</p></div>
+</body></html>`;
+
+  const blob=new Blob(["\ufeff",html],{type:"application/msword"});
+  const u=URL.createObjectURL(blob);const a=document.createElement("a");
+  a.href=u;a.download=`Informe_Integrado_${autor.apellidos.replace(/\s/g,"_")}_${filtros.anio||today.getFullYear()}.doc`;
+  a.click();URL.revokeObjectURL(u);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   MÓDULO: PROYECTOS EXTERNOS
+   Proyectos de otras instituciones en los que participan
+   docentes de la UNO como investigadores externos
+   ════════════════════════════════════════════════════════════════ */
+
+
+/* ── Formulario Proyecto Externo ── */
+function ProyectoExternoForm({proyecto, autores, onSave, onCancel}){
+  const isEdit=!!proyecto?.id;
+  const[saving,setSaving]=useState(false);
+  const[titulo,setTitulo]=useState(proyecto?.titulo||"");
+  const[institucion,setInstitucion]=useState(proyecto?.institucion||"");
+  const[pais,setPais]=useState(proyecto?.paisInstitucion||"Ecuador");
+  const[estado,setEstado]=useState(proyecto?.estado||"En ejecución");
+  const[fechaInicio,setFechaInicio]=useState(proyecto?.fechaInicio||"");
+  const[fechaFin,setFechaFin]=useState(proyecto?.fechaFin||"");
+  const[linea,setLinea]=useState(proyecto?.lineaInvestigacion||"");
+  const[descripcion,setDescripcion]=useState(proyecto?.descripcion||"");
+  const[urlRef,setUrlRef]=useState(proyecto?.urlReferencia||"");
+  const[evidencia,setEvidencia]=useState(proyecto?.evidenciaOneDrive||"");
+  const[partics,setPartics]=useState(proyecto?.participantes||[]);
+
+  const addP=()=>setPartics(p=>[...p,{autorId:"",rol:"Co-investigador",horasSemana:""}]);
+  const removeP=i=>setPartics(p=>p.filter((_,j)=>j!==i));
+  const updateP=(i,k,v)=>setPartics(p=>p.map((x,j)=>j===i?{...x,[k]:v}:x));
+
+  const guardar=async()=>{
+    if(!titulo.trim())return alert("El título es requerido");
+    if(!institucion.trim())return alert("La institución es requerida");
+    if(!partics.some(p=>p.autorId))return alert("Agregue al menos un docente UNO");
+    setSaving(true);
+    await onSave({
+      ...(isEdit&&{id:proyecto.id}),
+      titulo:titulo.trim(),institucion,paisInstitucion:pais,estado,
+      fechaInicio,fechaFin,lineaInvestigacion:linea,descripcion,
+      urlReferencia:urlRef,evidenciaOneDrive:evidencia,
+      participantes:partics.filter(p=>p.autorId)
+    });
+    setSaving(false);
+  };
+
+  const lineas=["Gestión del conocimiento para una acción docente innovadora, sistémica e interdisciplinaria",
+    "Innovación educativa y uso de TIC","Salud pública y bienestar social",
+    "Desarrollo local y comunitario","Derechos humanos y ciudadanía","Otros"];
+  const roles=["Co-investigador","Investigador Principal externo","Asesor externo","Colaborador","Par evaluador"];
+  const estados=["En ejecución","Propuesto","Finalizado","Suspendido"];
+
+  const lbl=(t)=><label style={{fontSize:10,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>{t}</label>;
+  const inp=(val,set,ph,tp="text")=><input type={tp} value={val} onChange={e=>set(e.target.value)} placeholder={ph} style={{width:"100%",padding:"9px 12px",borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:13,background:"white",outline:"none",boxSizing:"border-box"}}/>;
+  const sel=(val,set,opts,ph)=><select value={val} onChange={e=>set(e.target.value)} style={{width:"100%",padding:"9px 12px",borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:13,background:"white",outline:"none",boxSizing:"border-box"}}>{ph&&<option value="">{ph}</option>}{opts.map(o=><option key={o} value={o}>{o}</option>)}</select>;
+  const ta=(val,set,ph,rows=2)=><textarea value={val} onChange={e=>set(e.target.value)} placeholder={ph} rows={rows} style={{width:"100%",padding:"9px 12px",borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:13,background:"white",outline:"none",boxSizing:"border-box",resize:"vertical",fontFamily:"inherit"}}/>;
+
+  return(
+    <div style={{background:"white",borderRadius:16,overflow:"hidden",maxWidth:620,width:"100%",boxShadow:"0 20px 60px rgba(0,0,0,.18)",maxHeight:"90vh",overflowY:"auto"}}>
+      {/* Header */}
+      <div style={{background:"linear-gradient(135deg,#0c4a6e,#0369a1)",padding:"18px 22px",display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+        <div>
+          <div style={{fontSize:9,fontWeight:700,color:"#7dd3fc",letterSpacing:1,marginBottom:4}}>PROYECTO EXTERNO — OTRA INSTITUCIÓN</div>
+          <h3 style={{fontSize:15,fontWeight:800,color:"white",margin:0,fontFamily:"'Playfair Display',serif"}}>{isEdit?"Editar Proyecto Externo":"Registrar Proyecto Externo"}</h3>
+          <p style={{fontSize:10,color:"rgba(255,255,255,.6)",margin:"4px 0 0"}}>Registra un proyecto de otra institución en el que participan docentes UNO</p>
+        </div>
+        <button onClick={onCancel} style={{border:"none",background:"rgba(255,255,255,.15)",cursor:"pointer",color:"white",borderRadius:8,padding:6,flexShrink:0}}><X size={16}/></button>
+      </div>
+
+      <div style={{padding:22,display:"flex",flexDirection:"column",gap:14}}>
+
+        {/* Institución + título */}
+        <div style={{background:"#f0f9ff",borderRadius:10,padding:"10px 14px",border:"1px solid #bae6fd",fontSize:11,color:"#0369a1",fontWeight:600}}>
+          📋 Completa los datos del proyecto que ejecuta la otra institución
+        </div>
+        <div>{lbl("TÍTULO DEL PROYECTO *")}{ta(titulo,setTitulo,"Título completo del proyecto externo",2)}</div>
+        <div style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:12}}>
+          <div>{lbl("INSTITUCIÓN EJECUTORA *")}{inp(institucion,setInstitucion,"Ej: PUCE, UCE, Yachay Tech")}</div>
+          <div>{lbl("PAÍS")}{inp(pais,setPais,"Ecuador")}</div>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
+          <div>{lbl("ESTADO")}{sel(estado,setEstado,estados)}</div>
+          <div>{lbl("FECHA INICIO")}{inp(fechaInicio,setFechaInicio,"dd/mm/aaaa")}</div>
+          <div>{lbl("FECHA FIN")}{inp(fechaFin,setFechaFin,"dd/mm/aaaa")}</div>
+        </div>
+        <div>{lbl("LÍNEA DE INVESTIGACIÓN")}{sel(linea,setLinea,lineas,"Seleccionar línea…")}</div>
+        <div>{lbl("DESCRIPCIÓN / RESUMEN")}{ta(descripcion,setDescripcion,"Breve descripción del proyecto y el rol de la UNO…",3)}</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+          <div>{lbl("URL / REFERENCIA")}{inp(urlRef,setUrlRef,"https://…")}</div>
+          <div>{lbl("EVIDENCIA ONEDRIVE")}{inp(evidencia,setEvidencia,"https://onedrive.live.com/…")}</div>
+        </div>
+
+        {/* Docentes UNO */}
+        <div style={{borderTop:"1px solid #f1f5f9",paddingTop:14}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+            <div>
+              <div style={{fontSize:12,fontWeight:700,color:C1}}>Docentes UNO Participantes *</div>
+              <div style={{fontSize:10,color:"#94a3b8",marginTop:2}}>Docentes de la facultad que participan en este proyecto</div>
+            </div>
+            <button onClick={addP} style={{display:"inline-flex",alignItems:"center",gap:5,padding:"5px 12px",borderRadius:8,border:"none",background:`linear-gradient(135deg,${C1},${C1L})`,color:"white",fontSize:11,fontWeight:700,cursor:"pointer"}}><Plus size={12}/>Agregar</button>
+          </div>
+          {partics.length===0&&<div style={{textAlign:"center",padding:"16px",background:"#fdf0f0",borderRadius:8,fontSize:12,color:"#94a3b8",border:`1px dashed ${C1}30`}}>Ningún docente agregado. Haz clic en "Agregar".</div>}
+          {partics.map((p,i)=>(
+            <div key={i} style={{background:"#fdf0f0",borderRadius:10,padding:12,marginBottom:8,border:`1px solid ${C1}20`}}>
+              <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
+                <span style={{fontSize:10,fontWeight:700,color:C1}}>DOCENTE UNO {i+1}</span>
+                <button onClick={()=>removeP(i)} style={{border:"none",background:"none",cursor:"pointer",color:"#be123c"}}><X size={13}/></button>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr",gap:8}}>
+                <div>
+                  <div style={{fontSize:9,fontWeight:600,color:"#475569",marginBottom:2}}>DOCENTE *</div>
+                  <select value={p.autorId} onChange={e=>updateP(i,"autorId",e.target.value)} style={{width:"100%",padding:"7px 8px",borderRadius:8,border:"1.5px solid #e2e8f0",fontSize:11,background:"white",outline:"none"}}>
+                    <option value="">Seleccionar…</option>
+                    {autores.map(a=><option key={a.id} value={a.id}>{a.apellidos}, {a.nombres}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <div style={{fontSize:9,fontWeight:600,color:"#475569",marginBottom:2}}>ROL</div>
+                  <select value={p.rol} onChange={e=>updateP(i,"rol",e.target.value)} style={{width:"100%",padding:"7px 8px",borderRadius:8,border:"1.5px solid #e2e8f0",fontSize:11,background:"white",outline:"none"}}>
+                    {roles.map(r=><option key={r} value={r}>{r}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <div style={{fontSize:9,fontWeight:600,color:"#475569",marginBottom:2}}>H/SEMANA</div>
+                  <input type="number" value={p.horasSemana} onChange={e=>updateP(i,"horasSemana",e.target.value)} placeholder="2" style={{width:"100%",padding:"7px 8px",borderRadius:8,border:"1.5px solid #e2e8f0",fontSize:11,background:"white",outline:"none",boxSizing:"border-box"}}/>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div style={{display:"flex",gap:8,justifyContent:"space-between",padding:"12px 22px",borderTop:"1px solid #f1f5f9",background:"#fafbfc",position:"sticky",bottom:0}}>
+        <button onClick={onCancel} style={{display:"inline-flex",alignItems:"center",gap:6,padding:"9px 18px",borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:13,fontWeight:500,cursor:"pointer",background:"white",color:"#475569"}}><X size={15}/>Cancelar</button>
+        <button onClick={guardar} disabled={saving} style={{display:"inline-flex",alignItems:"center",gap:6,padding:"9px 18px",borderRadius:10,border:"none",fontSize:13,fontWeight:700,cursor:saving?"not-allowed":"pointer",background:`linear-gradient(135deg,${C1},${C1L})`,color:"white",opacity:saving?.6:1}}>{saving?<Loader2 size={15} style={{animation:"spin 1s linear infinite"}}/>:<Save size={15}/>}{saving?"Guardando…":"Guardar Proyecto Externo"}</button>
+      </div>
+    </div>
+  );
+}
+
+/* ── Vista Proyectos Externos ── */
+function ViewProyectoExterno({proyectosExt, autores, isAdmin, currentUser, onNuevo, onDetail, onEdit, onDelete}){
+  const[busqueda,setBusqueda]=useState("");
+  const[filtroEst,setFiltroEst]=useState("");
+
+  // Filtrar: admin ve todos; docente ve solo los suyos
+  const proyFilt = proyectosExt.filter(p=>{
+    if(filtroEst&&p.estado!==filtroEst)return false;
+    if(busqueda&&!p.titulo?.toLowerCase().includes(busqueda.toLowerCase())&&!p.institucion?.toLowerCase().includes(busqueda.toLowerCase()))return false;
+    if(!isAdmin){
+      const soy=(p.participantes||[]).some(x=>String(x.autorId)===String(currentUser?.id));
+      if(!soy)return false;
+    }
+    return true;
+  });
+
+  const total    = proyectosExt.length;
+  const activos  = proyectosExt.filter(p=>p.estado==="En ejecución").length;
+  const miProyN  = !isAdmin?proyectosExt.filter(p=>(p.participantes||[]).some(x=>String(x.autorId)===String(currentUser?.id))).length:0;
+
+  // Agrupar por institución
+  const instCount={};proyectosExt.forEach(p=>{const inst=p.institucion||"Sin institución";instCount[inst]=(instCount[inst]||0)+1;});
+
+  return(
+    <div>
+      {/* KPIs */}
+      <div className="kpi-grid" style={{display:"grid",gridTemplateColumns:isAdmin?"repeat(4,1fr)":"repeat(3,1fr)",gap:10,marginBottom:16}}>
+        {[
+          {l:"Total",v:total,c:P.sky,i:Building2},
+          {l:"En ejecución",v:activos,c:P.green,i:TrendingUp},
+          ...(isAdmin?[{l:"Instituciones",v:Object.keys(instCount).length,c:P.violet,i:Globe}]:[{l:"Mis participaciones",v:miProyN,c:C1,i:Users}]),
+          {l:"Finalizados",v:proyectosExt.filter(p=>p.estado==="Finalizado").length,c:P.slate,i:CheckCircle2}
+        ].map((s,i)=><div key={i} style={{background:"white",borderRadius:12,padding:"12px 14px",border:"1px solid #f1f5f9"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div><p style={{fontSize:10,color:"#94a3b8",margin:0}}>{s.l}</p><p style={{fontSize:22,fontWeight:800,color:s.c,margin:"2px 0 0"}}>{s.v}</p></div>
+            <s.i size={16} style={{color:s.c,opacity:.4}}/>
+          </div>
+        </div>)}
+      </div>
+
+      {/* Filtros */}
+      <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap",alignItems:"center"}}>
+        <div style={{flex:1,minWidth:140,position:"relative"}}>
+          <Search size={13} style={{position:"absolute",left:10,top:10,color:"#94a3b8"}}/>
+          <input value={busqueda} onChange={e=>setBusqueda(e.target.value)} placeholder="Buscar por título o institución…" style={{width:"100%",padding:"8px 10px 8px 30px",borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:12,background:"white",outline:"none",boxSizing:"border-box"}}/>
+        </div>
+        {["","En ejecución","Propuesto","Finalizado","Suspendido"].map(e=><button key={e} onClick={()=>setFiltroEst(e)} style={{padding:"4px 12px",borderRadius:20,border:filtroEst===e?`2px solid ${P.sky}`:"1.5px solid #e2e8f0",fontSize:11,fontWeight:filtroEst===e?700:400,background:filtroEst===e?P.skyBg:"white",color:filtroEst===e?P.sky:"#475569",cursor:"pointer"}}>{e||"Todos"}</button>)}
+        <Btn primary small icon={Plus} onClick={onNuevo}>Registrar Proyecto Externo</Btn>
+      </div>
+
+      {/* Tabla de instituciones (solo admin) */}
+      {isAdmin&&Object.keys(instCount).length>0&&<div style={{background:"white",borderRadius:12,padding:"12px 16px",marginBottom:14,border:"1px solid #f1f5f9"}}>
+        <p style={{fontSize:11,fontWeight:700,color:P.navy,margin:"0 0 8px"}}>Instituciones colaboradoras</p>
+        <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+          {Object.entries(instCount).sort((a,b)=>b[1]-a[1]).map(([inst,n])=><span key={inst} style={{fontSize:11,background:P.skyBg,color:P.sky,padding:"3px 10px",borderRadius:20,border:"1px solid #bae6fd",display:"inline-flex",alignItems:"center",gap:4}}><Building2 size={9}/>{inst} ({n})</span>)}
+        </div>
+      </div>}
+
+      {proyFilt.length===0&&<div style={{textAlign:"center",padding:"40px 20px",background:"white",borderRadius:12,border:"1px solid #f1f5f9"}}>
+        <Building2 size={32} style={{color:"#bae6fd",marginBottom:8}}/>
+        <p style={{fontSize:13,color:"#94a3b8",margin:0}}>{proyectosExt.length===0?"No hay proyectos externos registrados. Usa el botón para registrar uno.":"Sin proyectos con los filtros seleccionados"}</p>
+      </div>}
+
+      <div style={{display:"grid",gap:10}}>
+        {proyFilt.map(p=>{
+          const partUNO=(p.participantes||[]).filter(x=>x.autorId);
+          const stateColor=p.estado==="En ejecución"?P.green:p.estado==="Finalizado"?P.slate:P.gold;
+          const soyYo=partUNO.find(x=>String(x.autorId)===String(currentUser?.id));
+          return(
+            <div key={p.id} onClick={()=>onDetail(p)} style={{background:"white",borderRadius:12,padding:16,border:"1px solid #bae6fd",cursor:"pointer",transition:"all .15s",boxShadow:"0 1px 3px rgba(0,0,0,.03)"}} onMouseEnter={e=>{e.currentTarget.style.boxShadow=`0 4px 16px ${P.sky}30`;e.currentTarget.style.borderColor=P.sky;}} onMouseLeave={e=>{e.currentTarget.style.boxShadow="0 1px 3px rgba(0,0,0,.03)";e.currentTarget.style.borderColor="#bae6fd";}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6,gap:8}}>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:3}}>
+                    <Building2 size={11} style={{color:P.sky,flexShrink:0}}/>
+                    <span style={{fontSize:10,fontWeight:700,color:P.sky}}>{p.institucion||"Institución"}{p.paisInstitucion&&p.paisInstitucion!=="Ecuador"?` · ${p.paisInstitucion}`:""}</span>
+                  </div>
+                  <p style={{fontSize:13,fontWeight:700,color:P.navy,margin:0,lineHeight:1.3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.titulo}</p>
+                </div>
+                <span style={{fontSize:10,fontWeight:600,color:stateColor,background:stateColor+"18",padding:"2px 8px",borderRadius:20,flexShrink:0}}>{p.estado}</span>
+              </div>
+              <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:6}}>
+                {p.fechaInicio&&<Bdg c={P.slate}><Calendar size={9} style={{marginRight:3}}/>{p.fechaInicio}{p.fechaFin?` → ${p.fechaFin}`:""}</Bdg>}
+                {partUNO.length>0&&<Bdg c={C1} bg={C1Bg}><Users size={9} style={{marginRight:3}}/>{partUNO.length} docente{partUNO.length!==1?"s":""} UNO</Bdg>}
+                {soyYo&&<Bdg c={P.green} bg={P.greenBg}>Tu participación: {soyYo.rol}</Bdg>}
+                {p.lineaInvestigacion&&<span style={{fontSize:10,color:"#64748b",background:"#f8fafc",padding:"2px 8px",borderRadius:10,border:"1px solid #f1f5f9",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:200}}>{p.lineaInvestigacion.substring(0,45)}{p.lineaInvestigacion.length>45?"…":""}</span>}
+              </div>
+              {p.descripcion&&<p style={{fontSize:11,color:"#64748b",margin:"6px 0 0",lineHeight:1.4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.descripcion}</p>}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ── Modal Detalle Proyecto Externo ── */
+function ProyectoExternoDetail({proyecto, autores, onClose, onEdit, onDelete, onChangeStatus, isAdmin, currentUser}){
+  const partUNO  = (proyecto.participantes||[]).filter(p=>p.autorId);
+  const canEdit  = isAdmin||partUNO.some(p=>String(p.autorId)===String(currentUser?.id));
+  const stateColor = proyecto.estado==="En ejecución"?P.green:proyecto.estado==="Finalizado"?P.slate:P.gold;
+
+  const Row=({label,value,children})=><div style={{display:"flex",gap:6,padding:"5px 0",borderBottom:"1px solid #f8fafc"}}>
+    <span style={{fontSize:11,color:"#94a3b8",minWidth:160,flexShrink:0,fontWeight:600}}>{label}</span>
+    <span style={{fontSize:11,color:"#1e293b"}}>{children||value||"—"}</span>
+  </div>;
+
+  return(
+    <div style={{background:"white",borderRadius:16,overflow:"hidden",maxWidth:600,width:"100%",boxShadow:"0 20px 60px rgba(0,0,0,.18)"}}>
+      <div style={{background:"linear-gradient(135deg,#0c4a6e,#0369a1)",padding:"18px 22px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
+          <div style={{flex:1,paddingRight:12}}>
+            <div style={{display:"inline-flex",alignItems:"center",gap:5,marginBottom:4}}><Building2 size={12} style={{color:"#7dd3fc"}}/><span style={{fontSize:9,fontWeight:700,color:"#7dd3fc",letterSpacing:1}}>PROYECTO EXTERNO · {proyecto.institucion}</span></div>
+            <h3 style={{fontSize:14,fontWeight:800,color:"white",margin:"0 0 4px",lineHeight:1.3,fontFamily:"'Playfair Display',serif"}}>{proyecto.titulo}</h3>
+            {proyecto.paisInstitucion&&proyecto.paisInstitucion!=="Ecuador"&&<span style={{fontSize:10,color:"rgba(255,255,255,.65)"}}>🌐 {proyecto.paisInstitucion}</span>}
+          </div>
+          <button onClick={onClose} style={{border:"none",background:"rgba(255,255,255,.15)",cursor:"pointer",color:"white",borderRadius:8,padding:6,flexShrink:0}}><X size={16}/></button>
+        </div>
+        <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
+          <span style={{fontSize:10,fontWeight:600,color:stateColor,background:"rgba(255,255,255,.15)",padding:"2px 10px",borderRadius:20}}>{proyecto.estado}</span>
+          {partUNO.length>0&&<span style={{fontSize:10,color:"rgba(255,255,255,.7)"}}><Users size={10} style={{marginRight:4}}/>{partUNO.length} docente{partUNO.length!==1?"s":""} UNO participando</span>}
+        </div>
+      </div>
+
+      <div style={{padding:"16px 20px",maxHeight:"55vh",overflowY:"auto"}}>
+        <Row label="Institución ejecutora"><span style={{fontWeight:600,color:P.sky}}>{proyecto.institucion}</span></Row>
+        <Row label="País" value={proyecto.paisInstitucion}/>
+        <Row label="Línea de investigación" value={proyecto.lineaInvestigacion}/>
+        <Row label="Período">{proyecto.fechaInicio||"—"}{proyecto.fechaFin?` → ${proyecto.fechaFin}`:""}</Row>
+        {proyecto.descripcion&&<div style={{margin:"10px 0",padding:"10px 12px",background:"#f0f9ff",borderRadius:8,border:"1px solid #bae6fd"}}><p style={{fontSize:10,fontWeight:700,color:P.sky,margin:"0 0 4px"}}>DESCRIPCIÓN</p><p style={{fontSize:12,color:"#1e293b",margin:0,lineHeight:1.6}}>{proyecto.descripcion}</p></div>}
+
+        <h4 style={{fontSize:12,fontWeight:700,color:C1,margin:"14px 0 8px"}}>Docentes UNO que participan ({partUNO.length})</h4>
+        {partUNO.map((p,i)=>{
+          const a=autores.find(x=>String(x.id)===String(p.autorId));
+          const foto=a?.fotoUrl?driveImgUrl(a.fotoUrl):avatarUrl(a?.nombres,a?.apellidos);
+          return<div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:"1px solid #f8fafc"}}>
+            <img src={foto} alt="" style={{width:34,height:34,borderRadius:"50%",objectFit:"cover",border:`2px solid ${C1}20`,flexShrink:0}} onError={e=>{e.target.onerror=null;e.target.src=avatarUrl(a?.nombres,a?.apellidos)}}/>
+            <div style={{flex:1,minWidth:0}}>
+              <p style={{fontSize:12,fontWeight:600,color:P.navy,margin:0}}>{a?`${a.apellidos}, ${a.nombres}`:"Docente desconocido"}</p>
+              <div style={{display:"flex",gap:5,marginTop:2,flexWrap:"wrap"}}>
+                <Bdg c={C1}>{p.rol||"—"}</Bdg>
+                {p.horasSemana&&<Bdg c={P.green} bg={P.greenBg}><Clock size={9} style={{marginRight:2}}/>{p.horasSemana}h/sem</Bdg>}
+                {a?.departamento&&<Bdg c={P.slate}>{a.departamento}</Bdg>}
+              </div>
+            </div>
+          </div>;
+        })}
+        {[proyecto.urlReferencia,proyecto.evidenciaOneDrive].some(Boolean)&&<div style={{marginTop:12,display:"flex",gap:8,flexWrap:"wrap"}}>
+          {proyecto.urlReferencia&&<a href={proyecto.urlReferencia} target="_blank" rel="noreferrer" style={{display:"inline-flex",alignItems:"center",gap:5,padding:"6px 12px",borderRadius:8,background:P.skyBg,border:`1px solid ${P.sky}30`,color:P.sky,fontSize:11,fontWeight:700,textDecoration:"none"}}><Globe size={12}/>Ver proyecto</a>}
+          {proyecto.evidenciaOneDrive&&<a href={proyecto.evidenciaOneDrive} target="_blank" rel="noreferrer" style={{display:"inline-flex",alignItems:"center",gap:5,padding:"6px 12px",borderRadius:8,background:"#f5f3ff",border:"1px solid #ddd6fe",color:"#7c3aed",fontSize:11,fontWeight:700,textDecoration:"none"}}><ExternalLink size={12}/>OneDrive</a>}
+        </div>}
+      </div>
+
+      <div style={{display:"flex",gap:8,justifyContent:"space-between",padding:"12px 20px",borderTop:"1px solid #f1f5f9",background:"#fafbfc"}}>
+        <Btn onClick={onClose}>Cerrar</Btn>
+        <div style={{display:"flex",gap:8}}>
+          {canEdit&&<Btn onClick={()=>onChangeStatus(proyecto)} icon={CheckCircle2}>Cambiar Estado</Btn>}
+          {canEdit&&<Btn danger onClick={()=>onDelete(proyecto)} icon={Trash2}>Eliminar</Btn>}
+          {canEdit&&<Btn primary onClick={()=>onEdit(proyecto)} icon={Edit3}>Editar</Btn>}
+        </div>
       </div>
     </div>
   );
