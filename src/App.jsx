@@ -875,8 +875,7 @@ export default function App(){
     setLoading(false);
   },[]);
   useEffect(()=>{if(user)loadData()},[user,loadData]);
-  useEffect(()=>{window._proyExt=proyectosExt;},[proyectosExt]);
-  useEffect(()=>{if(user){try{const k="pubtracker_proyext_v1";const saved=JSON.parse(sessionStorage.getItem(k)||"[]");if(saved.length>0)setProyectosExt(saved);}catch(e){}}},[user]);
+
   const loadM2=useCallback(async(background=false)=>{
     if(!API_URL)return;
     if(!background)setLoadingM2(true);
@@ -894,6 +893,21 @@ export default function App(){
     setLoadingM3(false);
   },[]);
   useEffect(()=>{if(user&&view==="semilleros")loadM3()},[user,view,loadM3]);
+
+  const CACHE_KEY_EXT = "pubtracker_proyext_v1";
+  const loadProyExt=useCallback(async(background=false)=>{
+    if(!API_URL){
+      // Modo demo: cargar de sessionStorage
+      try{const s=JSON.parse(sessionStorage.getItem(CACHE_KEY_EXT)||"[]");setProyectosExt(s);}catch(e){}
+      return;
+    }
+    if(!background)setProyectosExt(prev=>prev); // no spinner, usa lo que hay
+    const r=await apiGet("getProyectosExt");
+    if(r&&!r.error&&r.proyectosExt){
+      setProyectosExt(r.proyectosExt);
+    }
+  },[]);
+  useEffect(()=>{if(user&&view==="proyexterno")loadProyExt()},[user,view,loadProyExt]);
   useEffect(()=>{
     const fn=()=>{const m=window.innerWidth<768;setIsMobile(m);if(m)setSideOpen(false);};
     fn();
@@ -1079,6 +1093,7 @@ export default function App(){
     const isEd=!!editProyExt2;
     const id=proy.id||("PE"+Date.now().toString(36));
     const full={...proy,id};
+    // Optimistic update
     setProyectosExt(prev=>{
       const np=[...prev];
       const ex=np.findIndex(x=>x.id===full.id);
@@ -1086,14 +1101,18 @@ export default function App(){
       return np;
     });
     setShowProyExtForm(false);setEditProyExt2(null);
-    showToast(isEd?"Proyecto externo actualizado ✓":"Proyecto externo registrado ✓");
-    try{
-      const k="pubtracker_proyext_v1";
-      const all=JSON.parse(sessionStorage.getItem(k)||"[]");
-      const idx=all.findIndex(x=>x.id===full.id);
-      if(idx>=0)all[idx]=full;else all.push(full);
-      sessionStorage.setItem(k,JSON.stringify(all));
-    }catch(e){}
+    if(API_URL){
+      const action=isEd?"updateProyExt":"addProyExt";
+      const r=await apiPost({action,id:isEd?full.id:undefined,proyecto:full});
+      if(r?.ok){
+        showToast(isEd?"Proyecto externo actualizado ✓":"Proyecto externo registrado ✓");
+        loadProyExt(true);
+      } else showToast("Error al guardar: "+(r?.error||""),"error");
+    } else {
+      // Modo demo: sessionStorage
+      try{const k="pubtracker_proyext_v1";const all=JSON.parse(sessionStorage.getItem(k)||"[]");const idx=all.findIndex(x=>x.id===full.id);if(idx>=0)all[idx]=full;else all.push(full);sessionStorage.setItem(k,JSON.stringify(all));}catch(e){}
+      showToast(isEd?"Actualizado":"Registrado");
+    }
   };
 
   const handleDeleteProyExt=async()=>{
@@ -1101,24 +1120,43 @@ export default function App(){
     const pid=deleteProyExt2.id;
     setProyectosExt(prev=>prev.filter(p=>p.id!==pid));
     setDeleteProyExt2(null);setDetailProyExt2(null);
-    showToast("Proyecto externo eliminado ✓");
-    try{
-      const k="pubtracker_proyext_v1";
-      const all=JSON.parse(sessionStorage.getItem(k)||"[]").filter(x=>x.id!==pid);
-      sessionStorage.setItem(k,JSON.stringify(all));
-    }catch(e){}
+    if(API_URL){
+      const r=await apiPost({action:"deleteProyExt",id:pid});
+      if(r?.ok)showToast("Proyecto externo eliminado ✓");
+      else showToast("Error al eliminar","error");
+    } else {
+      try{const k="pubtracker_proyext_v1";const all=JSON.parse(sessionStorage.getItem(k)||"[]").filter(x=>x.id!==pid);sessionStorage.setItem(k,JSON.stringify(all));}catch(e){}
+      showToast("Eliminado");
+    }
   };
 
+  const handleVincularPubExt=(proyId,pubId)=>{
+    setProyectosExt(prev=>prev.map(p=>{
+      if(String(p.id)!==String(proyId))return p;
+      const pubs=p.pubsVinculadas||[];
+      if(pubs.includes(pubId))return p;
+      return{...p,pubsVinculadas:[...pubs,pubId]};
+    }));
+    // Update detailProyExt2 live
+    setDetailProyExt2(prev=>prev&&String(prev.id)===String(proyId)?{...prev,pubsVinculadas:[...(prev.pubsVinculadas||[]),pubId]}:prev);
+    showToast("Publicación vinculada ✓");
+    if(API_URL){apiPost({action:"updateProyExt",id:proyId,proyecto:{...proyectosExt.find(p=>p.id===proyId)||{},pubsVinculadas:[...(proyectosExt.find(p=>p.id===proyId)?.pubsVinculadas||[]),pubId]}});}
+  };
+  const handleDesvincularPubExt=(proyId,pubId)=>{
+    setProyectosExt(prev=>prev.map(p=>{
+      if(String(p.id)!==String(proyId))return p;
+      return{...p,pubsVinculadas:(p.pubsVinculadas||[]).filter(x=>x!==pubId)};
+    }));
+    setDetailProyExt2(prev=>prev&&String(prev.id)===String(proyId)?{...prev,pubsVinculadas:(prev.pubsVinculadas||[]).filter(x=>x!==pubId)}:prev);
+    showToast("Desvinculada");
+    if(API_URL){const proy=proyectosExt.find(p=>p.id===proyId);if(proy)apiPost({action:"updateProyExt",id:proyId,proyecto:{...proy,pubsVinculadas:(proy.pubsVinculadas||[]).filter(x=>x!==pubId)}});}
+  };
   const handleStatusProyExt=(id,nuevoEstado)=>{
     setProyectosExt(prev=>prev.map(p=>p.id===id?{...p,estado:nuevoEstado}:p));
     setDetailProyExt2(prev=>prev&&prev.id===id?{...prev,estado:nuevoEstado}:prev);
     setStatusProyExt(null);
     showToast("Estado actualizado ✓");
-    try{
-      const k="pubtracker_proyext_v1";
-      const all=JSON.parse(sessionStorage.getItem(k)||"[]").map(p=>p.id===id?{...p,estado:nuevoEstado}:p);
-      sessionStorage.setItem(k,JSON.stringify(all));
-    }catch(e){}
+    if(API_URL){apiPost({action:"updateStatusExt",id,estado:nuevoEstado});}
   };
 
   const menu=[
@@ -1512,7 +1550,7 @@ export default function App(){
     {/* PROYECTOS EXTERNOS: Formulario */}
     {showProyExtForm&&<div style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{maxHeight:"92vh",overflowY:"auto",animation:"slideUp .3s",width:"100%",maxWidth:640}}><ProyectoExternoForm proyecto={editProyExt2} autores={data.autores} onSave={handleSaveProyExt} onCancel={()=>{setShowProyExtForm(false);setEditProyExt2(null);}}/></div></div>}
     {/* PROYECTOS EXTERNOS: Detalle */}
-    {detailProyExt2&&<div style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{maxHeight:"92vh",overflowY:"auto",animation:"slideUp .3s",width:"100%",maxWidth:620}}><ProyectoExternoDetail proyecto={detailProyExt2} autores={data.autores} onClose={()=>setDetailProyExt2(null)} onEdit={p=>{setEditProyExt2(p);setDetailProyExt2(null);setShowProyExtForm(true);}} onDelete={p=>setDeleteProyExt2(p)} onChangeStatus={p=>setStatusProyExt(p)} isAdmin={isAdmin} currentUser={user}/></div></div>}
+    {detailProyExt2&&<div style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{maxHeight:"92vh",overflowY:"auto",animation:"slideUp .3s",width:"100%",maxWidth:620}}><ProyectoExternoDetail proyecto={detailProyExt2} autores={data.autores} pubs={data.publicaciones} onClose={()=>setDetailProyExt2(null)} onEdit={p=>{setEditProyExt2(p);setDetailProyExt2(null);setShowProyExtForm(true);}} onDelete={p=>setDeleteProyExt2(p)} onChangeStatus={p=>setStatusProyExt(p)} onVincularPub={handleVincularPubExt} onDesvincularPub={handleDesvincularPubExt} isAdmin={isAdmin} currentUser={user}/></div></div>}
     {/* PROYECTOS EXTERNOS: Confirmar eliminar */}
     {deleteProyExt2&&<div style={{position:"fixed",inset:0,zIndex:60,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"rgba(15,23,42,.55)",backdropFilter:"blur(6px)",animation:"fadeIn .2s"}}><div style={{animation:"slideUp .3s"}}><ConfirmDelete title="Eliminar Proyecto Externo" message={`¿Eliminar el proyecto "${deleteProyExt2.titulo}"?`} onConfirm={handleDeleteProyExt} onCancel={()=>setDeleteProyExt2(null)}/></div></div>}
     {/* PROYECTOS EXTERNOS: Cambiar Estado */}
@@ -2171,6 +2209,214 @@ function ViewProyectos({proyectos, participantes, estudiantes, seguimiento, obje
   );
 }
 
+/* ════════════════════════════════════════════════════════════════
+   EXPORT WORD SEMILLERO — Individual y Consolidado
+   ════════════════════════════════════════════════════════════════ */
+
+function exportWordSemillero(semillero, integrantes, semPubs, pubs, autores){
+  const today    = new Date();
+  const fechaStr = today.toLocaleDateString("es-EC",{year:"numeric",month:"long",day:"numeric"});
+  const misInt   = integrantes.filter(i=>String(i.semilleroId)===String(semillero.id));
+  const visPubs  = semPubs.filter(r=>String(r.semilleroId)===String(semillero.id))
+    .map(r=>pubs.find(p=>String(p.id)===String(r.pubId))).filter(Boolean);
+  const tutor    = autores.find(a=>String(a.id)===String(semillero.docenteTutor));
+  const stateCol = semillero.estado==="Activo"?"#047857":"#64748b";
+
+  const intRows = misInt.map((i,n)=>`<tr>
+    <td style="padding:5px 8px;border:1px solid #e2e8f0;font-size:10px;font-weight:600;">${i.nombre||"—"}</td>
+    <td style="padding:5px 8px;border:1px solid #e2e8f0;font-size:10px;">${i.cedula||"—"}</td>
+    <td style="padding:5px 8px;border:1px solid #e2e8f0;font-size:10px;">${i.carrera||"—"}</td>
+    <td style="padding:5px 8px;border:1px solid #e2e8f0;font-size:10px;">${i.nivel||"—"}</td>
+    <td style="padding:5px 8px;border:1px solid #e2e8f0;font-size:10px;">${i.rol||"—"}</td>
+    <td style="padding:5px 8px;border:1px solid #e2e8f0;font-size:10px;">${i.email||"—"}</td>
+  </tr>`).join("");
+
+  const tipoRes={};visPubs.forEach(p=>{const t=p.tipoPublicacion||"Otro";tipoRes[t]=(tipoRes[t]||0)+1;});
+  const tipoRows=Object.entries(tipoRes).map(([t,n])=>`<tr>
+    <td style="padding:5px 8px;border:1px solid #d1d5db;font-size:10px;">${t}</td>
+    <td style="padding:5px 8px;border:1px solid #d1d5db;font-size:10px;text-align:center;font-weight:700;">${n}</td>
+  </tr>`).join("");
+
+  const pubRows = visPubs.map((p,i)=>{
+    const idx=[p.indexacion1,p.indexacion2,p.indexacion3].filter(Boolean).join(", ")||"—";
+    const ec=p.estadoPublicacion==="Publicado"?"#047857":p.estadoPublicacion==="Aceptado"?"#0369a1":"#a16207";
+    const val=p.valoracion&&parseFloat(p.valoracion)>0?` [${parseFloat(p.valoracion).toFixed(2)}]`:"";
+    const lnks=(p.doi?`<a href="https://doi.org/${p.doi}" style="color:#c2410c;font-size:9px;display:block;">DOI ↗</a>`:"")+
+               (p.url?`<a href="${p.url}" style="color:#1d4ed8;font-size:9px;display:block;">URL ↗</a>`:"")+
+               (p.evidencia?`<a href="${p.evidencia}" style="color:#6d28d9;font-size:9px;display:block;">OneDrive ↗</a>`:"");
+    return`<tr>
+      <td style="padding:4px 6px;border:1px solid #e2e8f0;text-align:center;color:#047857;font-size:10px;font-weight:700;">${i+1}</td>
+      <td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;"><strong>${p.titulo}</strong>${val}</td>
+      <td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;">${p.tipoPublicacion||"—"}</td>
+      <td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;color:${ec};font-weight:600;">${p.estadoPublicacion||"—"}</td>
+      <td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;text-align:center;font-weight:bold;">${p.cuartil&&p.cuartil!=="N/A"?p.cuartil:"—"}</td>
+      <td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;">${idx}</td>
+      <td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:10px;">${lnks||"—"}</td>
+    </tr>`;
+  }).join("");
+
+  const html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><style>@page Section1{size:842pt 595pt;mso-page-orientation:landscape;margin:1.5cm 2cm}body{font-family:Arial,sans-serif;margin:0;padding:0;color:#1e293b;font-size:11px}h2{font-size:12px;color:${NAVY};border-bottom:2px solid #047857;padding-bottom:3px;margin:16px 0 8px;text-transform:uppercase;letter-spacing:.5px}table{width:100%;border-collapse:collapse;margin:6px 0}th{background:#047857;color:white;text-align:left;padding:6px 8px;border:1px solid #047857;font-size:10px}.ft{margin-top:24px;text-align:center;color:#94a3b8;font-size:9px;border-top:1px solid #e2e8f0;padding-top:8px}.ib{background:#f0fdf4;border-left:4px solid #047857;padding:8px 12px;margin-bottom:12px;border-radius:0 6px 6px 0}.ir{font-size:10px;margin-bottom:3px}.il{font-weight:700;color:#475569;display:inline-block;min-width:160px}.iv{color:#1e293b}</style></head><body style="mso-section-properties:url('#Section1')">
+
+<div style="border-bottom:3px solid #047857;padding-bottom:12px;margin-bottom:20px;display:table;width:100%;"><div style="display:table-row;"><div style="display:table-cell;vertical-align:top;"><div style="font-size:16px;font-weight:900;color:#047857;">UNIVERSIDAD DE OTAVALO</div><div style="font-size:11px;color:#64748b;">Facultad de Ciencias Sociales y Pedagógicas · Coordinación de Investigación</div><div style="font-size:14px;font-weight:700;color:${NAVY};margin-top:4px;">Semillero de Investigación</div></div><div style="display:table-cell;text-align:right;vertical-align:top;"><div style="font-size:10px;color:#94a3b8;">PubTracker v5.0</div><div style="font-size:10px;color:#94a3b8;">${fechaStr}</div></div></div></div>
+
+<div style="background:linear-gradient(135deg,#064e3b,#047857);color:white;padding:16px 18px;border-radius:8px;margin-bottom:16px;">
+  <div style="font-size:8px;font-weight:700;letter-spacing:2px;color:rgba(255,255,255,.6);margin-bottom:4px;">SEMILLERO DE INVESTIGACIÓN</div>
+  <div style="font-size:18px;font-weight:900;margin-bottom:4px;">${semillero.nombre}${semillero.acronimo?` (${semillero.acronimo})`:""}</div>
+  <div style="display:table;width:100%;margin-top:6px;"><div style="display:table-row;">
+    <div style="display:table-cell;font-size:10px;color:rgba(255,255,255,.8);">Estado: <strong style="color:white;">${semillero.estado||"—"}</strong></div>
+    <div style="display:table-cell;font-size:10px;color:rgba(255,255,255,.8);">Área: <strong style="color:white;">${semillero.areaConocimiento||"—"}</strong></div>
+    <div style="display:table-cell;font-size:10px;color:rgba(255,255,255,.8);">Tutor: <strong style="color:white;">${tutor?`${tutor.apellidos}, ${tutor.nombres}`:"—"}</strong></div>
+    <div style="display:table-cell;font-size:10px;color:rgba(255,255,255,.8);">Integrantes: <strong style="color:white;">${misInt.length}</strong></div>
+  </div></div>
+</div>
+
+<div class="ib">
+  <div class="ir"><span class="il">Línea de investigación:</span><span class="iv">${semillero.lineaInvestigacion||"—"}</span></div>
+  <div class="ir"><span class="il">Fecha de creación:</span><span class="iv">${semillero.fechaCreacion||"—"}</span></div>
+  <div class="ir"><span class="il">Docente tutor:</span><span class="iv">${tutor?`${tutor.tituloAcademico||""} ${tutor.apellidos}, ${tutor.nombres}`.trim():"—"}</span></div>
+</div>
+
+${semillero.descripcion?`<h2>1. Descripción / Misión</h2><div style="padding:10px 14px;background:#f0fdf4;border-radius:6px;border:1px solid #bbf7d0;font-size:11px;line-height:1.7;">${semillero.descripcion}</div>`:""}
+${semillero.objetivos?`<h2>2. Objetivos</h2><div style="padding:10px 14px;background:#f8fafc;border-radius:6px;border:1px solid #f1f5f9;font-size:11px;line-height:1.7;">${semillero.objetivos}</div>`:""}
+
+${misInt.length>0?`<h2>3. Integrantes (${misInt.length})</h2>
+<table><tr><th style="width:25%;">Nombre</th><th style="width:15%;">Cédula</th><th style="width:20%;">Carrera</th><th style="width:10%;">Nivel</th><th style="width:15%;">Rol</th><th style="width:15%;">Email</th></tr>${intRows}</table>`:""}
+
+${visPubs.length>0?`<h2>4. Producción Científica Vinculada (${visPubs.length})</h2>
+${tipoRows?`<p style="font-size:10px;color:#475569;font-weight:700;margin:0 0 4px;">Distribución por tipo:</p><table style="margin-bottom:10px;"><tr><th style="width:75%;">Tipo</th><th style="width:25%;text-align:center;">Cantidad</th></tr>${tipoRows}<tr style="background:#f0fdf4;"><td style="padding:5px 8px;border:1px solid #d1d5db;font-size:10px;font-weight:700;color:#047857;">TOTAL</td><td style="padding:5px 8px;border:1px solid #d1d5db;font-size:10px;text-align:center;font-weight:700;color:#047857;">${visPubs.length}</td></tr></table>`:""}
+<table style="table-layout:fixed;"><tr>
+  <th style="width:3%;text-align:center;">#</th><th style="width:30%;">Título</th><th style="width:10%;">Tipo</th>
+  <th style="width:9%;">Estado</th><th style="width:4%;text-align:center;">Q</th><th style="width:20%;">Indexación</th><th style="width:10%;">Evidencia</th>
+</tr>${pubRows}</table>`:""}
+
+<div class="ft"><p>PubTracker v5.0 · Coordinación de Investigación · Facultad de Ciencias Sociales y Pedagógicas · Universidad de Otavalo</p><p>Perfil de semillero generado el ${fechaStr}</p></div>
+</body></html>`;
+
+  const blob=new Blob(["﻿",html],{type:"application/msword"});
+  const u=URL.createObjectURL(blob);const a=document.createElement("a");
+  a.href=u;a.download=`Semillero_${semillero.nombre.substring(0,40).replace(/[^a-zA-Z0-9]/g,"_")}.doc`;
+  a.click();URL.revokeObjectURL(u);
+}
+
+function exportWordConsolidadoSemilleros(semilleros, semIntegrantes, semPubs, pubs, autores){
+  const today    = new Date();
+  const fechaStr = today.toLocaleDateString("es-EC",{year:"numeric",month:"long",day:"numeric"});
+  const totalInt = semilleros.reduce((acc,s)=>acc+semIntegrantes.filter(i=>String(i.semilleroId)===String(s.id)).length,0);
+  const totalPubs= new Set(semPubs.map(r=>r.pubId)).size;
+
+  const semSecs = semilleros.map((s,idx)=>{
+    const misInt  = semIntegrantes.filter(i=>String(i.semilleroId)===String(s.id));
+    const visPubs = semPubs.filter(r=>String(r.semilleroId)===String(s.id)).map(r=>pubs.find(p=>String(p.id)===String(r.pubId))).filter(Boolean);
+    const tutor   = autores.find(a=>String(a.id)===String(s.docenteTutor));
+    const tipoRes={};visPubs.forEach(p=>{const t=p.tipoPublicacion||"Otro";tipoRes[t]=(tipoRes[t]||0)+1;});
+    const tipoStr=Object.entries(tipoRes).map(([t,n])=>`${t}: ${n}`).join(" · ")||"Sin publicaciones";
+    const pubList=visPubs.map((p,i)=>`<tr><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:9px;text-align:center;color:#047857;font-weight:700;">${i+1}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:9px;">${p.titulo}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:9px;">${p.tipoPublicacion||"—"}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:9px;">${p.estadoPublicacion||"—"}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:9px;text-align:center;">${p.cuartil&&p.cuartil!=="N/A"?p.cuartil:"—"}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:9px;text-align:center;font-weight:700;color:#047857;">${p.valoracion&&parseFloat(p.valoracion)>0?parseFloat(p.valoracion).toFixed(2):"—"}</td></tr>`).join("");
+    const stateCol=s.estado==="Activo"?"#047857":s.estado==="En formación"?"#a16207":"#64748b";
+
+    return`<div style="margin-bottom:20px;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;page-break-inside:avoid;">
+  <div style="background:#047857;color:white;padding:10px 14px;display:table;width:100%;">
+    <div style="display:table-cell;width:70%;"><div style="font-size:12px;font-weight:700;">${idx+1}. ${s.nombre}${s.acronimo?` (${s.acronimo})`:""}</div>
+      ${tutor?`<div style="font-size:9px;color:rgba(255,255,255,.7);margin-top:2px;">Tutor: ${tutor.apellidos}, ${tutor.nombres}</div>`:""}
+    </div>
+    <div style="display:table-cell;text-align:right;vertical-align:top;">
+      <span style="font-size:10px;font-weight:700;background:rgba(255,255,255,.2);padding:2px 8px;border-radius:12px;">${s.estado||"—"}</span>
+    </div>
+  </div>
+  <div style="padding:8px 14px;background:#f0fdf4;border-bottom:1px solid #d1fae5;font-size:9px;">
+    <table style="margin:0;border-collapse:collapse;"><tr>
+      <td style="padding:1px 12px 1px 0;"><strong>Área:</strong> ${s.areaConocimiento||"—"}</td>
+      <td style="padding:1px 12px 1px 0;"><strong>Línea:</strong> ${s.lineaInvestigacion?s.lineaInvestigacion.substring(0,50)+"…":"—"}</td>
+      <td style="padding:1px 12px 1px 0;"><strong>Integrantes:</strong> ${misInt.length}</td>
+      <td style="padding:1px 0;"><strong>Creado:</strong> ${s.fechaCreacion||"—"}</td>
+    </tr></table>
+  </div>
+  ${visPubs.length>0?`<div style="padding:8px 14px;">
+    <div style="font-size:9px;font-weight:700;color:#047857;margin-bottom:4px;">Producción vinculada (${visPubs.length}): ${tipoStr}</div>
+    <table style="font-size:9px;"><tr><th style="width:3%;text-align:center;font-size:8px;">#</th><th style="width:45%;font-size:8px;">Título</th><th style="width:12%;font-size:8px;">Tipo</th><th style="width:11%;font-size:8px;">Estado</th><th style="width:5%;text-align:center;font-size:8px;">Q</th><th style="width:8%;text-align:center;font-size:8px;">Val.</th></tr>${pubList}</table>
+  </div>`:`<div style="padding:8px 14px;font-size:9px;color:#94a3b8;font-style:italic;">Sin publicaciones vinculadas</div>`}
+</div>`;
+  }).join("");
+
+  const html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><style>@page Section1{size:842pt 595pt;mso-page-orientation:landscape;margin:1.5cm 2cm}body{font-family:Arial,sans-serif;margin:0;padding:0;color:#1e293b;font-size:11px}h2{font-size:13px;color:${NAVY};border-bottom:2px solid #047857;padding-bottom:3px;margin:20px 0 10px;text-transform:uppercase}table{width:100%;border-collapse:collapse;margin:6px 0}th{background:#047857;color:white;text-align:left;padding:6px 8px;border:1px solid #047857;font-size:10px}.ft{margin-top:24px;text-align:center;color:#94a3b8;font-size:9px;border-top:1px solid #e2e8f0;padding-top:8px}</style></head><body style="mso-section-properties:url('#Section1')">
+
+<div style="border-bottom:3px solid #047857;padding-bottom:12px;margin-bottom:20px;display:table;width:100%;"><div style="display:table-row;"><div style="display:table-cell;vertical-align:top;"><div style="font-size:16px;font-weight:900;color:#047857;">UNIVERSIDAD DE OTAVALO</div><div style="font-size:11px;color:#64748b;">Facultad de Ciencias Sociales y Pedagógicas · Coordinación de Investigación</div><div style="font-size:14px;font-weight:700;color:${NAVY};margin-top:4px;">Reporte Consolidado — Semilleros de Investigación</div></div><div style="display:table-cell;text-align:right;vertical-align:top;"><div style="font-size:10px;color:#94a3b8;">PubTracker v5.0</div><div style="font-size:10px;color:#94a3b8;">${fechaStr}</div></div></div></div>
+
+<div style="display:table;width:100%;margin-bottom:20px;">
+  <div style="display:table-row;">
+    ${[{l:"Total Semilleros",v:semilleros.length,c:"#047857"},{l:"Activos",v:semilleros.filter(s=>s.estado==="Activo").length,c:"#0369a1"},{l:"Total Integrantes",v:totalInt,c:"#6d28d9"},{l:"Pubs vinculadas",v:totalPubs,c:C1}].map(k=>`<div style="display:table-cell;padding:10px;background:white;border:1px solid #f1f5f9;border-radius:8px;margin:0 4px;text-align:center;"><div style="font-size:22px;font-weight:900;color:${k.c};">${k.v}</div><div style="font-size:10px;color:#64748b;">${k.l}</div></div>`).join("")}
+  </div>
+</div>
+
+<h2>Detalle por Semillero</h2>
+${semSecs}
+
+<div class="ft"><p>PubTracker v5.0 · Coordinación de Investigación · Facultad de Ciencias Sociales y Pedagógicas · Universidad de Otavalo</p><p>Reporte consolidado de semilleros generado el ${fechaStr}</p></div>
+</body></html>`;
+
+  const blob=new Blob(["﻿",html],{type:"application/msword"});
+  const u=URL.createObjectURL(blob);const a=document.createElement("a");
+  a.href=u;a.download=`Reporte_Consolidado_Semilleros_${today.getFullYear()}.doc`;
+  a.click();URL.revokeObjectURL(u);
+}
+
+/* ── Reporte Word Proyectos Externos (consolidado) ── */
+function exportWordProyectosExternos(proyectosExt, autores, pubs){
+  const today    = new Date();
+  const fechaStr = today.toLocaleDateString("es-EC",{year:"numeric",month:"long",day:"numeric"});
+
+  const proySecs = proyectosExt.map((p,idx)=>{
+    const partUNO=(p.participantes||[]).filter(x=>x.autorId);
+    const visPubs=(p.pubsVinculadas||[]).map(pid=>pubs.find(pub=>String(pub.id)===String(pid))).filter(Boolean);
+    const stateCol=p.estado==="En ejecución"?"#047857":p.estado==="Finalizado"?"#64748b":"#a16207";
+    const partList=partUNO.map(x=>{const a=autores.find(q=>String(q.id)===String(x.autorId));return a?`${a.apellidos}, ${a.nombres} (${x.rol})`:x.rol;}).join(" · ")||"—";
+    const pubList=visPubs.map((pub,i)=>`<tr><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:9px;text-align:center;color:#0369a1;font-weight:700;">${i+1}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:9px;">${pub.titulo}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:9px;">${pub.tipoPublicacion||"—"}</td><td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:9px;">${pub.estadoPublicacion||"—"}</td></tr>`).join("");
+
+    return`<div style="margin-bottom:20px;border:1px solid #bae6fd;border-radius:8px;overflow:hidden;page-break-inside:avoid;">
+  <div style="background:linear-gradient(135deg,#0c4a6e,#0369a1);color:white;padding:10px 14px;display:table;width:100%;">
+    <div style="display:table-cell;width:65%;"><div style="font-size:12px;font-weight:700;">${idx+1}. ${p.titulo}</div>
+      <div style="font-size:9px;color:rgba(255,255,255,.7);margin-top:2px;">📍 ${p.institucion||"—"}${p.paisInstitucion&&p.paisInstitucion!=="Ecuador"?` · ${p.paisInstitucion}`:""}</div>
+    </div>
+    <div style="display:table-cell;text-align:right;vertical-align:top;">
+      <span style="font-size:10px;font-weight:700;background:rgba(255,255,255,.2);padding:2px 8px;border-radius:12px;">${p.estado||"—"}</span>
+    </div>
+  </div>
+  <div style="padding:8px 14px;background:#f0f9ff;border-bottom:1px solid #bae6fd;font-size:9px;">
+    <table style="margin:0;border-collapse:collapse;"><tr>
+      <td style="padding:1px 12px 1px 0;"><strong>Período:</strong> ${p.fechaInicio||"—"}${p.fechaFin?` → ${p.fechaFin}`:""}</td>
+      <td style="padding:1px 12px 1px 0;"><strong>Línea:</strong> ${p.lineaInvestigacion||"—"}</td>
+    </tr></table>
+    <div style="margin-top:4px;"><strong>Docentes UNO:</strong> ${partList}</div>
+    ${p.descripcion?`<div style="margin-top:4px;color:#475569;">${p.descripcion.substring(0,200)}${p.descripcion.length>200?"…":""}</div>`:""}
+  </div>
+  ${visPubs.length>0?`<div style="padding:8px 14px;">
+    <div style="font-size:9px;font-weight:700;color:#0369a1;margin-bottom:4px;">Publicaciones generadas (${visPubs.length})</div>
+    <table style="font-size:9px;"><tr><th style="font-size:8px;width:3%;text-align:center;">#</th><th style="font-size:8px;width:55%;">Título</th><th style="font-size:8px;width:20%;">Tipo</th><th style="font-size:8px;width:22%;">Estado</th></tr>${pubList}</table>
+  </div>`:`<div style="padding:8px 14px;font-size:9px;color:#94a3b8;font-style:italic;">Sin publicaciones vinculadas</div>`}
+</div>`;
+  }).join("");
+
+  const html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><style>@page Section1{size:842pt 595pt;mso-page-orientation:landscape;margin:1.5cm 2cm}body{font-family:Arial,sans-serif;margin:0;padding:0;color:#1e293b;font-size:11px}h2{font-size:13px;color:${NAVY};border-bottom:2px solid #0369a1;padding-bottom:3px;margin:20px 0 10px;text-transform:uppercase}table{width:100%;border-collapse:collapse;margin:6px 0}th{background:#0369a1;color:white;text-align:left;padding:6px 8px;border:1px solid #0369a1;font-size:10px}.ft{margin-top:24px;text-align:center;color:#94a3b8;font-size:9px;border-top:1px solid #e2e8f0;padding-top:8px}</style></head><body style="mso-section-properties:url('#Section1')">
+
+<div style="border-bottom:3px solid #0369a1;padding-bottom:12px;margin-bottom:20px;display:table;width:100%;"><div style="display:table-row;"><div style="display:table-cell;vertical-align:top;"><div style="font-size:16px;font-weight:900;color:#0369a1;">UNIVERSIDAD DE OTAVALO</div><div style="font-size:11px;color:#64748b;">Facultad de Ciencias Sociales y Pedagógicas · Coordinación de Investigación</div><div style="font-size:14px;font-weight:700;color:${NAVY};margin-top:4px;">Reporte — Proyectos Externos con Participación UNO</div></div><div style="display:table-cell;text-align:right;vertical-align:top;"><div style="font-size:10px;color:#94a3b8;">${fechaStr}</div></div></div></div>
+
+<div style="display:table;width:100%;margin-bottom:20px;">
+  <div style="display:table-row;">
+    ${[{l:"Total proyectos",v:proyectosExt.length,c:"#0369a1"},{l:"En ejecución",v:proyectosExt.filter(p=>p.estado==="En ejecución").length,c:"#047857"},{l:"Instituciones",v:new Set(proyectosExt.map(p=>p.institucion)).size,c:"#6d28d9"},{l:"Finalizados",v:proyectosExt.filter(p=>p.estado==="Finalizado").length,c:"#64748b"}].map(k=>`<div style="display:table-cell;padding:10px;background:white;border:1px solid #f1f5f9;border-radius:8px;margin:0 4px;text-align:center;"><div style="font-size:22px;font-weight:900;color:${k.c};">${k.v}</div><div style="font-size:10px;color:#64748b;">${k.l}</div></div>`).join("")}
+  </div>
+</div>
+
+<h2>Detalle por Proyecto</h2>
+${proySecs}
+
+<div class="ft"><p>PubTracker v5.0 · Coordinación de Investigación · Facultad de Ciencias Sociales y Pedagógicas · Universidad de Otavalo</p><p>Reporte proyectos externos generado el ${fechaStr}</p></div>
+</body></html>`;
+
+  const blob=new Blob(["﻿",html],{type:"application/msword"});
+  const u=URL.createObjectURL(blob);const a=document.createElement("a");
+  a.href=u;a.download=`Proyectos_Externos_${today.getFullYear()}.doc`;
+  a.click();URL.revokeObjectURL(u);
+}
+
 /* ════════════════════════════════════════════════════════
    MÓDULO 3 — SEMILLEROS DE INVESTIGACIÓN
    ════════════════════════════════════════════════════════ */
@@ -2462,9 +2708,12 @@ function SemilleroDetail({semillero, autores, pubs, integrantes, semPubs,
         </div>}
       </div>
 
-      <div style={{display:"flex",gap:8,justifyContent:"flex-end",padding:"12px 20px",borderTop:"1px solid #f1f5f9",background:"#fafbfc"}}>
-        <Btn onClick={onClose}>Cerrar</Btn>
-        {canEdit&&<><Btn danger onClick={()=>onDelete(semillero)} icon={Trash2}>Eliminar</Btn><Btn primary onClick={()=>onEdit(semillero)} icon={Edit3}>Editar</Btn></>}
+      <div style={{display:"flex",gap:8,justifyContent:"space-between",padding:"12px 20px",borderTop:"1px solid #f1f5f9",background:"#fafbfc"}}>
+        <Btn onClick={()=>exportWordSemillero(semillero,integrantes,semPubs,pubs,autores)} icon={FileDown}>Exportar Word</Btn>
+        <div style={{display:"flex",gap:8}}>
+          <Btn onClick={onClose}>Cerrar</Btn>
+          {canEdit&&<><Btn danger onClick={()=>onDelete(semillero)} icon={Trash2}>Eliminar</Btn><Btn primary onClick={()=>onEdit(semillero)} icon={Edit3}>Editar</Btn></>}
+        </div>
       </div>
     </div>
   );
@@ -2525,6 +2774,7 @@ function ViewSemilleros({semilleros, semIntegrantes, semPubs, autores, pubs,
         </div>
         {["","Activo","Inactivo","En formación","Suspendido"].map(e=><button key={e} onClick={()=>setFiltroEst(e)} style={{padding:"4px 12px",borderRadius:20,border:filtroEst===e?`2px solid ${P.green}`:"1.5px solid #e2e8f0",fontSize:11,fontWeight:filtroEst===e?700:400,background:filtroEst===e?"#f0fdf4":"white",color:filtroEst===e?P.green:"#475569",cursor:"pointer"}}>{e||"Todos"}</button>)}
         {isAdmin&&<Btn primary small icon={Plus} onClick={onNuevo}>Nuevo Semillero</Btn>}
+        {isAdmin&&semilleros.length>0&&<Btn small icon={FileDown} onClick={()=>exportWordConsolidadoSemilleros(semilleros,semIntegrantes,semPubs,pubs,autores)}>Reporte Word</Btn>}
       </div>
 
       {semFilt.length===0&&<div style={{textAlign:"center",padding:"40px 20px",background:"white",borderRadius:12,border:"1px solid #f1f5f9"}}>
@@ -3007,6 +3257,7 @@ function ViewProyectoExterno({proyectosExt, autores, isAdmin, currentUser, onNue
         </div>
         {["","En ejecución","Propuesto","Finalizado","Suspendido"].map(e=><button key={e} onClick={()=>setFiltroEst(e)} style={{padding:"4px 12px",borderRadius:20,border:filtroEst===e?`2px solid ${P.sky}`:"1.5px solid #e2e8f0",fontSize:11,fontWeight:filtroEst===e?700:400,background:filtroEst===e?P.skyBg:"white",color:filtroEst===e?P.sky:"#475569",cursor:"pointer"}}>{e||"Todos"}</button>)}
         <Btn primary small icon={Plus} onClick={onNuevo}>Registrar Proyecto Externo</Btn>
+        {isAdmin&&proyectosExt.length>0&&<Btn small icon={FileDown} onClick={()=>exportWordProyectosExternos(proyectosExt,autores,pubs)}>Reporte Word</Btn>}
       </div>
 
       {/* Tabla de instituciones (solo admin) */}
@@ -3055,18 +3306,21 @@ function ViewProyectoExterno({proyectosExt, autores, isAdmin, currentUser, onNue
 }
 
 /* ── Modal Detalle Proyecto Externo ── */
-function ProyectoExternoDetail({proyecto, autores, onClose, onEdit, onDelete, onChangeStatus, isAdmin, currentUser}){
+function ProyectoExternoDetail({proyecto, autores, pubs, semPubs: _sp, onClose, onEdit, onDelete, onChangeStatus, onVincularPub, onDesvincularPub, isAdmin, currentUser}){
+  const[tabD,setTabD]=useState("info");
   const partUNO  = (proyecto.participantes||[]).filter(p=>p.autorId);
   const canEdit  = isAdmin||partUNO.some(p=>String(p.autorId)===String(currentUser?.id));
   const stateColor = proyecto.estado==="En ejecución"?P.green:proyecto.estado==="Finalizado"?P.slate:P.gold;
+  const visPubs  = (proyecto.pubsVinculadas||[]).map(pid=>pubs.find(p=>String(p.id)===String(pid))).filter(Boolean);
 
+  const tabs=[{id:"info",label:"Información",icon:FileText},{id:"equipo",label:"Docentes UNO",icon:Users},{id:"pubs",label:"Publicaciones",icon:BookOpen}];
   const Row=({label,value,children})=><div style={{display:"flex",gap:6,padding:"5px 0",borderBottom:"1px solid #f8fafc"}}>
     <span style={{fontSize:11,color:"#94a3b8",minWidth:160,flexShrink:0,fontWeight:600}}>{label}</span>
     <span style={{fontSize:11,color:"#1e293b"}}>{children||value||"—"}</span>
   </div>;
 
   return(
-    <div style={{background:"white",borderRadius:16,overflow:"hidden",maxWidth:600,width:"100%",boxShadow:"0 20px 60px rgba(0,0,0,.18)"}}>
+    <div style={{background:"white",borderRadius:16,overflow:"hidden",maxWidth:650,width:"100%",boxShadow:"0 20px 60px rgba(0,0,0,.18)"}}>
       <div style={{background:"linear-gradient(135deg,#0c4a6e,#0369a1)",padding:"18px 22px"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
           <div style={{flex:1,paddingRight:12}}>
@@ -3078,42 +3332,88 @@ function ProyectoExternoDetail({proyecto, autores, onClose, onEdit, onDelete, on
         </div>
         <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
           <span style={{fontSize:10,fontWeight:600,color:stateColor,background:"rgba(255,255,255,.15)",padding:"2px 10px",borderRadius:20}}>{proyecto.estado}</span>
-          {partUNO.length>0&&<span style={{fontSize:10,color:"rgba(255,255,255,.7)"}}><Users size={10} style={{marginRight:4}}/>{partUNO.length} docente{partUNO.length!==1?"s":""} UNO participando</span>}
+          {partUNO.length>0&&<span style={{fontSize:10,color:"rgba(255,255,255,.7)"}}><Users size={10} style={{marginRight:4}}/>{partUNO.length} docente{partUNO.length!==1?"s":""} UNO</span>}
+          {visPubs.length>0&&<span style={{fontSize:10,color:"rgba(255,255,255,.7)"}}><BookOpen size={10} style={{marginRight:4}}/>{visPubs.length} pub{visPubs.length!==1?"s":""} vinculadas</span>}
         </div>
       </div>
 
-      <div style={{padding:"16px 20px",maxHeight:"55vh",overflowY:"auto"}}>
-        <Row label="Institución ejecutora"><span style={{fontWeight:600,color:P.sky}}>{proyecto.institucion}</span></Row>
-        <Row label="País" value={proyecto.paisInstitucion}/>
-        <Row label="Línea de investigación" value={proyecto.lineaInvestigacion}/>
-        <Row label="Período">{proyecto.fechaInicio||"—"}{proyecto.fechaFin?` → ${proyecto.fechaFin}`:""}</Row>
-        {proyecto.descripcion&&<div style={{margin:"10px 0",padding:"10px 12px",background:"#f0f9ff",borderRadius:8,border:"1px solid #bae6fd"}}><p style={{fontSize:10,fontWeight:700,color:P.sky,margin:"0 0 4px"}}>DESCRIPCIÓN</p><p style={{fontSize:12,color:"#1e293b",margin:0,lineHeight:1.6}}>{proyecto.descripcion}</p></div>}
+      {/* Tabs */}
+      <div style={{display:"flex",borderBottom:"1px solid #f1f5f9",background:"#fafbfc"}}>
+        {tabs.map(t=><button key={t.id} onClick={()=>setTabD(t.id)} style={{flex:1,padding:"8px 12px",border:"none",cursor:"pointer",fontSize:11,fontWeight:tabD===t.id?700:400,color:tabD===t.id?P.sky:"#94a3b8",background:tabD===t.id?"white":"transparent",borderBottom:tabD===t.id?`3px solid ${P.sky}`:"3px solid transparent",display:"flex",alignItems:"center",justifyContent:"center",gap:4}}><t.icon size={12}/>{t.label}</button>)}
+      </div>
 
-        <h4 style={{fontSize:12,fontWeight:700,color:C1,margin:"14px 0 8px"}}>Docentes UNO que participan ({partUNO.length})</h4>
-        {partUNO.map((p,i)=>{
-          const a=autores.find(x=>String(x.id)===String(p.autorId));
-          const foto=a?.fotoUrl?driveImgUrl(a.fotoUrl):avatarUrl(a?.nombres,a?.apellidos);
-          return<div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:"1px solid #f8fafc"}}>
-            <img src={foto} alt="" style={{width:34,height:34,borderRadius:"50%",objectFit:"cover",border:`2px solid ${C1}20`,flexShrink:0}} onError={e=>{e.target.onerror=null;e.target.src=avatarUrl(a?.nombres,a?.apellidos)}}/>
-            <div style={{flex:1,minWidth:0}}>
-              <p style={{fontSize:12,fontWeight:600,color:P.navy,margin:0}}>{a?`${a.apellidos}, ${a.nombres}`:"Docente desconocido"}</p>
-              <div style={{display:"flex",gap:5,marginTop:2,flexWrap:"wrap"}}>
-                <Bdg c={C1}>{p.rol||"—"}</Bdg>
-                {p.horasSemana&&<Bdg c={P.green} bg={P.greenBg}><Clock size={9} style={{marginRight:2}}/>{p.horasSemana}h/sem</Bdg>}
-                {a?.departamento&&<Bdg c={P.slate}>{a.departamento}</Bdg>}
+      <div style={{padding:"16px 20px",maxHeight:"52vh",overflowY:"auto"}}>
+        {/* Info */}
+        {tabD==="info"&&<div>
+          <Row label="Institución ejecutora"><span style={{fontWeight:600,color:P.sky}}>{proyecto.institucion}</span></Row>
+          <Row label="País" value={proyecto.paisInstitucion}/>
+          <Row label="Línea de investigación" value={proyecto.lineaInvestigacion}/>
+          <Row label="Período">{proyecto.fechaInicio||"—"}{proyecto.fechaFin?` → ${proyecto.fechaFin}`:""}</Row>
+          {proyecto.descripcion&&<div style={{margin:"10px 0",padding:"10px 12px",background:"#f0f9ff",borderRadius:8,border:"1px solid #bae6fd"}}><p style={{fontSize:10,fontWeight:700,color:P.sky,margin:"0 0 4px"}}>DESCRIPCIÓN</p><p style={{fontSize:12,color:"#1e293b",margin:0,lineHeight:1.6}}>{proyecto.descripcion}</p></div>}
+          <div style={{marginTop:12,display:"flex",gap:8,flexWrap:"wrap"}}>
+            {proyecto.urlReferencia&&<a href={proyecto.urlReferencia} target="_blank" rel="noreferrer" style={{display:"inline-flex",alignItems:"center",gap:5,padding:"6px 12px",borderRadius:8,background:P.skyBg,border:`1px solid ${P.sky}30`,color:P.sky,fontSize:11,fontWeight:700,textDecoration:"none"}}><Globe size={12}/>Ver proyecto</a>}
+            {proyecto.evidenciaOneDrive&&<a href={proyecto.evidenciaOneDrive} target="_blank" rel="noreferrer" style={{display:"inline-flex",alignItems:"center",gap:5,padding:"6px 12px",borderRadius:8,background:"#f5f3ff",border:"1px solid #ddd6fe",color:"#7c3aed",fontSize:11,fontWeight:700,textDecoration:"none"}}><ExternalLink size={12}/>OneDrive</a>}
+          </div>
+        </div>}
+
+        {/* Equipo */}
+        {tabD==="equipo"&&<div>
+          <h4 style={{fontSize:12,fontWeight:700,color:C1,margin:"0 0 10px"}}>Docentes UNO ({partUNO.length})</h4>
+          {partUNO.length===0&&<p style={{fontSize:12,color:"#94a3b8"}}>Sin docentes registrados</p>}
+          {partUNO.map((p,i)=>{
+            const a=autores.find(x=>String(x.id)===String(p.autorId));
+            const foto=a?.fotoUrl?driveImgUrl(a.fotoUrl):avatarUrl(a?.nombres,a?.apellidos);
+            return<div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:"1px solid #f8fafc"}}>
+              <img src={foto} alt="" style={{width:34,height:34,borderRadius:"50%",objectFit:"cover",border:`2px solid ${C1}20`,flexShrink:0}} onError={e=>{e.target.onerror=null;e.target.src=avatarUrl(a?.nombres,a?.apellidos)}}/>
+              <div style={{flex:1,minWidth:0}}>
+                <p style={{fontSize:12,fontWeight:600,color:P.navy,margin:0}}>{a?`${a.apellidos}, ${a.nombres}`:"Docente desconocido"}</p>
+                <div style={{display:"flex",gap:5,marginTop:2,flexWrap:"wrap"}}>
+                  <Bdg c={P.sky}>{p.rol||"—"}</Bdg>
+                  {p.horasSemana&&<Bdg c={P.green} bg={P.greenBg}><Clock size={9} style={{marginRight:2}}/>{p.horasSemana}h/sem</Bdg>}
+                  {a?.departamento&&<Bdg c={P.slate}>{a.departamento}</Bdg>}
+                </div>
               </div>
+            </div>;
+          })}
+        </div>}
+
+        {/* Publicaciones vinculadas */}
+        {tabD==="pubs"&&<div>
+          {/* Resumen por tipo */}
+          {visPubs.length>0&&(()=>{const tr={};visPubs.forEach(p=>{const t=p.tipoPublicacion||"Otro";tr[t]=(tr[t]||0)+1;});return<div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:10,padding:"8px 12px",background:"#f0f9ff",borderRadius:8,border:"1px solid #bae6fd"}}>
+            <span style={{fontSize:10,fontWeight:700,color:P.sky,marginRight:4}}>Productos:</span>
+            {Object.entries(tr).map(([t,n])=><Bdg key={t} c={P.sky} bg={P.skyBg}>{t}: {n}</Bdg>)}
+            <span style={{fontSize:10,color:"#94a3b8",marginLeft:"auto"}}>Total: {visPubs.length}</span>
+          </div>;})()}
+          {canEdit&&<div style={{marginBottom:12,background:P.skyBg,borderRadius:10,padding:"10px 14px",border:`1px solid ${P.sky}30`}}>
+            <p style={{fontSize:11,color:P.sky,fontWeight:700,margin:"0 0 8px"}}>Vincular publicación como producto de este proyecto externo</p>
+            <div style={{display:"flex",gap:8,alignItems:"center"}}>
+              <select id="ext-pub-sel" style={{flex:1,padding:"7px 10px",borderRadius:8,border:"1.5px solid #e2e8f0",fontSize:12,background:"white",outline:"none"}}>
+                <option value="">Seleccionar publicación…</option>
+                <optgroup label="── Artículos Científicos">{pubs.filter(p=>p.tipoPublicacion==="Artículo Científico"&&!visPubs.some(vp=>vp.id===p.id)).map(p=><option key={p.id} value={p.id}>{p.titulo?.substring(0,65)}{p.titulo?.length>65?"…":""}</option>)}</optgroup>
+                <optgroup label="── Artículos Regionales">{pubs.filter(p=>p.tipoPublicacion==="Artículo Regional"&&!visPubs.some(vp=>vp.id===p.id)).map(p=><option key={p.id} value={p.id}>{p.titulo?.substring(0,65)}{p.titulo?.length>65?"…":""}</option>)}</optgroup>
+                <optgroup label="── Libros">{pubs.filter(p=>p.tipoPublicacion==="Libro"&&!visPubs.some(vp=>vp.id===p.id)).map(p=><option key={p.id} value={p.id}>{p.titulo?.substring(0,65)}{p.titulo?.length>65?"…":""}</option>)}</optgroup>
+                <optgroup label="── Ponencias">{pubs.filter(p=>p.tipoPublicacion==="Ponencia"&&!visPubs.some(vp=>vp.id===p.id)).map(p=><option key={p.id} value={p.id}>{p.titulo?.substring(0,65)}{p.titulo?.length>65?"…":""}</option>)}</optgroup>
+                <optgroup label="── Otros">{pubs.filter(p=>!["Artículo Científico","Artículo Regional","Libro","Ponencia"].includes(p.tipoPublicacion)&&!visPubs.some(vp=>vp.id===p.id)).map(p=><option key={p.id} value={p.id}>{p.titulo?.substring(0,65)}{p.titulo?.length>65?"…":""}</option>)}</optgroup>
+              </select>
+              <Btn small primary onClick={()=>{const sel=document.getElementById("ext-pub-sel");if(sel?.value)onVincularPub&&onVincularPub(proyecto.id,sel.value);}} icon={Plus}>Vincular</Btn>
             </div>
-          </div>;
-        })}
-        {[proyecto.urlReferencia,proyecto.evidenciaOneDrive].some(Boolean)&&<div style={{marginTop:12,display:"flex",gap:8,flexWrap:"wrap"}}>
-          {proyecto.urlReferencia&&<a href={proyecto.urlReferencia} target="_blank" rel="noreferrer" style={{display:"inline-flex",alignItems:"center",gap:5,padding:"6px 12px",borderRadius:8,background:P.skyBg,border:`1px solid ${P.sky}30`,color:P.sky,fontSize:11,fontWeight:700,textDecoration:"none"}}><Globe size={12}/>Ver proyecto</a>}
-          {proyecto.evidenciaOneDrive&&<a href={proyecto.evidenciaOneDrive} target="_blank" rel="noreferrer" style={{display:"inline-flex",alignItems:"center",gap:5,padding:"6px 12px",borderRadius:8,background:"#f5f3ff",border:"1px solid #ddd6fe",color:"#7c3aed",fontSize:11,fontWeight:700,textDecoration:"none"}}><ExternalLink size={12}/>OneDrive</a>}
+          </div>}
+          {visPubs.length===0&&<p style={{fontSize:12,color:"#94a3b8",textAlign:"center",padding:"20px 0"}}>Sin publicaciones vinculadas. Usa el selector para agregar artículos, libros, ponencias, etc.</p>}
+          {visPubs.map(p=><div key={p.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:"1px solid #f8fafc"}}>
+            <div style={{flex:1,minWidth:0}}>
+              <p style={{fontSize:12,fontWeight:600,color:P.navy,margin:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.titulo}</p>
+              <div style={{display:"flex",gap:4,marginTop:2,flexWrap:"wrap"}}><EBdg e={p.estadoPublicacion}/><TipoBdg tipo={p.tipoPublicacion}/>{p.cuartil&&p.cuartil!=="N/A"&&<QBdg q={p.cuartil}/>}<ValBdg v={p.valoracion}/></div>
+            </div>
+            {canEdit&&<button onClick={()=>onDesvincularPub&&onDesvincularPub(proyecto.id,p.id)} style={{marginLeft:8,padding:"3px 8px",borderRadius:7,border:"1px solid #ffe4e6",background:"#fff5f5",cursor:"pointer",fontSize:10,color:P.rose,fontWeight:600,flexShrink:0,display:"flex",alignItems:"center",gap:3}}><X size={10}/>Quitar</button>}
+          </div>)}
         </div>}
       </div>
 
       <div style={{display:"flex",gap:8,justifyContent:"space-between",padding:"12px 20px",borderTop:"1px solid #f1f5f9",background:"#fafbfc"}}>
-        <Btn onClick={onClose}>Cerrar</Btn>
+        <Btn onClick={()=>exportWordProyectosExternos([{...proyecto,pubsVinculadas:visPubs.map(p=>p.id)}],autores,pubs)} icon={FileDown}>Exportar Word</Btn>
         <div style={{display:"flex",gap:8}}>
+          <Btn onClick={onClose}>Cerrar</Btn>
           {canEdit&&<Btn onClick={()=>onChangeStatus(proyecto)} icon={CheckCircle2}>Cambiar Estado</Btn>}
           {canEdit&&<Btn danger onClick={()=>onDelete(proyecto)} icon={Trash2}>Eliminar</Btn>}
           {canEdit&&<Btn primary onClick={()=>onEdit(proyecto)} icon={Edit3}>Editar</Btn>}
